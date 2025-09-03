@@ -1567,14 +1567,13 @@ class Searcher(QThread):
     def run(self):
         # extract_flat 옵션을 제거하거나 False로 설정하여 전체 포맷 정보를 가져옵니다.
         ydl_opts = {
-            'quiet': True,
-            'no_warnings': False, # WARNING 메시지를 보기 위해 False로 설정
+            'quiet': False,  # 디버깅을 위해 False로 변경
+            'no_warnings': False,
             'skip_download': True,
-            'ignoreerrors': True, # 일부 오류 무시
-            'ignore_no_formats_error': True, # 포맷 없는 오류 무시
-            # 'allow_unplayable_formats': True, # 디버깅용
-            # 'verbose': True, # 더 자세한 로그
-            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo[ext=mp4]+bestaudio[ext=mp3]/best[ext=mp4]/best[ext=mp3]/best', # mp4, mp3 선호
+            'ignoreerrors': True,
+            'ignore_no_formats_error': True,
+            'listformats': False,  # 포맷 리스트 출력하지 않음
+            # 모든 포맷을 가져오도록 설정
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             try:
@@ -1599,11 +1598,14 @@ class Searcher(QThread):
                         acodec = f.get('acodec', 'none')
                         filesize = f.get('filesize') or f.get('filesize_approx') or 0
 
+                        # 디버깅: 포맷 정보 출력
+                        print(f"[Debug] Format {format_id}: ext={ext}, vcodec={vcodec}, acodec={acodec}")
+
                         type_label = 'Unknown'
                         quality_desc = []
 
-                        # 확장자 필터링 (webm, mhtml 제외)
-                        if ext in ['webm', 'mhtml']:
+                        # 확장자 필터링 (webm 제외, mhtml은 유지)
+                        if ext in ['webm']:
                             continue
 
                         # 타입 결정 로직 개선
@@ -1613,14 +1615,25 @@ class Searcher(QThread):
                             if f.get('fps'): quality_desc.append(f"{f.get('fps')}fps")
                             if f.get('vbr'): quality_desc.append(f"V:{round(f.get('vbr'))}k")
                             elif f.get('abr'): quality_desc.append(f"A:{round(f.get('abr'))}k")
-                        elif vcodec != 'none':
+                        elif vcodec != 'none' and (vcodec != 'none' and vcodec != ''):
                             type_label = 'Video-only'
                             if f.get('width') and f.get('height'): quality_desc.append(f"{f.get('width')}x{f.get('height')}")
                             if f.get('fps'): quality_desc.append(f"{f.get('fps')}fps")
                             if f.get('vbr'): quality_desc.append(f"V:{round(f.get('vbr'))}k")
-                        elif acodec != 'none':
+                        elif acodec != 'none' and (acodec != 'none' and acodec != ''):
                             type_label = 'Audio-only'
                             if f.get('abr'): quality_desc.append(f"A:{round(f.get('abr'))}k")
+                        # 확장자 기반 추가 분류
+                        elif ext in ['m4a', 'mp3', 'aac', 'opus', 'ogg']:
+                            type_label = 'Audio-only'
+                            if f.get('abr'): quality_desc.append(f"A:{round(f.get('abr'))}k")
+                        elif ext in ['mp4', 'mkv', 'avi', 'mov']:
+                            # 비디오 확장자이지만 코덱 정보가 없는 경우
+                            if f.get('width') and f.get('height'):
+                                type_label = 'Video'
+                                quality_desc.append(f"{f.get('width')}x{f.get('height')}")
+                            else:
+                                type_label = 'Unknown'
                         # Unknown 타입은 필터링하지 않고, 정보가 부족하면 그대로 표시
 
                         quality_str = ' / '.join(filter(None, quality_desc))
@@ -1633,7 +1646,15 @@ class Searcher(QThread):
                     if not processed_format_list and raw_formats:
                         print(f"[Debug Searcher] Video {video_index + 1} ('{video.get('title', 'N/A')}') - all formats were filtered out. This shouldn't happen with relaxed filters.")
                     
-                    processed_format_list.sort(key=lambda x: (x[2] != 'Audio-only', x[2] != 'Video', x[2] != 'Video-only', -x[3]))
+                    # 오디오 추출 옵션 추가
+                    processed_format_list.append((
+                        "[Audio Extract] MP3 (Extract from best video) - N/A",
+                        "bestaudio/best",
+                        "Audio Extract",
+                        0
+                    ))
+                    
+                    processed_format_list.sort(key=lambda x: (x[2] != 'Audio Extract', x[2] != 'Audio-only', x[2] != 'Video', x[2] != 'Video-only', -x[3]))
 
                     self.updated_list.emit(
                         video.get('title', 'No title'),
@@ -1668,11 +1689,21 @@ class Downloader(QThread):
         for title, url, format_id in self.videos:
             # Use the passed title directly, ensuring it's used for the filename
             safe_title = title.replace("/", "_").replace("\\", "_")
+            # 포맷 ID에 따라 다운로드 옵션 설정
             download_options = {
                 'format': format_id,
                 'outtmpl': os.path.join(self.download_directory, f"{safe_title}.%(ext)s"),
                 'progress_hooks': [self.progress_hook],
             }
+            
+            # 오디오 추출 옵션 처리
+            if format_id == 'bestaudio/best':
+                download_options['postprocessors'] = [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }]
+                download_options['format'] = 'bestaudio/best'
 
             with yt_dlp.YoutubeDL(download_options) as ydl:
                 try:
