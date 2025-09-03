@@ -1599,7 +1599,7 @@ class Searcher(QThread):
                         filesize = f.get('filesize') or f.get('filesize_approx') or 0
 
                         # 디버깅: 포맷 정보 출력
-                        print(f"[Debug] Format {format_id}: ext={ext}, vcodec={vcodec}, acodec={acodec}")
+                        print(f"[Debug] Format {format_id}: ext={ext}, vcodec={vcodec}, acodec={acodec}, abr={f.get('abr')}, vbr={f.get('vbr')}")
 
                         type_label = 'Unknown'
                         quality_desc = []
@@ -1620,13 +1620,15 @@ class Searcher(QThread):
                             if f.get('width') and f.get('height'): quality_desc.append(f"{f.get('width')}x{f.get('height')}")
                             if f.get('fps'): quality_desc.append(f"{f.get('fps')}fps")
                             if f.get('vbr'): quality_desc.append(f"V:{round(f.get('vbr'))}k")
-                        elif acodec != 'none' and (acodec != 'none' and acodec != ''):
+                        elif acodec != 'none' and acodec != '' and vcodec == 'none':
                             type_label = 'Audio-only'
                             if f.get('abr'): quality_desc.append(f"A:{round(f.get('abr'))}k")
-                        # 확장자 기반 추가 분류
-                        elif ext in ['m4a', 'mp3', 'aac', 'opus', 'ogg']:
+                            else: quality_desc.append("Audio")
+                        # 확장자 기반 추가 분류 (더 많은 오디오 포맷 포함)
+                        elif ext in ['m4a', 'mp3', 'aac', 'opus', 'ogg', 'wav', 'flac', 'weba']:
                             type_label = 'Audio-only'
                             if f.get('abr'): quality_desc.append(f"A:{round(f.get('abr'))}k")
+                            else: quality_desc.append("Audio")
                         elif ext in ['mp4', 'mkv', 'avi', 'mov']:
                             # 비디오 확장자이지만 코덱 정보가 없는 경우
                             if f.get('width') and f.get('height'):
@@ -1646,15 +1648,34 @@ class Searcher(QThread):
                     if not processed_format_list and raw_formats:
                         print(f"[Debug Searcher] Video {video_index + 1} ('{video.get('title', 'N/A')}') - all formats were filtered out. This shouldn't happen with relaxed filters.")
                     
-                    # 오디오 추출 옵션 추가
+                    # 오디오 추출 옵션 추가 (여러 옵션 제공)
                     processed_format_list.append((
-                        "[Audio Extract] MP3 (Extract from best video) - N/A",
+                        "[Audio Extract] MP3 High Quality (192kbps) - N/A",
                         "bestaudio/best",
                         "Audio Extract",
-                        0
+                        999999  # 높은 우선순위를 위해 큰 값
                     ))
                     
-                    processed_format_list.sort(key=lambda x: (x[2] != 'Audio Extract', x[2] != 'Audio-only', x[2] != 'Video', x[2] != 'Video-only', -x[3]))
+                    processed_format_list.append((
+                        "[Audio Extract] MP3 Standard (128kbps) - N/A", 
+                        "worstaudio/worst",
+                        "Audio Extract",
+                        999998
+                    ))
+                    
+                    # 실제 오디오 전용 포맷이 있는지 확인
+                    audio_only_count = len([x for x in processed_format_list if x[2] == 'Audio-only'])
+                    print(f"[Debug] Found {audio_only_count} audio-only formats")
+                    
+                    # Audio Extract를 맨 위에 오도록 정렬
+                    processed_format_list.sort(key=lambda x: (
+                        0 if x[2] == 'Audio Extract' else
+                        1 if x[2] == 'Audio-only' else
+                        2 if x[2] == 'Video' else
+                        3 if x[2] == 'Video-only' else
+                        4,  # Unknown
+                        -x[3]  # 파일 크기 내림차순
+                    ))
 
                     self.updated_list.emit(
                         video.get('title', 'No title'),
