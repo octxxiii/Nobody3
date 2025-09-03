@@ -1402,13 +1402,15 @@ class VideoDownloader(QDialog):
                 modified_title = title_item.text() if title_item else "Untitled"
                 video_url = self.video_info_list[row][1]
                 format_combo_box = self.video_table.cellWidget(row, 3)
-                selected_format_detail = format_combo_box.currentText() if format_combo_box else None
+                selected_format_id = format_combo_box.currentData() if format_combo_box else None
 
-                if selected_format_detail in ["AUDIO", "VIDEO", "No available formats"]:
-                    invalid_selection = True
-                    break
+                if selected_format_id is None:
+                    current_text = format_combo_box.currentText()
+                    if "--- " in current_text or current_text == "No available formats":
+                        invalid_selection = True
+                        break
 
-                format_id = selected_format_detail.split(' - ')[0] if selected_format_detail else 'best'
+                format_id = selected_format_id if selected_format_id else 'best'
                 selected_videos.append((modified_title, video_url, format_id))
 
         if invalid_selection:
@@ -1461,7 +1463,7 @@ class VideoDownloader(QDialog):
         return {index.row() for index in self.video_table.selectedIndexes() if index.column() == 0}
 
     @pyqtSlot(str, str, str, list)
-    def update_video_list(self, title, thumbnail_url, video_url, formats):
+    def update_video_list(self, title, thumbnail_url, video_url, formats_info_list):
         row_position = self.video_table.rowCount()
         self.video_table.insertRow(row_position)
         self.video_info_list.append((title, video_url))
@@ -1474,45 +1476,46 @@ class VideoDownloader(QDialog):
 
         # Thumbnail
         if thumbnail_url:
-            response = requests.get(thumbnail_url)
-            pixmap = QPixmap()
-            if pixmap.loadFromData(response.content):
-                thumbnail_item = QTableWidgetItem()
-                thumbnail_item.setData(Qt.DecorationRole, pixmap.scaled(50, 50, Qt.KeepAspectRatio))
-                thumbnail_item.setFlags(Qt.ItemIsEnabled)  # Disable editing but allow selection
-                self.video_table.setItem(row_position, 1, thumbnail_item)
+            try:
+                response = requests.get(thumbnail_url, timeout=5)
+                pixmap = QPixmap()
+                if pixmap.loadFromData(response.content):
+                    thumbnail_item = QTableWidgetItem()
+                    thumbnail_item.setData(Qt.DecorationRole, pixmap.scaled(50, 50, Qt.KeepAspectRatio))
+                    thumbnail_item.setFlags(Qt.ItemIsEnabled)
+                    self.video_table.setItem(row_position, 1, thumbnail_item)
+            except:
+                # 썸네일 로드 실패 시 무시
+                pass
 
-        # Title
-        self.video_table.setItem(row_position, 2, QTableWidgetItem(title))
+        # Title (편집 가능하도록 설정)
+        title_item = QTableWidgetItem(title)
+        title_item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable)
+        self.video_table.setItem(row_position, 2, title_item)
 
         # Format combo box with categorized and ordered formats
         format_combo = QComboBox()
 
-        # Separating audio and video formats
-        audio_formats = [f for f in formats if 'm4a' in f.lower() or 'mp3' in f.lower()]  # Assuming 'm4a' and 'mp3' are considered audio
-        video_formats = [f for f in formats if
-                         f not in audio_formats and 'mp4' in f.lower()]  # Assuming 'mp4' is considered video
-
-        # Adding AUDIO label if there are audio formats
-        if audio_formats:
-            format_combo.addItem("AUDIO")
-            for format_detail in audio_formats:
-                format_combo.addItem(format_detail)
-
-        # Adding VIDEO label if there are video formats
-        if video_formats:
-            # if audio_formats:  # Add a separator if there are also audio formats
-            #     format_combo.addItem("-----------")
-            format_combo.addItem("VIDEO")
-            for format_detail in video_formats:
-                format_combo.addItem(format_detail)
-
-        # Set the default format if available
-        if format_combo.count() > 0:
-            format_combo.setCurrentIndex(1)  # Default to the first actual format after the AUDIO label
+        # 카테고리별로 포맷 추가
+        current_category = None
+        if not formats_info_list: # 포맷 정보가 없으면
+            format_combo.addItem("No available formats", None) # userData도 None
         else:
-            format_combo.addItem("No available formats")
+            for display_text, format_id, type_label, filesize in formats_info_list:
+                # 카테고리 헤더 추가 (type_label 변경 시)
+                if type_label != current_category:
+                    if format_combo.count() > 0 and current_category is not None:
+                        pass # 구분선 대신 카테고리명으로 구분
+                    format_combo.addItem(f"--- {type_label} --- ") # 카테고리 명칭 표시
+                    format_combo.model().item(format_combo.count() - 1).setEnabled(False) # 카테고리명은 선택 불가
+                    current_category = type_label
+                
+                format_combo.addItem(display_text, userData=format_id) # userData에 format_id 저장
 
+        # 기본 선택: 첫 번째 실제 포맷 (카테고리 헤더가 아닌)
+        if format_combo.count() > 1:
+            format_combo.setCurrentIndex(1) # 첫 번째 카테고리 헤더 다음 항목
+        
         self.video_table.setCellWidget(row_position, 3, format_combo)
         # self.video_table.setEditTriggers(QTableWidget.NoEditTriggers)
 
@@ -1554,7 +1557,7 @@ main_thread_signal_emitter = MainThreadSignalEmitter()
 
 
 class Searcher(QThread):
-    updated_list = pyqtSignal(str, str, str, list)  # The last parameter is a list of format strings.
+    updated_list = pyqtSignal(str, str, str, list)  # title, thumbnail_url, video_url, [(display_text, format_id, type_label, filesize)]
     search_progress = pyqtSignal(int, int)  # Signal with two arguments: current progress and total count
 
     def __init__(self, url, parent=None):
@@ -1562,50 +1565,92 @@ class Searcher(QThread):
         self.url = url
 
     def run(self):
-        with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+        # extract_flat 옵션을 제거하거나 False로 설정하여 전체 포맷 정보를 가져옵니다.
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': False, # WARNING 메시지를 보기 위해 False로 설정
+            'skip_download': True,
+            'ignoreerrors': True, # 일부 오류 무시
+            'ignore_no_formats_error': True, # 포맷 없는 오류 무시
+            # 'allow_unplayable_formats': True, # 디버깅용
+            # 'verbose': True, # 더 자세한 로그
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo[ext=mp4]+bestaudio[ext=mp3]/best[ext=mp4]/best[ext=mp3]/best', # mp4, mp3 선호
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             try:
                 result = ydl.extract_info(self.url, download=False)
                 videos = result.get('entries', [result])
+                if not videos:
+                    print("[Debug Searcher] No videos/entries found in yt_dlp result.")
+                    self.updated_list.emit(result.get('title', 'Video/Playlist not found'), "", self.url, [])
+                    return
 
-                for video in videos:
-                    formats = video.get('formats', [])
-                    format_list = []
-                    for f in formats:
-                        if f['ext'] != 'webm':  # 'webm' 포맷 제외
-                            filesize = f.get('filesize')
-                            if filesize and filesize > 0:
-                                ext = f['ext']
-                                if f.get('vcodec') != 'none':  # This is a video format
-                                    quality = f.get('resolution') or f"{f.get('height')}p"
-                                    type_label = 'Video'
-                                else:  # This is an audio format
-                                    quality = f"{round(f.get('abr', 0))}kbps" if f.get('abr') else ""
-                                    type_label = 'Audio'
-                                filesize_mb = f"{filesize // 1024 // 1024}MB"
-                                format_detail = (type_label, f"{ext} - {quality} - {filesize_mb}", filesize)
-                                format_list.append(format_detail)
+                for video_index, video in enumerate(videos):
+                    raw_formats = video.get('formats', [])
+                    processed_format_list = []
 
-                    # Sort the list: audio formats first, then by filesize in descending order
-                    format_list.sort(key=lambda x: (-x[2], x[0] == 'Video'))
+                    if not raw_formats:
+                        print(f"[Debug Searcher] Video {video_index + 1} ('{video.get('title', 'N/A')}') has no raw formats from yt_dlp.")
 
-                    # Convert tuple back to string for display, omitting filesize used for sorting
-                    format_list = [f"{f[1]}" for f in format_list]
+                    for f_index, f in enumerate(raw_formats):
+                        format_id = f.get('format_id')
+                        ext = f.get('ext')
+                        vcodec = f.get('vcodec', 'none')
+                        acodec = f.get('acodec', 'none')
+                        filesize = f.get('filesize') or f.get('filesize_approx') or 0
+
+                        type_label = 'Unknown'
+                        quality_desc = []
+
+                        # 확장자 필터링 (webm, mhtml 제외)
+                        if ext in ['webm', 'mhtml']:
+                            continue
+
+                        # 타입 결정 로직 개선
+                        if vcodec != 'none' and acodec != 'none':
+                            type_label = 'Video' # Muxed (Video+Audio)
+                            if f.get('width') and f.get('height'): quality_desc.append(f"{f.get('width')}x{f.get('height')}")
+                            if f.get('fps'): quality_desc.append(f"{f.get('fps')}fps")
+                            if f.get('vbr'): quality_desc.append(f"V:{round(f.get('vbr'))}k")
+                            elif f.get('abr'): quality_desc.append(f"A:{round(f.get('abr'))}k")
+                        elif vcodec != 'none':
+                            type_label = 'Video-only'
+                            if f.get('width') and f.get('height'): quality_desc.append(f"{f.get('width')}x{f.get('height')}")
+                            if f.get('fps'): quality_desc.append(f"{f.get('fps')}fps")
+                            if f.get('vbr'): quality_desc.append(f"V:{round(f.get('vbr'))}k")
+                        elif acodec != 'none':
+                            type_label = 'Audio-only'
+                            if f.get('abr'): quality_desc.append(f"A:{round(f.get('abr'))}k")
+                        # Unknown 타입은 필터링하지 않고, 정보가 부족하면 그대로 표시
+
+                        quality_str = ' / '.join(filter(None, quality_desc))
+                        filesize_mb_str = f"{(filesize // 1024 // 1024)}MB" if filesize > 0 else "N/A"
+
+                        display_text = f"[{type_label}] {ext.upper()} {format_id} ({quality_str if quality_str else 'data'}) - {filesize_mb_str}"
+                        
+                        processed_format_list.append((display_text, format_id, type_label, filesize))
+                    
+                    if not processed_format_list and raw_formats:
+                        print(f"[Debug Searcher] Video {video_index + 1} ('{video.get('title', 'N/A')}') - all formats were filtered out. This shouldn't happen with relaxed filters.")
+                    
+                    processed_format_list.sort(key=lambda x: (x[2] != 'Audio-only', x[2] != 'Video', x[2] != 'Video-only', -x[3]))
 
                     self.updated_list.emit(
                         video.get('title', 'No title'),
                         video.get('thumbnail', ''),
                         video.get('webpage_url', ''),
-                        format_list
+                        processed_format_list
                     )
             except Exception as e:
-                main_thread_signal_emitter.emit_warning(f'An unexpected error occurred: {str(e)}')
+                print(f"[Debug Searcher] Exception in run(): {e}")
+                import traceback
+                traceback.print_exc()
+                self.updated_list.emit('Error occurred', '', self.url, [])
 
     def estimate_total_count(self, result):
         if 'entries' in result:
-            # If it's a playlist, estimate the total count based on the number of entries
             return len(result['entries'])
         else:
-            # If it's a single video, return 1 as the total count
             return 1
 
 
