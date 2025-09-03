@@ -52,7 +52,7 @@ class SettingsDialog(QDialog):
         self.predefinedURL = "https://soundcloud.com/octxxiii"
         predefinedText = """
             <p style="text-align: center;">
-            <h1>OctXXIII Ver. 1.0</h1>
+            <h1>OctXXIII Ver. 2.0</h1>
             Youtube/Music Converter & Player
             </p>
             <br>
@@ -110,11 +110,20 @@ class SettingsDialog(QDialog):
                 현재 브라우저에서 재생되고 있는 타이틀이 뜨는 Label 추가 <br>
                 현재 브라우저의 비디오/오디오를 컨트롤 할 수 있는 패널 추가
                 </ol>
+                <h3>250103 Major Update v2.0</h3>
+                <ol>
+                미니 플레이어 모드 추가 (최소화 시 작은 플레이어 창으로 전환)<br>
+                최상위 고정 토글 기능 (📌/📍 버튼)<br>
+                최대화 버튼 활성화<br>
+                FFmpeg 포함 빌드 시스템 구축<br>
+                크로스 플랫폼 설치 파일 생성 (MSI/DMG)<br>
+                원클릭 빌드 스크립트 제공
+                </ol>
             </p>
             <h2>
             Creator: nobody 😜 
             <br>
-            Distribution date: 2024-04-01
+            Last Updated: 2025-01-03
             </h2>
         """
 

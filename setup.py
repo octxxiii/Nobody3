@@ -55,8 +55,8 @@ else:
 
 setup(
     name="OctXXIII",
-    version="1.0",
-    description="YouTube/Music Converter & Player",
+    version="2.0",
+    description="YouTube/Music Converter & Player with Mini Player",
     author="nobody",
     options={"build_exe": build_exe_options},
     executables=executables

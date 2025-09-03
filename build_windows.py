@@ -71,7 +71,7 @@ def create_msi():
     # WXS 파일 생성
     wxs_content = '''<?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-    <Product Id="*" Name="OctXXIII" Language="1033" Version="1.0.0" 
+    <Product Id="*" Name="OctXXIII" Language="1033" Version="2.0.0" 
              Manufacturer="nobody" UpgradeCode="12345678-1234-1234-1234-123456789012">
         
         <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
