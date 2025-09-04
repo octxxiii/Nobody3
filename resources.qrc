@@ -1,0 +1,8 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="/">
+    <file alias="homeIcon">icons/home.png</file>
+    <file alias="musicIcon">icons/music.png</file>
+    <file alias="soundCloudIcon">icons/soundcloud.png</file>
+    <!-- 기타 리소스 파일 추가 -->
+</qresource>
+</RCC>
