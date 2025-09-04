@@ -17,7 +17,7 @@ class MSIBuilder:
         self.version = "1.0.0"
         self.author = "octxxiii"
         self.description = "YouTube/Music Converter & Player"
-        self.main_script = "Nobody33.py"
+        self.main_script = "Nobody3.py"
         self.build_dir = Path("build")
         self.dist_dir = Path("dist")
         

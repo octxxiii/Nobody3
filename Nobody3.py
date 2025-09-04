@@ -331,6 +331,14 @@ class VideoDownloader(QDialog):
         self.mini_next_button.setFixedSize(30, 30)
         self.mini_next_button.clicked.connect(self.play_next)
         
+        # 볼륨 슬라이더 (미니 전용)
+        self.mini_volume_slider = QSlider(Qt.Horizontal)
+        self.mini_volume_slider.setRange(0, 100)
+        self.mini_volume_slider.setValue(50)
+        self.mini_volume_slider.setFixedWidth(90)
+        self.mini_volume_slider.setToolTip("볼륨")
+        self.mini_volume_slider.valueChanged.connect(self.mini_on_volume_changed)
+        
         # 최상위 고정 토글 버튼
         self.always_on_top_button = QPushButton("📌")
         self.always_on_top_button.setFixedSize(30, 30)
@@ -347,6 +355,7 @@ class VideoDownloader(QDialog):
         mini_player_layout.addWidget(self.mini_play_button)
         mini_player_layout.addWidget(self.mini_next_button)
         mini_player_layout.addStretch()
+        mini_player_layout.addWidget(self.mini_volume_slider)
         mini_player_layout.addWidget(self.always_on_top_button)
         mini_player_layout.addWidget(self.restore_button)
         
@@ -373,6 +382,76 @@ class VideoDownloader(QDialog):
         
         # 미니 플레이어 닫기 이벤트 처리
         self.mini_player.closeEvent = self.miniPlayerCloseEvent
+        
+        # 마키 초기화
+        self.mini_scroll_timer = QTimer(self)
+        self.mini_scroll_timer.timeout.connect(self._mini_scroll_step)
+        self.mini_original_title = ""
+        self.mini_scroll_pos = 0
+
+    def _update_mini_title_immediate(self):
+        """미니 플레이어 제목 즉시 반영 및 스크롤 필요시 타이머 시작"""
+        title = getattr(self, 'mini_original_title', '') or ''
+        max_visible = 24
+        
+        # 스크롤 위치 초기화
+        self.mini_scroll_pos = 0
+        
+        if len(title) > max_visible:
+            # 긴 제목의 경우 처음 부분을 보여주고 스크롤 시작
+            self.mini_title_label.setText(title[:max_visible])
+            if hasattr(self, 'mini_scroll_timer'):
+                self.mini_scroll_timer.start(300)
+        else:
+            # 짧은 제목의 경우 그대로 표시하고 스크롤 중지
+            self.mini_title_label.setText(title)
+            if hasattr(self, 'mini_scroll_timer'):
+                self.mini_scroll_timer.stop()
+
+    def _mini_scroll_step(self):
+        """미니 플레이어 제목 스크롤 한 스텝"""
+        title = getattr(self, 'mini_original_title', '') or ''
+        if not title:
+            return
+        max_visible = 24
+        if len(title) <= max_visible:
+            if hasattr(self, 'mini_scroll_timer'):
+                self.mini_scroll_timer.stop()
+            return
+        
+        pos = getattr(self, 'mini_scroll_pos', 0)
+        # 제목 끝까지 도달하면 처음으로 돌아가기
+        if pos >= len(title):
+            pos = 0
+        
+        # 현재 위치부터 max_visible만큼 표시
+        display_text = title[pos:pos + max_visible]
+        
+        # 제목이 화면보다 길면 스크롤 효과를 위해 공백 추가
+        if len(title) > max_visible:
+            # 제목 끝에 도달하면 처음 부분을 보여주기 위해 순환
+            if pos + max_visible > len(title):
+                remaining = max_visible - (len(title) - pos)
+                display_text = title[pos:] + "   " + title[:remaining]
+        
+        self.mini_title_label.setText(display_text)
+        self.mini_scroll_pos = pos + 1
+
+    def mini_on_volume_changed(self, value):
+        # 0-100 → 0.0-1.0 변환하여 웹 비디오 볼륨 적용
+        vol = max(0.0, min(1.0, value / 100.0))
+        js = f"""
+        (function() {{
+            var v = document.querySelector('video');
+            if (v) {{ v.volume = {vol}; return true; }}
+            return false;
+        }})();
+        """
+        try:
+            if hasattr(self, 'browser') and self.browser:
+                self.browser.page().runJavaScript(js)
+        except Exception as e:
+            print(f"mini_on_volume_changed js error: {e}")
 
     def miniPlayerCloseEvent(self, event):
         """미니 플레이어 닫기 시 메인 창도 닫기"""
@@ -855,12 +934,11 @@ class VideoDownloader(QDialog):
             self.scrollTimer.stop()
         self.title_label.setText(newTitle)  # Set title immediately without scrolling
         
-        # 미니 플레이어 제목도 업데이트
+        # 미니 플레이어 제목도 업데이트 (마키 적용)
         if hasattr(self, 'mini_player') and self.mini_player and hasattr(self, 'mini_title_label'):
-            mini_title = newTitle
-            if len(mini_title) > 30:
-                mini_title = mini_title[:27] + "..."
-            self.mini_title_label.setText(mini_title)
+            self.mini_original_title = newTitle
+            self.mini_scroll_pos = 0
+            self._update_mini_title_immediate()
 
         # 재생 상태 확인 및 버튼 업데이트
         self.checkPlaybackState()
