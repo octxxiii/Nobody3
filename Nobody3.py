@@ -35,7 +35,7 @@ DARK_THEME_STYLESHEET = """
 def resolve_writable_cache_dir(application_name: str = "OctXXIII") -> str:
     """Return a user-writable cache directory for the given application.
 
-    - Windows: %LOCALAPPDATA%\<AppName>\Caches
+    - Windows: %LOCALAPPDATA%\\<AppName>\\Caches
     - macOS:   ~/Library/Caches/<AppName>
     - Linux:   $XDG_CACHE_HOME/<AppName> or ~/.cache/<AppName>
     """
@@ -59,15 +59,14 @@ class SettingsDialog(QDialog):
         self.Nobody = nobody_cache  # Receive the parameter here
         self.setWindowTitle('Creator')
         self.layout = QVBoxLayout()
-        self.setupUI()
-
-        # Use a user-writable cache directory to avoid permission issues under Program Files
+        # Initialize cache directory BEFORE building UI, as setupUI references it
         self.cacheDirectory = resolve_writable_cache_dir("OctXXIII")
         if not os.path.exists(self.cacheDirectory):
             try:
                 os.makedirs(self.cacheDirectory, exist_ok=True)
             except Exception as e:
                 print(f"Failed to create cache directory {self.cacheDirectory}: {e}")
+        self.setupUI()
 
         # Define the URL and the descriptive text with HTML for line breaks
         self.predefinedURL = "https://soundcloud.com/octxxiii"
@@ -130,12 +129,18 @@ class SettingsDialog(QDialog):
         self.setLayout(self.layout)
         self.setFixedSize(400, 300)
 
-        self.updateCacheSize()
+        try:
+            self.updateCacheSize()
+        except Exception as e:
+            print(f"Failed to update cache size: {e}")
 
     def closeEvent(self, event):
         """ Reimplement the close event to emit the dialogClosed signal """
-        self.dialogClosed.emit()  # Emit the signal when the dialog is about to close
-        super().closeEvent(event)  # Proceed with the default close event
+        try:
+            self.dialogClosed.emit()
+        except Exception as e:
+            print(f"dialogClosed emit failed: {e}")
+        super().closeEvent(event)
 
     def setupUI(self):
         cache_path = self.cacheDirectory
@@ -154,8 +159,11 @@ class SettingsDialog(QDialog):
         for dirpath, dirnames, filenames in os.walk(directory):
             for f in filenames:
                 fp = os.path.join(dirpath, f)
-                if os.path.exists(fp):
-                    total_size += os.path.getsize(fp)
+                try:
+                    if os.path.exists(fp):
+                        total_size += os.path.getsize(fp)
+                except Exception as e:
+                    print(f"Skip size for {fp}: {e}")
         return total_size
 
     def clearCache(self):
@@ -524,7 +532,7 @@ class VideoDownloader(QDialog):
         self.navLayout.addWidget(self.refreshButton)
         self.navLayout.addWidget(self.homeButton)  # Adding the home button between back and forward
         self.navLayout.addWidget(self.musicButton)
-        # self.navLayout.addWidget(self.SCButton)
+        self.navLayout.addWidget(self.SCButton)
         self.navLayout.addWidget(self.toggleDownButton)
 
         # Left Widget for Browser and Navigation
@@ -1054,11 +1062,15 @@ class VideoDownloader(QDialog):
 
     def openSettingsDialog(self):
         if not self.settingsDialog:
-            self.settingsDialog = SettingsDialog(
-                self)  # Ensure the dialog has a parent specified for proper object lifetime management
-            self.settingsDialog.dialogClosed.connect(self.refreshBrowser)
-            self.settingsDialog.finished.connect(self.onSettingsDialogClosed)
-            self.settingsDialog.show()
+            try:
+                self.settingsDialog = SettingsDialog(self)
+                self.settingsDialog.dialogClosed.connect(self.refreshBrowser)
+                self.settingsDialog.finished.connect(self.onSettingsDialogClosed)
+                self.settingsDialog.show()
+            except Exception as e:
+                # 예외로 앱이 종료되지 않도록 방어
+                self.settingsDialog = None
+                QMessageBox.critical(self, "Error", f"정보 창을 여는 중 오류가 발생했습니다:\n{e}")
         else:
             self.settingsDialog.raise_()  # Brings the dialog to the front if already open
 
