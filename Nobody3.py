@@ -32,6 +32,23 @@ DARK_THEME_STYLESHEET = """
 """
 
 
+def resolve_writable_cache_dir(application_name: str = "OctXXIII") -> str:
+    """Return a user-writable cache directory for the given application.
+
+    - Windows: %LOCALAPPDATA%\\<AppName>\\Caches
+    - macOS:   ~/Library/Caches/<AppName>
+    - Linux:   $XDG_CACHE_HOME/<AppName> or ~/.cache/<AppName>
+    """
+    if sys.platform.startswith("win"):
+        base = os.getenv("LOCALAPPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Local")
+        return os.path.join(base, application_name, "Caches")
+    elif sys.platform == "darwin":
+        return os.path.join(os.path.expanduser("~/Library/Caches"), application_name)
+    else:
+        base = os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
+        return os.path.join(base, application_name)
+
+
 class SettingsDialog(QDialog):
     dialogClosed = pyqtSignal()
 
@@ -42,79 +59,55 @@ class SettingsDialog(QDialog):
         self.Nobody = nobody_cache  # Receive the parameter here
         self.setWindowTitle('Creator')
         self.layout = QVBoxLayout()
+        # Initialize cache directory BEFORE building UI, as setupUI references it
+        self.cacheDirectory = resolve_writable_cache_dir("OctXXIII")
+        if not os.path.exists(self.cacheDirectory):
+            try:
+                os.makedirs(self.cacheDirectory, exist_ok=True)
+            except Exception as e:
+                print(f"Failed to create cache directory {self.cacheDirectory}: {e}")
         self.setupUI()
-
-        executable_path = os.path.abspath(sys.argv[0])
-        executable_dir = os.path.dirname(executable_path)
-        self.cacheDirectory = os.path.join(executable_dir, 'Caches')
 
         # Define the URL and the descriptive text with HTML for line breaks
         self.predefinedURL = "https://soundcloud.com/octxxiii"
         predefinedText = """
             <p style="text-align: center;">
-            <h1>OctXXIII Ver. 1.0</h1>
-            Youtube/Music Converter & Player
+            <h1>OctXXIII v2.0</h1>
+            <div>Youtube/Music Converter & Player</div>
+            <div>Release: 2025-01-03</div>
             </p>
             <br>
             <p>
-            <h3}>사용방법</h3>
+            <h3>2025 업데이트</h3>
+                <ul>
+                    <li>미니 플레이어 모드 추가</li>
+                    <li>최상위 고정 토글 기능</li>
+                    <li>최대화 버튼 활성화</li>
+                    <li>FFmpeg 포함 빌드 시스템</li>
+                    <li>크로스 플랫폼 지원</li>
+                </ul>
 
+                <h3>사용방법</h3>
                 <ol>
-                1. 브라우저상에서 원하는 영상이나 플레이리스트를 선택<br>
-                2. CopyURL을 클릭하거나 url 추가 후 검색 버튼을 클릭<br>
-                3. Table에 추가 된 영상의 옵션을 선택 후 다운로드
+                    <li>브라우저에서 원하는 영상/플레이리스트 선택</li>
+                    <li>CopyURL 클릭 또는 URL 입력 후 검색</li>
+                    <li>테이블에서 포맷 선택 후 다운로드</li>
                 </ol>
-                <h3>240326 issue 및 업데이트</h3>
-                <ol>
-                url을 통한 비디오 검색기능<br>
-                플레이리스트, 단일 비디오 모두 검색가능<br>
-                Video Table에 썸네일, 제목, 다운가능한 포멧 가시화<br>
-                url 검색시 목록에 중첩<br>
-                체크박스를 통해 특정 비디오만 다운로드 가능<br>
-                특정 비디오 선택 삭제 가능<br>
-                경로 지정 다운로드 가능<br>
-                제목을 수정한 후 수정 된 제목으로 다운로드 가능<br>
-                </ol>
-                <h3>240327 issue 및 업데이트</h3>
-                <ol>
-                Video Table에 url이 추가되어 있으면 검색 불가<br> 
-                Video Table에 추가 된 url 삭제 후 재검색 가능<br>
-                간혹 플레이리스트 중 검색 되지 않는 url이 존재함
-                </ol>
-                <h3>240328 issue 및 업데이트</h3>
-                <ol>
-                간혹 플레이리스트 중 검색 되지 않는 url이 존재함<br>
-                브라우저 창 기존 다운로드 프로그램 좌측에 추가<br>
-                브라우저 창 show&hide 기능 추가<br>
-                브라우저 nav 추가<br>
-                브라우저의 현재 url copy 기능 추가<br>
-                url 입력창 전체 삭제 기능 추가<br>
-                기존 테마 가시성 증가<br>
-                black, monokai theme 추가<br>
-                </ol>
-                <h3>240401 issue 및 업데이트</h3>
-                <ol>
-                간혹 플레이리스트 중 검색 되지 않는 url이 존재함<br>
-                브라우저창 다운로드 창 각각 숨기기 기능 추가<br>
-                유튜브 홈, 뮤직 홈 버튼 추가<br>
-                </ol>
-                <h3>240405 issue 및 업데이트</h3>
-                <ol>
-                클립보드 복사 에러 수정<br>
-                새로고침 버튼 추가<br>
-                사운드 클라우드 버튼 추가<br>
-                </ol>
-                <h3>240408 issue 및 업데이트</h3>
-                <ol>
-                전체 선택 삭제 후 전체 선택 체크 해제 안되던 에러 해결 <br>
-                현재 브라우저에서 재생되고 있는 타이틀이 뜨는 Label 추가 <br>
-                현재 브라우저의 비디오/오디오를 컨트롤 할 수 있는 패널 추가
-                </ol>
+
+                <h3>이전 버전들 (2024)</h3>
+                <ul>
+                    <li>v1.0 (240408): 현재 브라우저 비디오/오디오 컨트롤 패널 추가</li>
+                    <li>240405: 클립보드 복사, 새로고침, SoundCloud 지원</li>
+                    <li>240401: 브라우저 숨기기, YouTube Music 지원</li>
+                    <li>240328: 브라우저 통합, 테마 시스템</li>
+                    <li>240327: 플레이리스트 지원, URL 관리</li>
+                    <li>240326: 기본 다운로드 기능, 썸네일 지원</li>
+                </ul>
             </p>
             <h2>
             Creator: nobody 😜 
             <br>
-            Distribution date: 2024-04-01
+            Last Updated: 2025-09-04
             </h2>
         """
 
@@ -136,15 +129,21 @@ class SettingsDialog(QDialog):
         self.setLayout(self.layout)
         self.setFixedSize(400, 300)
 
-        self.updateCacheSize()
+        try:
+            self.updateCacheSize()
+        except Exception as e:
+            print(f"Failed to update cache size: {e}")
 
     def closeEvent(self, event):
         """ Reimplement the close event to emit the dialogClosed signal """
-        self.dialogClosed.emit()  # Emit the signal when the dialog is about to close
-        super().closeEvent(event)  # Proceed with the default close event
+        try:
+            self.dialogClosed.emit()
+        except Exception as e:
+            print(f"dialogClosed emit failed: {e}")
+        super().closeEvent(event)
 
     def setupUI(self):
-        cache_path = os.path.expanduser(f"~/Library/Caches/Nobody")
+        cache_path = self.cacheDirectory
 
     def performAction(self):
         # Implement the action to open the URL in a web browser
@@ -160,8 +159,11 @@ class SettingsDialog(QDialog):
         for dirpath, dirnames, filenames in os.walk(directory):
             for f in filenames:
                 fp = os.path.join(dirpath, f)
-                if os.path.exists(fp):
-                    total_size += os.path.getsize(fp)
+                try:
+                    if os.path.exists(fp):
+                        total_size += os.path.getsize(fp)
+                except Exception as e:
+                    print(f"Skip size for {fp}: {e}")
         return total_size
 
     def clearCache(self):
@@ -238,17 +240,20 @@ class VideoDownloader(QDialog):
         super().__init__(*args, **kwargs)
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint) # 최소화, 최대화, 닫기 버튼 활성화
         self.settingsDialog = None
-        self.Nobody = "~/Library/Caches/Nobody"  # Define here
+        self.Nobody = resolve_writable_cache_dir("Nobody")  # Define here
         
         # 미니 플레이어 관련 변수
         self.is_mini_mode = False
         self.normal_geometry = None
         self.mini_player = None
         self.mini_always_on_top = True  # 기본적으로 최상위 고정
-        # 실행 파일이 있는 폴더를 기반으로 캐시 디렉토리 설정
-        executable_path = os.path.abspath(sys.argv[0])
-        executable_dir = os.path.dirname(executable_path)
-        self.cacheDirectory = os.path.join(executable_dir, 'Caches')
+        # Use a user-writable cache directory to avoid permission issues under Program Files
+        self.cacheDirectory = resolve_writable_cache_dir("OctXXIII")
+        if not os.path.exists(self.cacheDirectory):
+            try:
+                os.makedirs(self.cacheDirectory, exist_ok=True)
+            except Exception as e:
+                print(f"Failed to create cache directory {self.cacheDirectory}: {e}")
 
         # 지정된 경로에 폴더가 없으면 폴더 생성
         if not os.path.exists(self.cacheDirectory):
@@ -527,7 +532,7 @@ class VideoDownloader(QDialog):
         self.navLayout.addWidget(self.refreshButton)
         self.navLayout.addWidget(self.homeButton)  # Adding the home button between back and forward
         self.navLayout.addWidget(self.musicButton)
-        # self.navLayout.addWidget(self.SCButton)
+        self.navLayout.addWidget(self.SCButton)
         self.navLayout.addWidget(self.toggleDownButton)
 
         # Left Widget for Browser and Navigation
@@ -1057,11 +1062,15 @@ class VideoDownloader(QDialog):
 
     def openSettingsDialog(self):
         if not self.settingsDialog:
-            self.settingsDialog = SettingsDialog(
-                self)  # Ensure the dialog has a parent specified for proper object lifetime management
-            self.settingsDialog.dialogClosed.connect(self.refreshBrowser)
-            self.settingsDialog.finished.connect(self.onSettingsDialogClosed)
-            self.settingsDialog.show()
+            try:
+                self.settingsDialog = SettingsDialog(self)
+                self.settingsDialog.dialogClosed.connect(self.refreshBrowser)
+                self.settingsDialog.finished.connect(self.onSettingsDialogClosed)
+                self.settingsDialog.show()
+            except Exception as e:
+                # 예외로 앱이 종료되지 않도록 방어
+                self.settingsDialog = None
+                QMessageBox.critical(self, "Error", f"정보 창을 여는 중 오류가 발생했습니다:\n{e}")
         else:
             self.settingsDialog.raise_()  # Brings the dialog to the front if already open
 

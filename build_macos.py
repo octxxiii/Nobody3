@@ -115,9 +115,9 @@ def create_app_bundle():
     <key>CFBundleName</key>
     <string>OctXXIII</string>
     <key>CFBundleVersion</key>
-    <string>2.0</string>
+    <string>1.0</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.0</string>
+    <string>1.0</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundlePackageType</key>

@@ -3,8 +3,6 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-blue)
 ![Python](https://img.shields.io/badge/python-3.8%2B-green)
 ![License](https://img.shields.io/badge/license-GPL-red)
-![Version](https://img.shields.io/badge/version-2.0-brightgreen)
-![Year](https://img.shields.io/badge/year-2025-orange)
 
 YouTube와 SoundCloud에서 음악을 스트리밍하고 다운로드할 수 있는 PyQt5 기반 애플리케이션입니다.
 
@@ -177,15 +175,14 @@ OctXXIII/
 
 ## 🎉 업데이트 히스토리
 
-### v2.0 (2025-01-03)
+### v1.0 (2024-04-08)
 - ✅ 미니 플레이어 모드 추가
 - ✅ 최상위 고정 토글 기능
 - ✅ 최대화 버튼 활성화
 - ✅ FFmpeg 포함 빌드 시스템
 - ✅ 크로스 플랫폼 지원
 
-### 이전 버전들 (2024)
-- v1.0 (240408): 현재 브라우저 비디오/오디오 컨트롤 패널 추가
+### 이전 버전들
 - 240405: 클립보드 복사, 새로고침, SoundCloud 지원
 - 240401: 브라우저 숨기기, YouTube Music 지원
 - 240328: 브라우저 통합, 테마 시스템
@@ -195,4 +192,4 @@ OctXXIII/
 ---
 
 **Created by nobody 😜**  
-**Last Updated: 2025-01-03**
+**Distribution date: 2024-04-01**
