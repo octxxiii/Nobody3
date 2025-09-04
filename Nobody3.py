@@ -32,6 +32,23 @@ DARK_THEME_STYLESHEET = """
 """
 
 
+def resolve_writable_cache_dir(application_name: str = "OctXXIII") -> str:
+    """Return a user-writable cache directory for the given application.
+
+    - Windows: %LOCALAPPDATA%\<AppName>\Caches
+    - macOS:   ~/Library/Caches/<AppName>
+    - Linux:   $XDG_CACHE_HOME/<AppName> or ~/.cache/<AppName>
+    """
+    if sys.platform.startswith("win"):
+        base = os.getenv("LOCALAPPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Local")
+        return os.path.join(base, application_name, "Caches")
+    elif sys.platform == "darwin":
+        return os.path.join(os.path.expanduser("~/Library/Caches"), application_name)
+    else:
+        base = os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
+        return os.path.join(base, application_name)
+
+
 class SettingsDialog(QDialog):
     dialogClosed = pyqtSignal()
 
@@ -44,9 +61,13 @@ class SettingsDialog(QDialog):
         self.layout = QVBoxLayout()
         self.setupUI()
 
-        executable_path = os.path.abspath(sys.argv[0])
-        executable_dir = os.path.dirname(executable_path)
-        self.cacheDirectory = os.path.join(executable_dir, 'Caches')
+        # Use a user-writable cache directory to avoid permission issues under Program Files
+        self.cacheDirectory = resolve_writable_cache_dir("OctXXIII")
+        if not os.path.exists(self.cacheDirectory):
+            try:
+                os.makedirs(self.cacheDirectory, exist_ok=True)
+            except Exception as e:
+                print(f"Failed to create cache directory {self.cacheDirectory}: {e}")
 
         # Define the URL and the descriptive text with HTML for line breaks
         self.predefinedURL = "https://soundcloud.com/octxxiii"
@@ -117,7 +138,7 @@ class SettingsDialog(QDialog):
         super().closeEvent(event)  # Proceed with the default close event
 
     def setupUI(self):
-        cache_path = os.path.expanduser(f"~/Library/Caches/Nobody")
+        cache_path = self.cacheDirectory
 
     def performAction(self):
         # Implement the action to open the URL in a web browser
@@ -211,17 +232,20 @@ class VideoDownloader(QDialog):
         super().__init__(*args, **kwargs)
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint) # 최소화, 최대화, 닫기 버튼 활성화
         self.settingsDialog = None
-        self.Nobody = "~/Library/Caches/Nobody"  # Define here
+        self.Nobody = resolve_writable_cache_dir("Nobody")  # Define here
         
         # 미니 플레이어 관련 변수
         self.is_mini_mode = False
         self.normal_geometry = None
         self.mini_player = None
         self.mini_always_on_top = True  # 기본적으로 최상위 고정
-        # 실행 파일이 있는 폴더를 기반으로 캐시 디렉토리 설정
-        executable_path = os.path.abspath(sys.argv[0])
-        executable_dir = os.path.dirname(executable_path)
-        self.cacheDirectory = os.path.join(executable_dir, 'Caches')
+        # Use a user-writable cache directory to avoid permission issues under Program Files
+        self.cacheDirectory = resolve_writable_cache_dir("OctXXIII")
+        if not os.path.exists(self.cacheDirectory):
+            try:
+                os.makedirs(self.cacheDirectory, exist_ok=True)
+            except Exception as e:
+                print(f"Failed to create cache directory {self.cacheDirectory}: {e}")
 
         # 지정된 경로에 폴더가 없으면 폴더 생성
         if not os.path.exists(self.cacheDirectory):
