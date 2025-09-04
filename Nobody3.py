@@ -293,12 +293,12 @@ class VideoDownloader(QDialog):
         self.mini_player = QDialog(self)
         self.mini_player.setWindowTitle("OctXXIII - Mini Player")
         self.mini_player.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint)
-        self.mini_player.setFixedSize(300, 120)
+        self.mini_player.setFixedSize(300, 100)  # 높이를 120에서 100으로 줄임
         
         # 미니 플레이어 레이아웃
         mini_layout = QVBoxLayout(self.mini_player)
-        mini_layout.setContentsMargins(10, 10, 10, 10)
-        mini_layout.setSpacing(5)
+        mini_layout.setContentsMargins(1, 1, 1, 1)  # 여백을 10에서 1로 줄임
+        mini_layout.setSpacing(2)  # 간격을 5에서 2로 줄임
         
         # 제목 레이블 (미니 버전)
         self.mini_title_label = QLabel()
@@ -309,53 +309,56 @@ class VideoDownloader(QDialog):
                 border: 1px solid #555;
                 border-radius: 3px;
                 background-color: #333;
-                padding: 2px;
-                font-size: 10px;
+                padding: 1px;
+                font-size: 12px;
+                font-weight: bold;
             }
         """)
         self.mini_title_label.setWordWrap(False)
         
         # 플레이어 컨트롤 (미니 버전)
         mini_player_layout = QHBoxLayout()
-        mini_player_layout.setSpacing(5)
+        mini_player_layout.setSpacing(2)  # 간격을 5에서 2로 줄임
+        mini_player_layout.setContentsMargins(0, 0, 0, 0)  # 여백 제거
         
         self.mini_back_button = QPushButton("⏮️")
-        self.mini_back_button.setFixedSize(30, 30)
+        self.mini_back_button.setFixedSize(28, 28)  # 크기를 30에서 28로 줄임
         self.mini_back_button.clicked.connect(self.play_back)
         
         self.mini_play_button = QPushButton("⏯️")
-        self.mini_play_button.setFixedSize(35, 30)
+        self.mini_play_button.setFixedSize(32, 28)  # 크기를 35x30에서 32x28로 줄임
         self.mini_play_button.clicked.connect(self.play)
         
         self.mini_next_button = QPushButton("⏭️")
-        self.mini_next_button.setFixedSize(30, 30)
+        self.mini_next_button.setFixedSize(28, 28)  # 크기를 30에서 28로 줄임
         self.mini_next_button.clicked.connect(self.play_next)
         
         # 볼륨 슬라이더 (미니 전용)
         self.mini_volume_slider = QSlider(Qt.Horizontal)
         self.mini_volume_slider.setRange(0, 100)
         self.mini_volume_slider.setValue(50)
-        self.mini_volume_slider.setFixedWidth(90)
+        self.mini_volume_slider.setFixedWidth(80)  # 너비를 100에서 80으로 조정
+        self.mini_volume_slider.setFixedHeight(20)  # 높이를 명시적으로 설정
         self.mini_volume_slider.setToolTip("볼륨")
         self.mini_volume_slider.valueChanged.connect(self.mini_on_volume_changed)
         
         # 최상위 고정 토글 버튼
         self.always_on_top_button = QPushButton("📌")
-        self.always_on_top_button.setFixedSize(30, 30)
+        self.always_on_top_button.setFixedSize(28, 28)  # 크기를 30에서 28로 줄임
         self.always_on_top_button.clicked.connect(self.toggleAlwaysOnTop)
         self.always_on_top_button.setToolTip("최상위 고정 토글")
         
         # 복원 버튼
         self.restore_button = QPushButton("🔼")
-        self.restore_button.setFixedSize(30, 30)
+        self.restore_button.setFixedSize(28, 28)  # 크기를 30에서 28로 줄임
         self.restore_button.clicked.connect(self.restoreFromMini)
         self.restore_button.setToolTip("원래 크기로 복원")
         
         mini_player_layout.addWidget(self.mini_back_button)
         mini_player_layout.addWidget(self.mini_play_button)
         mini_player_layout.addWidget(self.mini_next_button)
-        mini_player_layout.addStretch()
         mini_player_layout.addWidget(self.mini_volume_slider)
+        mini_player_layout.addStretch()
         mini_player_layout.addWidget(self.always_on_top_button)
         mini_player_layout.addWidget(self.restore_button)
         
@@ -366,18 +369,35 @@ class VideoDownloader(QDialog):
         self.mini_player.setStyleSheet("""
             QDialog { 
                 background-color: #2D2D2D; 
-                border: 2px solid #555555;
-                border-radius: 10px;
+                border: 1px solid #555555;
+                border-radius: 8px;
             }
             QPushButton { 
                 background-color: #333333; 
                 color: #FFFFFF; 
                 border: 1px solid #555555; 
-                border-radius: 5px; 
-                padding: 2px; 
+                border-radius: 4px; 
+                padding: 1px; 
+                font-size: 12px;
             }
             QPushButton:hover { background-color: #555555; }
             QPushButton:pressed { background-color: #444444; }
+            QSlider::groove:horizontal {
+                border: 1px solid #555555;
+                height: 6px;
+                background: #333333;
+                border-radius: 3px;
+            }
+            QSlider::handle:horizontal {
+                background: #666666;
+                border: 1px solid #555555;
+                width: 12px;
+                margin: -3px 0;
+                border-radius: 6px;
+            }
+            QSlider::handle:horizontal:hover {
+                background: #777777;
+            }
         """)
         
         # 미니 플레이어 닫기 이벤트 처리
@@ -388,6 +408,14 @@ class VideoDownloader(QDialog):
         self.mini_scroll_timer.timeout.connect(self._mini_scroll_step)
         self.mini_original_title = ""
         self.mini_scroll_pos = 0
+        
+        # 볼륨 초기화
+        self.current_volume = 0.5  # 기본 볼륨 50%
+        
+        # 볼륨 유지 타이머
+        self.volume_maintain_timer = QTimer(self)
+        self.volume_maintain_timer.timeout.connect(self.maintain_volume)
+        self.volume_maintain_timer.start(1000)  # 1초마다 볼륨 확인
 
     def _update_mini_title_immediate(self):
         """미니 플레이어 제목 즉시 반영 및 스크롤 필요시 타이머 시작"""
@@ -440,10 +468,23 @@ class VideoDownloader(QDialog):
     def mini_on_volume_changed(self, value):
         # 0-100 → 0.0-1.0 변환하여 웹 비디오 볼륨 적용
         vol = max(0.0, min(1.0, value / 100.0))
+        
+        # 현재 볼륨 값을 저장하여 자동 리셋 방지
+        self.current_volume = vol
+        
         js = f"""
         (function() {{
             var v = document.querySelector('video');
-            if (v) {{ v.volume = {vol}; return true; }}
+            if (v) {{ 
+                v.volume = {vol}; 
+                // 볼륨 변경 이벤트 리스너 추가하여 자동 리셋 방지
+                v.addEventListener('volumechange', function() {{
+                    if (v.volume !== {vol}) {{
+                        v.volume = {vol};
+                    }}
+                }});
+                return true; 
+            }}
             return false;
         }})();
         """
@@ -453,8 +494,28 @@ class VideoDownloader(QDialog):
         except Exception as e:
             print(f"mini_on_volume_changed js error: {e}")
 
+    def maintain_volume(self):
+        """볼륨이 자동으로 변경되지 않도록 유지"""
+        if hasattr(self, 'current_volume') and hasattr(self, 'browser') and self.browser:
+            js = f"""
+            (function() {{
+                var v = document.querySelector('video');
+                if (v && v.volume !== {self.current_volume}) {{
+                    v.volume = {self.current_volume};
+                }}
+                return true;
+            }})();
+            """
+            try:
+                self.browser.page().runJavaScript(js)
+            except Exception as e:
+                pass  # 조용히 무시
+
     def miniPlayerCloseEvent(self, event):
         """미니 플레이어 닫기 시 메인 창도 닫기"""
+        # 볼륨 유지 타이머 중지
+        if hasattr(self, 'volume_maintain_timer'):
+            self.volume_maintain_timer.stop()
         self.close()
         event.accept()
 
@@ -1539,9 +1600,10 @@ class Searcher(QThread):
                         acodec = f.get('acodec', 'none')
 
                         # 최고 품질 오디오 포맷 추적
-                        if acodec != 'none' and f.get('abr', 0) > best_audio_bitrate:
+                        abr = f.get('abr') or 0
+                        if acodec != 'none' and abr > best_audio_bitrate:
                             best_audio = f
-                            best_audio_bitrate = f.get('abr', 0)
+                            best_audio_bitrate = abr
 
                         # 타입 결정 로직 개선
                         if vcodec != 'none' and acodec != 'none':
