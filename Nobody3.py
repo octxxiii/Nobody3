@@ -52,7 +52,7 @@ class SettingsDialog(QDialog):
         self.predefinedURL = "https://soundcloud.com/octxxiii"
         predefinedText = """
             <p style="text-align: center;">
-            <h1>OctXXIII Ver. 2.0</h1>
+            <h1>OctXXIII Ver. 1.0</h1>
             Youtube/Music Converter & Player
             </p>
             <br>
@@ -110,20 +110,11 @@ class SettingsDialog(QDialog):
                 현재 브라우저에서 재생되고 있는 타이틀이 뜨는 Label 추가 <br>
                 현재 브라우저의 비디오/오디오를 컨트롤 할 수 있는 패널 추가
                 </ol>
-                <h3>250103 Major Update v2.0</h3>
-                <ol>
-                미니 플레이어 모드 추가 (최소화 시 작은 플레이어 창으로 전환)<br>
-                최상위 고정 토글 기능 (📌/📍 버튼)<br>
-                최대화 버튼 활성화<br>
-                FFmpeg 포함 빌드 시스템 구축<br>
-                크로스 플랫폼 설치 파일 생성 (MSI/DMG)<br>
-                원클릭 빌드 스크립트 제공
-                </ol>
             </p>
             <h2>
             Creator: nobody 😜 
             <br>
-            Last Updated: 2025-01-03
+            Distribution date: 2024-04-01
             </h2>
         """
 
@@ -1440,6 +1431,10 @@ class Searcher(QThread):
                     if not raw_formats:
                         print(f"[Debug Searcher] Video {video_index + 1} ('{video.get('title', 'N/A')}') has no raw formats from yt_dlp.")
 
+                    # 최고 품질 오디오 포맷 찾기 (MP3 변환용)
+                    best_audio = None
+                    best_audio_bitrate = 0
+                    
                     for f_index, f in enumerate(raw_formats):
                         format_id = f.get('format_id')
                         ext = f.get('ext')
@@ -1455,6 +1450,11 @@ class Searcher(QThread):
 
                         vcodec = f.get('vcodec', 'none')
                         acodec = f.get('acodec', 'none')
+
+                        # 최고 품질 오디오 포맷 추적
+                        if acodec != 'none' and f.get('abr', 0) > best_audio_bitrate:
+                            best_audio = f
+                            best_audio_bitrate = f.get('abr', 0)
 
                         # 타입 결정 로직 개선
                         if vcodec != 'none' and acodec != 'none':
@@ -1480,6 +1480,26 @@ class Searcher(QThread):
                         display_text = f"[{type_label}] {ext.upper()} {format_id} ({quality_str if quality_str else 'data'}) - {filesize_mb_str}"
                         
                         processed_format_list.append((display_text, format_id, type_label, filesize))
+                    
+                    # MP3 변환 옵션 추가
+                    if best_audio:
+                        # 추정 파일 크기 계산
+                        estimated_size = best_audio.get('filesize', 0)
+                        if estimated_size > 0:
+                            estimated_size_mb = f"{estimated_size // 1024 // 1024}MB"
+                        else:
+                            # 파일 크기를 모르는 경우 비트레이트로 추정
+                            duration = video.get('duration', 0)
+                            if duration and best_audio_bitrate:
+                                estimated_size = int(duration * best_audio_bitrate * 1000 / 8)  # bytes
+                                estimated_size_mb = f"~{estimated_size // 1024 // 1024}MB"
+                            else:
+                                estimated_size_mb = "N/A"
+                        
+                        # MP3 옵션 추가
+                        mp3_quality = f"A:{round(min(320, best_audio_bitrate))}k"  # 최대 320kbps
+                        mp3_display_text = f"[Audio-only] MP3 bestaudio (MP3 Conversion / {mp3_quality}) - {estimated_size_mb}"
+                        processed_format_list.append((mp3_display_text, "bestaudio/best", "Audio-only", estimated_size))
                     
                     if not processed_format_list and raw_formats:
                         print(f"[Debug Searcher] Video {video_index + 1} ('{video.get('title', 'N/A')}') - all formats were filtered out. This shouldn't happen with relaxed filters.")
@@ -1520,6 +1540,10 @@ class Downloader(QThread):
     def run(self):
         for title, url, format_id in self.videos:
             safe_title = title.replace("/", "_").replace("\\", "_")
+            
+            # MP3 변환이 필요한지 확인
+            is_mp3_conversion = format_id == "bestaudio/best" or "MP3" in title
+            
             download_options = {
                 'format': format_id,
                 'outtmpl': os.path.join(self.download_directory, f"{safe_title}.%(ext)s"),
@@ -1537,17 +1561,26 @@ class Downloader(QThread):
                 'no_color': True,
                 'logtostderr': True,
                 'verbose': True,
-                'postprocessors': [{
+                'ffmpeg_location': 'ffmpeg',
+            }
+            
+            # MP3 변환 또는 일반 비디오 변환 설정
+            if is_mp3_conversion:
+                download_options['postprocessors'] = [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '320',  # 최대 320kbps
+                }]
+            else:
+                download_options['postprocessors'] = [{
                     'key': 'FFmpegVideoConvertor',
                     'preferedformat': 'mp4',
-                }],
-                'ffmpeg_location': 'ffmpeg',
-                'merge_output_format': 'mp4',
-                'postprocessor_args': [
+                }]
+                download_options['merge_output_format'] = 'mp4'
+                download_options['postprocessor_args'] = [
                     '-c:v', 'copy',
                     '-c:a', 'copy'
                 ]
-            }
 
             with yt_dlp.YoutubeDL(download_options) as ydl:
                 try:

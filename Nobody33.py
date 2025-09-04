@@ -208,7 +208,7 @@ class SettingsDialog(QDialog):
         self.predefinedURL = "https://soundcloud.com/octxxiii"
         predefinedText = """
             <p style="text-align: center;">
-            <h1>OctXXIII Ver. 2.0</h1>
+            <h1>OctXXIII Ver. 1.0</h1>
             Youtube/Music Converter & Player
             </p>
             <br>
@@ -266,20 +266,11 @@ class SettingsDialog(QDialog):
                 현재 브라우저에서 재생되고 있는 타이틀이 뜨는 Label 추가 <br>
                 현재 브라우저의 비디오/오디오를 컨트롤 할 수 있는 패널 추가
                 </ol>
-                <h3>250103 Major Update v2.0</h3>
-                <ol>
-                미니 플레이어 모드 추가 (최소화 시 작은 플레이어 창으로 전환)<br>
-                최상위 고정 토글 기능 (📌/📍 버튼)<br>
-                최대화 버튼 활성화<br>
-                FFmpeg 포함 빌드 시스템 구축<br>
-                크로스 플랫폼 설치 파일 생성 (MSI/DMG)<br>
-                원클릭 빌드 스크립트 제공
-                </ol>
             </p>
             <h2>
             Creator: nobody 😜 
             <br>
-            Last Updated: 2025-01-03
+            Distribution date: 2024-04-01
             </h2>
         """
 
@@ -1579,6 +1570,8 @@ class Searcher(QThread):
                 for video in videos:
                     formats = video.get('formats', [])
                     format_list = []
+                    
+                    # 기본 포맷들 추가
                     for f in formats:
                         if f['ext'] != 'webm':  # 'webm' 포맷 제외
                             filesize = f.get('filesize')
@@ -1591,20 +1584,49 @@ class Searcher(QThread):
                                     quality = f"{round(f.get('abr', 0))}kbps" if f.get('abr') else ""
                                     type_label = 'Audio'
                                 filesize_mb = f"{filesize // 1024 // 1024}MB"
-                                format_detail = (type_label, f"{ext} - {quality} - {filesize_mb}", filesize)
+                                format_detail = (type_label, f"{ext} - {quality} - {filesize_mb}", filesize, f['format_id'])
                                 format_list.append(format_detail)
+                    
+                    # MP3 변환 옵션 추가 (최고 품질 오디오 기반)
+                    best_audio = None
+                    best_audio_bitrate = 0
+                    
+                    for f in formats:
+                        if f.get('vcodec') == 'none' and f.get('abr'):  # 오디오 전용 포맷
+                            if f.get('abr', 0) > best_audio_bitrate:
+                                best_audio = f
+                                best_audio_bitrate = f.get('abr', 0)
+                    
+                    if best_audio:
+                        # 추정 파일 크기 계산 (MP3는 보통 원본보다 작음)
+                        estimated_size = best_audio.get('filesize', 0)
+                        if estimated_size > 0:
+                            estimated_size_mb = f"{estimated_size // 1024 // 1024}MB"
+                        else:
+                            # 파일 크기를 모르는 경우 비트레이트로 추정
+                            duration = video.get('duration', 0)
+                            if duration and best_audio_bitrate:
+                                estimated_size = int(duration * best_audio_bitrate * 1000 / 8)  # bytes
+                                estimated_size_mb = f"~{estimated_size // 1024 // 1024}MB"
+                            else:
+                                estimated_size_mb = "Unknown"
+                        
+                        # MP3 옵션 추가
+                        mp3_quality = f"{round(min(320, best_audio_bitrate))}kbps"  # 최대 320kbps
+                        mp3_format_detail = ('Audio', f"mp3 - {mp3_quality} - {estimated_size_mb}", estimated_size, f"bestaudio/best")
+                        format_list.append(mp3_format_detail)
 
                     # Sort the list: audio formats first, then by filesize in descending order
                     format_list.sort(key=lambda x: (-x[2], x[0] == 'Video'))
 
-                    # Convert tuple back to string for display, omitting filesize used for sorting
-                    format_list = [f"{f[1]}" for f in format_list]
+                    # Convert tuple back to string for display, omitting filesize and format_id used for sorting
+                    format_list_display = [f"{f[1]}" for f in format_list]
 
                     self.updated_list.emit(
                         video.get('title', 'No title'),
                         video.get('thumbnail', ''),
                         video.get('webpage_url', ''),
-                        format_list
+                        format_list_display
                     )
             except Exception as e:
                 main_thread_signal_emitter.emit_warning(f'An unexpected error occurred: {str(e)}')
@@ -1632,11 +1654,25 @@ class Downloader(QThread):
         for title, url, format_id in self.videos:
             # Use the passed title directly, ensuring it's used for the filename
             safe_title = title.replace("/", "_").replace("\\", "_")
+            
+            # MP3 변환이 필요한지 확인
+            is_mp3_conversion = "mp3" in format_id.lower() or format_id == "bestaudio/best"
+            
             download_options = {
                 'format': format_id,
                 'outtmpl': os.path.join(self.download_directory, f"{safe_title}.%(ext)s"),
                 'progress_hooks': [self.progress_hook],
             }
+            
+            # MP3 변환 옵션 추가
+            if is_mp3_conversion:
+                download_options['postprocessors'] = [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '320',  # 최대 320kbps
+                }]
+                # MP3 파일명으로 직접 지정
+                download_options['outtmpl'] = os.path.join(self.download_directory, f"{safe_title}.%(ext)s")
 
             with yt_dlp.YoutubeDL(download_options) as ydl:
                 try:
