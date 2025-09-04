@@ -337,8 +337,7 @@ class VideoDownloader(QDialog):
         self.mini_volume_slider = QSlider(Qt.Horizontal)
         self.mini_volume_slider.setRange(0, 100)
         self.mini_volume_slider.setValue(50)
-        self.mini_volume_slider.setFixedWidth(80)  # 너비를 100에서 80으로 조정
-        self.mini_volume_slider.setFixedHeight(20)  # 높이를 명시적으로 설정
+        self.mini_volume_slider.setFixedHeight(20)  # 높이만 설정, 너비는 자동 조정
         self.mini_volume_slider.setToolTip("볼륨")
         self.mini_volume_slider.valueChanged.connect(self.mini_on_volume_changed)
         
@@ -357,8 +356,7 @@ class VideoDownloader(QDialog):
         mini_player_layout.addWidget(self.mini_back_button)
         mini_player_layout.addWidget(self.mini_play_button)
         mini_player_layout.addWidget(self.mini_next_button)
-        mini_player_layout.addWidget(self.mini_volume_slider)
-        mini_player_layout.addStretch()
+        mini_player_layout.addWidget(self.mini_volume_slider, 1)  # stretch factor 1로 설정하여 공간 차지
         mini_player_layout.addWidget(self.always_on_top_button)
         mini_player_layout.addWidget(self.restore_button)
         
@@ -1451,7 +1449,11 @@ class VideoDownloader(QDialog):
             
             # 제목과 URL 가져오기
             modified_title = title_item.text() if title_item else "Untitled"
-            video_url = self.video_info_list[row][1]
+            if row < len(self.video_info_list) and self.video_info_list[row] is not None:
+                video_url = self.video_info_list[row][1]
+            else:
+                print(f"[Error] Invalid video_info_list entry at row {row}")
+                continue
             
             # 포맷 ID 확인
             if format_combo_box:
@@ -1555,17 +1557,22 @@ class Searcher(QThread):
         # extract_flat 옵션을 제거하거나 False로 설정하여 전체 포맷 정보를 가져옵니다.
         ydl_opts = {
             'quiet': True,
-            'no_warnings': False, # WARNING 메시지를 보기 위해 False로 설정
+            'no_warnings': True, # WARNING 메시지 숨김으로 속도 향상
             'skip_download': True,
             'ignoreerrors': True, # 일부 오류 무시
             'ignore_no_formats_error': True, # 포맷 없는 오류 무시
-            # 'allow_unplayable_formats': True, # 디버깅용
-            # 'verbose': True, # 더 자세한 로그
-            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', # mp4 선호
+            'extract_flat': False, # 전체 포맷 정보 가져오기
+            'format': 'best', # 단순한 포맷 선택으로 속도 향상
+            'socket_timeout': 10, # 타임아웃 설정
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             try:
                 result = ydl.extract_info(self.url, download=False)
+                if result is None:
+                    print("[Debug Searcher] yt_dlp result is None.")
+                    self.updated_list.emit("Video/Playlist not found", "", self.url, [])
+                    return
+                    
                 videos = result.get('entries', [result])
                 if not videos:
                     print("[Debug Searcher] No videos/entries found in yt_dlp result.")
@@ -1573,6 +1580,10 @@ class Searcher(QThread):
                     return
 
                 for video_index, video in enumerate(videos):
+                    if video is None:
+                        print(f"[Debug Searcher] Video {video_index + 1} is None, skipping.")
+                        continue
+                        
                     raw_formats = video.get('formats', [])
                     processed_format_list = []
 
@@ -1584,6 +1595,9 @@ class Searcher(QThread):
                     best_audio_bitrate = 0
                     
                     for f_index, f in enumerate(raw_formats):
+                        if f is None:
+                            continue
+                            
                         format_id = f.get('format_id')
                         ext = f.get('ext')
 
