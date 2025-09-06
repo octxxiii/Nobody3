@@ -49,6 +49,133 @@ def resolve_writable_cache_dir(application_name: str = "OctXXIII") -> str:
         return os.path.join(base, application_name)
 
 
+class AppSettings:
+    """애플리케이션 설정 관리 클래스"""
+    def __init__(self):
+        self.default_format = "mp3"  # 기본 포맷
+        self.show_video_formats = True  # 비디오 포맷 표시
+        self.show_audio_formats = True  # 오디오 포맷 표시
+        self.show_audio_only = True  # 오디오 전용 포맷 표시
+        self.max_quality = 720  # 최대 품질 (480, 720, 1080, 0=무제한)
+        
+    def save_settings(self):
+        """설정을 파일에 저장"""
+        settings = {
+            'default_format': self.default_format,
+            'show_video_formats': self.show_video_formats,
+            'show_audio_formats': self.show_audio_formats,
+            'show_audio_only': self.show_audio_only,
+            'max_quality': self.max_quality
+        }
+        try:
+            import json
+            with open('settings.json', 'w', encoding='utf-8') as f:
+                json.dump(settings, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"설정 저장 실패: {e}")
+    
+    def load_settings(self):
+        """파일에서 설정 로드"""
+        try:
+            import json
+            with open('settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                self.default_format = settings.get('default_format', 'mp3')
+                self.show_video_formats = settings.get('show_video_formats', True)
+                self.show_audio_formats = settings.get('show_audio_formats', True)
+                self.show_audio_only = settings.get('show_audio_only', True)
+                self.max_quality = settings.get('max_quality', 720)
+        except Exception as e:
+            print(f"설정 로드 실패: {e}")
+
+class FormatSettingsDialog(QDialog):
+    """포맷 설정 다이얼로그"""
+    settingsChanged = pyqtSignal()
+    
+    def __init__(self, parent=None, app_settings=None):
+        super(FormatSettingsDialog, self).__init__(parent)
+        self.app_settings = app_settings or AppSettings()
+        self.setWindowTitle('포맷 설정')
+        self.setModal(True)
+        self.setFixedSize(400, 300)
+        self.setupUI()
+        
+    def setupUI(self):
+        layout = QVBoxLayout()
+        
+        # 기본 포맷 설정
+        default_group = QGroupBox("기본 포맷")
+        default_layout = QVBoxLayout()
+        
+        self.default_format_combo = QComboBox()
+        self.default_format_combo.addItems(['mp3', 'mp4', 'webm', 'm4a', 'best'])
+        self.default_format_combo.setCurrentText(self.app_settings.default_format)
+        default_layout.addWidget(QLabel("기본 선택 포맷:"))
+        default_layout.addWidget(self.default_format_combo)
+        default_group.setLayout(default_layout)
+        
+        # 표시할 포맷 설정
+        display_group = QGroupBox("표시할 포맷")
+        display_layout = QVBoxLayout()
+        
+        self.show_video_check = QCheckBox("비디오 포맷 표시")
+        self.show_video_check.setChecked(self.app_settings.show_video_formats)
+        
+        self.show_audio_check = QCheckBox("오디오 포맷 표시")
+        self.show_audio_check.setChecked(self.app_settings.show_audio_formats)
+        
+        self.show_audio_only_check = QCheckBox("오디오 전용 포맷 표시")
+        self.show_audio_only_check.setChecked(self.app_settings.show_audio_only)
+        
+        display_layout.addWidget(self.show_video_check)
+        display_layout.addWidget(self.show_audio_check)
+        display_layout.addWidget(self.show_audio_only_check)
+        display_group.setLayout(display_layout)
+        
+        # 품질 설정
+        quality_group = QGroupBox("최대 품질")
+        quality_layout = QVBoxLayout()
+        
+        self.quality_combo = QComboBox()
+        self.quality_combo.addItems(['480p', '720p', '1080p', '무제한'])
+        quality_map = {480: 0, 720: 1, 1080: 2, 0: 3}
+        self.quality_combo.setCurrentIndex(quality_map.get(self.app_settings.max_quality, 1))
+        quality_layout.addWidget(QLabel("최대 품질:"))
+        quality_layout.addWidget(self.quality_combo)
+        quality_group.setLayout(quality_layout)
+        
+        # 버튼
+        button_layout = QHBoxLayout()
+        self.save_button = QPushButton("저장")
+        self.cancel_button = QPushButton("취소")
+        self.save_button.clicked.connect(self.save_settings)
+        self.cancel_button.clicked.connect(self.reject)
+        
+        button_layout.addWidget(self.save_button)
+        button_layout.addWidget(self.cancel_button)
+        
+        # 레이아웃 구성
+        layout.addWidget(default_group)
+        layout.addWidget(display_group)
+        layout.addWidget(quality_group)
+        layout.addLayout(button_layout)
+        
+        self.setLayout(layout)
+        
+    def save_settings(self):
+        """설정 저장"""
+        self.app_settings.default_format = self.default_format_combo.currentText()
+        self.app_settings.show_video_formats = self.show_video_check.isChecked()
+        self.app_settings.show_audio_formats = self.show_audio_check.isChecked()
+        self.app_settings.show_audio_only = self.show_audio_only_check.isChecked()
+        
+        quality_map = {0: 480, 1: 720, 2: 1080, 3: 0}
+        self.app_settings.max_quality = quality_map[self.quality_combo.currentIndex()]
+        
+        self.app_settings.save_settings()
+        self.settingsChanged.emit()
+        self.accept()
+
 class SettingsDialog(QDialog):
     dialogClosed = pyqtSignal()
 
@@ -1562,8 +1689,11 @@ class Searcher(QThread):
             'ignoreerrors': True, # 일부 오류 무시
             'ignore_no_formats_error': True, # 포맷 없는 오류 무시
             'extract_flat': False, # 전체 포맷 정보 가져오기
-            'format': 'best', # 단순한 포맷 선택으로 속도 향상
+            'format': 'best[height<=480]/best[height<=720]/best', # 480p 우선, 없으면 720p, 최후에 best
             'socket_timeout': 10, # 타임아웃 설정
+            'retries': 2, # 재시도 횟수 제한
+            'fragment_retries': 2, # 프래그먼트 재시도 제한
+            'concurrent_fragment_downloads': 1, # 동시 다운로드 제한
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             try:
