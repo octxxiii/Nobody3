@@ -9,7 +9,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings, QWebEng
 from PyQt5.QtWidgets import (QApplication, QDialog, QPushButton, QVBoxLayout, QLineEdit, QLabel, QProgressBar,
                              QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QFileDialog,
                              QTextEdit, QComboBox, QAbstractItemView, QHBoxLayout, QSplitter, QWidget, QMessageBox,
-                             QSlider)
+                             QSlider, QGroupBox)
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, pyqtSlot, QObject, QTimer, QUrl, QSize
 import yt_dlp
 import resources_rc # resources_rc 임포트 복원
@@ -58,6 +58,14 @@ class AppSettings:
         self.show_audio_only = True  # 오디오 전용 포맷 표시
         self.max_quality = 720  # 최대 품질 (480, 720, 1080, 0=무제한)
         
+    def get_settings_file_path(self):
+        """설정 파일 경로 반환"""
+        import os
+        cache_dir = resolve_writable_cache_dir("OctXXIII")
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir, exist_ok=True)
+        return os.path.join(cache_dir, 'settings.json')
+    
     def save_settings(self):
         """설정을 파일에 저장"""
         settings = {
@@ -69,8 +77,10 @@ class AppSettings:
         }
         try:
             import json
-            with open('settings.json', 'w', encoding='utf-8') as f:
+            settings_file = self.get_settings_file_path()
+            with open(settings_file, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, ensure_ascii=False, indent=2)
+            print(f"설정 저장 완료: {settings_file}")
         except Exception as e:
             print(f"설정 저장 실패: {e}")
     
@@ -78,13 +88,18 @@ class AppSettings:
         """파일에서 설정 로드"""
         try:
             import json
-            with open('settings.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                self.default_format = settings.get('default_format', 'mp3')
-                self.show_video_formats = settings.get('show_video_formats', True)
-                self.show_audio_formats = settings.get('show_audio_formats', True)
-                self.show_audio_only = settings.get('show_audio_only', True)
-                self.max_quality = settings.get('max_quality', 720)
+            settings_file = self.get_settings_file_path()
+            if os.path.exists(settings_file):
+                with open(settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    self.default_format = settings.get('default_format', 'mp3')
+                    self.show_video_formats = settings.get('show_video_formats', True)
+                    self.show_audio_formats = settings.get('show_audio_formats', True)
+                    self.show_audio_only = settings.get('show_audio_only', True)
+                    self.max_quality = settings.get('max_quality', 720)
+                print(f"설정 로드 완료: {settings_file}")
+            else:
+                print(f"설정 파일이 없습니다. 기본값을 사용합니다: {settings_file}")
         except Exception as e:
             print(f"설정 로드 실패: {e}")
 
@@ -97,35 +112,47 @@ class FormatSettingsDialog(QDialog):
         self.app_settings = app_settings or AppSettings()
         self.setWindowTitle('포맷 설정')
         self.setModal(True)
-        self.setFixedSize(400, 300)
+        self.setFixedSize(450, 420)  # 크기 증가로 여유 공간 확보
         self.setupUI()
         
     def setupUI(self):
         layout = QVBoxLayout()
+        layout.setContentsMargins(15, 15, 15, 15)  # 여백 증가
+        layout.setSpacing(15)  # 그룹 간 간격 증가
         
         # 기본 포맷 설정
         default_group = QGroupBox("기본 포맷")
         default_layout = QVBoxLayout()
+        default_layout.setContentsMargins(10, 15, 10, 10)  # 그룹 내부 여백
+        default_layout.setSpacing(8)  # 위젯 간 간격
         
+        default_label = QLabel("기본 선택 포맷:")
         self.default_format_combo = QComboBox()
         self.default_format_combo.addItems(['mp3', 'mp4', 'webm', 'm4a', 'best'])
         self.default_format_combo.setCurrentText(self.app_settings.default_format)
-        default_layout.addWidget(QLabel("기본 선택 포맷:"))
+        self.default_format_combo.setMinimumHeight(30)  # 콤보박스 높이 증가
+        
+        default_layout.addWidget(default_label)
         default_layout.addWidget(self.default_format_combo)
         default_group.setLayout(default_layout)
         
         # 표시할 포맷 설정
         display_group = QGroupBox("표시할 포맷")
         display_layout = QVBoxLayout()
+        display_layout.setContentsMargins(10, 15, 10, 10)  # 그룹 내부 여백
+        display_layout.setSpacing(5)  # 체크박스 간 간격 적절히 조정
         
         self.show_video_check = QCheckBox("비디오 포맷 표시")
         self.show_video_check.setChecked(self.app_settings.show_video_formats)
+        self.show_video_check.setMinimumHeight(20)  # 체크박스 높이 조정
         
         self.show_audio_check = QCheckBox("오디오 포맷 표시")
         self.show_audio_check.setChecked(self.app_settings.show_audio_formats)
+        self.show_audio_check.setMinimumHeight(20)
         
         self.show_audio_only_check = QCheckBox("오디오 전용 포맷 표시")
         self.show_audio_only_check.setChecked(self.app_settings.show_audio_only)
+        self.show_audio_only_check.setMinimumHeight(20)
         
         display_layout.addWidget(self.show_video_check)
         display_layout.addWidget(self.show_audio_check)
@@ -135,19 +162,29 @@ class FormatSettingsDialog(QDialog):
         # 품질 설정
         quality_group = QGroupBox("최대 품질")
         quality_layout = QVBoxLayout()
+        quality_layout.setContentsMargins(10, 15, 10, 10)  # 그룹 내부 여백
+        quality_layout.setSpacing(8)
         
+        quality_label = QLabel("최대 품질:")
         self.quality_combo = QComboBox()
         self.quality_combo.addItems(['480p', '720p', '1080p', '무제한'])
         quality_map = {480: 0, 720: 1, 1080: 2, 0: 3}
         self.quality_combo.setCurrentIndex(quality_map.get(self.app_settings.max_quality, 1))
-        quality_layout.addWidget(QLabel("최대 품질:"))
+        self.quality_combo.setMinimumHeight(30)  # 콤보박스 높이 증가
+        
+        quality_layout.addWidget(quality_label)
         quality_layout.addWidget(self.quality_combo)
         quality_group.setLayout(quality_layout)
         
         # 버튼
         button_layout = QHBoxLayout()
+        button_layout.setContentsMargins(0, 10, 0, 0)  # 버튼 상단 여백
+        button_layout.setSpacing(10)  # 버튼 간 간격
+        
         self.save_button = QPushButton("저장")
         self.cancel_button = QPushButton("취소")
+        self.save_button.setMinimumHeight(35)  # 버튼 높이 증가
+        self.cancel_button.setMinimumHeight(35)
         self.save_button.clicked.connect(self.save_settings)
         self.cancel_button.clicked.connect(self.reject)
         
@@ -161,6 +198,97 @@ class FormatSettingsDialog(QDialog):
         layout.addLayout(button_layout)
         
         self.setLayout(layout)
+        
+        # 다크 테마 스타일 적용
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #2D2D2D;
+                color: #FFFFFF;
+                font-size: 12px;
+            }
+            QGroupBox {
+                color: #FFFFFF;
+                font-weight: bold;
+                font-size: 13px;
+                border: 2px solid #555555;
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 5px;
+            }
+            QGroupBox::title {
+                color: #FFFFFF;
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 8px 0 8px;
+                background-color: #2D2D2D;
+            }
+            QLabel {
+                color: #FFFFFF;
+                font-size: 12px;
+                padding: 2px;
+            }
+            QCheckBox {
+                color: #FFFFFF;
+                font-size: 12px;
+                spacing: 8px;
+                padding: 1px;
+                margin: 2px 0px;
+            }
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+                border: 2px solid #555555;
+                border-radius: 3px;
+                background-color: #333333;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #666666;
+                border: 2px solid #777777;
+            }
+            QComboBox {
+                background-color: #333333;
+                color: #FFFFFF;
+                border: 2px solid #555555;
+                border-radius: 5px;
+                padding: 5px;
+                font-size: 12px;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 20px;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border: 1px solid #FFFFFF;
+                width: 0px;
+                height: 0px;
+                border-top: 4px solid #FFFFFF;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+            }
+            QComboBox QAbstractItemView {
+                background: #2D2D2D;
+                selection-background-color: #555555;
+                color: #FFFFFF;
+                border: 1px solid #555555;
+            }
+            QPushButton {
+                background-color: #333333;
+                color: #FFFFFF;
+                border: 2px solid #555555;
+                border-radius: 5px;
+                padding: 8px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #555555;
+                border: 2px solid #777777;
+            }
+            QPushButton:pressed {
+                background-color: #444444;
+            }
+        """)
         
     def save_settings(self):
         """설정 저장"""
@@ -367,7 +495,12 @@ class VideoDownloader(QDialog):
         super().__init__(*args, **kwargs)
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint) # 최소화, 최대화, 닫기 버튼 활성화
         self.settingsDialog = None
+        self.formatSettingsDialog = None  # 포맷 설정 다이얼로그 참조
         self.Nobody = resolve_writable_cache_dir("Nobody")  # Define here
+        
+        # 앱 설정 초기화 및 로드
+        self.app_settings = AppSettings()
+        self.app_settings.load_settings()
         
         # 미니 플레이어 관련 변수
         self.is_mini_mode = False
@@ -730,6 +863,23 @@ class VideoDownloader(QDialog):
             self.lower()
         else:
             super().keyPressEvent(event)  # Handle other key events normally
+    
+    def closeEvent(self, event):
+        """애플리케이션 종료 시 설정 저장"""
+        try:
+            self.app_settings.save_settings()
+        except Exception as e:
+            print(f"설정 저장 중 오류: {e}")
+        
+        # 미니 플레이어가 있다면 닫기
+        if hasattr(self, 'mini_player') and self.mini_player:
+            self.mini_player.close()
+        
+        # 볼륨 유지 타이머 중지
+        if hasattr(self, 'volume_maintain_timer'):
+            self.volume_maintain_timer.stop()
+            
+        super().closeEvent(event)
 
     def get_video_info(url):
         ydl_opts = {
@@ -852,6 +1002,10 @@ class VideoDownloader(QDialog):
         self.createrButton = QPushButton('💬')
         self.createrButton.setFixedSize(30, 30)
         self.createrButton.clicked.connect(self.openSettingsDialog)
+        self.formatSettingsButton = QPushButton('⚙️')
+        self.formatSettingsButton.setFixedSize(30, 30)
+        self.formatSettingsButton.clicked.connect(self.openFormatSettingsDialog)
+        self.formatSettingsButton.setToolTip('포맷 설정')
         self.copyUrlButton = QPushButton('📋')
         self.copyUrlButton.setFixedSize(30, 30)
         self.search_url = QLineEdit()
@@ -923,6 +1077,7 @@ class VideoDownloader(QDialog):
         titleLayout.setSpacing(5) # 버튼과 레이블 사이 간격 설정
         titleLayout.addWidget(self.browHideButton) # titleLayout 좌측에 추가
         titleLayout.addWidget(self.title_label) # title_label을 중앙으로 이동
+        titleLayout.addWidget(self.formatSettingsButton) # 포맷 설정 버튼 추가
         titleLayout.addWidget(self.createrButton) # createrButton을 titleLayout 우측에 추가
 
         playerLayout = QHBoxLayout()
@@ -1341,6 +1496,69 @@ class VideoDownloader(QDialog):
     def onSettingsDialogClosed(self):
         self.settingsDialog.deleteLater()
         self.settingsDialog = None  # Clear the reference after the dialog is closed
+    
+    def openFormatSettingsDialog(self):
+        """포맷 설정 다이얼로그 열기"""
+        if not self.formatSettingsDialog:
+            try:
+                self.formatSettingsDialog = FormatSettingsDialog(self, self.app_settings)
+                self.formatSettingsDialog.settingsChanged.connect(self.onFormatSettingsChanged)
+                self.formatSettingsDialog.finished.connect(self.onFormatSettingsDialogClosed)
+                self.formatSettingsDialog.show()
+            except Exception as e:
+                # 예외로 앱이 종료되지 않도록 방어
+                self.formatSettingsDialog = None
+                QMessageBox.critical(self, "Error", f"포맷 설정 창을 여는 중 오류가 발생했습니다:\n{e}")
+        else:
+            self.formatSettingsDialog.raise_()  # Brings the dialog to the front if already open
+
+    def onFormatSettingsDialogClosed(self):
+        """포맷 설정 다이얼로그 닫힘 처리"""
+        if self.formatSettingsDialog:
+            self.formatSettingsDialog.deleteLater()
+            self.formatSettingsDialog = None
+
+    def onFormatSettingsChanged(self):
+        """포맷 설정 변경 시 호출"""
+        # 현재 테이블의 모든 행을 다시 필터링하여 업데이트
+        self.applyFormatFilters()
+        self.status_label.setText("포맷 설정이 적용되었습니다.")
+    
+    def filterFormatsBySettings(self, formats_info_list):
+        """설정에 따라 포맷 리스트 필터링"""
+        if not formats_info_list:
+            return formats_info_list
+        
+        filtered_formats = []
+        
+        for display_text, format_id, type_label, filesize in formats_info_list:
+            # 포맷 타입별 필터링
+            if type_label == 'Video' and not self.app_settings.show_video_formats:
+                continue
+            elif type_label == 'Audio-only' and not self.app_settings.show_audio_only:
+                continue
+            elif type_label in ['Video-only'] and not self.app_settings.show_audio_formats:
+                continue
+            
+            # 품질 제한 필터링 (비디오 포맷만)
+            if type_label in ['Video', 'Video-only'] and self.app_settings.max_quality > 0:
+                # 해상도 추출 (예: "1920x1080" 형식)
+                import re
+                resolution_match = re.search(r'(\d+)x(\d+)', display_text)
+                if resolution_match:
+                    height = int(resolution_match.group(2))
+                    if height > self.app_settings.max_quality:
+                        continue
+            
+            filtered_formats.append((display_text, format_id, type_label, filesize))
+        
+        return filtered_formats
+    
+    def applyFormatFilters(self):
+        """현재 테이블의 모든 콤보박스에 포맷 필터 적용"""
+        # 이 메서드는 설정 변경 후 기존 테이블 항목들을 업데이트하는 용도
+        # 실제로는 새로운 검색 시에만 필터가 적용되므로 여기서는 메시지만 표시
+        pass
 
     def refreshBrowser(self):
         """ Method to refresh the browser when the settings dialog is closed """
@@ -1506,12 +1724,15 @@ class VideoDownloader(QDialog):
         # Format combo box with categorized and ordered formats
         format_combo = QComboBox()
 
+        # 설정에 따라 포맷 필터링
+        filtered_formats = self.filterFormatsBySettings(formats_info_list)
+
         # 카테고리별로 포맷 추가
         current_category = None
-        if not formats_info_list: # 포맷 정보가 없으면
+        if not filtered_formats: # 포맷 정보가 없으면
             format_combo.addItem("No available formats", None) # userData도 None
         else:
-            for display_text, format_id, type_label, filesize in formats_info_list:
+            for display_text, format_id, type_label, filesize in filtered_formats:
                 # 카테고리 헤더 추가 (type_label 변경 시)
                 if type_label != current_category:
                     if format_combo.count() > 0 and current_category is not None: # 첫 카테고리가 아니고, 이전 카테고리가 있었다면 구분선 고려 가능
@@ -1523,12 +1744,25 @@ class VideoDownloader(QDialog):
                 format_combo.addItem(display_text, userData=format_id) # userData에 format_id 저장
 
         # Set the default format if available
-        # 첫 번째 실제 선택 가능한 아이템을 기본값으로 설정
+        # 설정된 기본 포맷을 찾아서 설정
         default_index = -1
+        preferred_format = self.app_settings.default_format.lower()
+        
+        # 먼저 기본 설정 포맷과 일치하는 것을 찾기
         for i in range(format_combo.count()):
             if format_combo.model().item(i).isEnabled():
-                default_index = i
-                break
+                item_text = format_combo.itemText(i).lower()
+                if preferred_format in item_text or (preferred_format == 'mp3' and 'mp3' in item_text):
+                    default_index = i
+                    break
+        
+        # 기본 포맷을 찾지 못했다면 첫 번째 실제 선택 가능한 아이템을 기본값으로 설정
+        if default_index == -1:
+            for i in range(format_combo.count()):
+                if format_combo.model().item(i).isEnabled():
+                    default_index = i
+                    break
+        
         if default_index != -1:
             format_combo.setCurrentIndex(default_index)
 

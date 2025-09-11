@@ -25,7 +25,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "Create &Desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
 
 [Files]
-Source: "dist\\OctXXIII\\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs
+Source: "dist\\OctXXIII.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\\OctXXIII"; Filename: "{app}\\OctXXIII.exe"

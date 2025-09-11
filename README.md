@@ -44,17 +44,23 @@ YouTube와 SoundCloud에서 음악을 스트리밍하고 다운로드할 수 있
 
 ### 빠른 시작
 
-#### Windows
+#### Windows (설치 파일 사용)
+1. [Releases](https://github.com/octxxiii/Nobody3/releases)에서 최신 `OctXXIII-Setup-v2.0.exe` 다운로드
+2. 설치 파일 실행하여 자동 설치
+3. 바탕화면 바로가기로 실행
+
+#### Windows (소스에서 빌드)
 ```cmd
-git clone https://github.com/your-username/OctXXIII.git
-cd OctXXIII
-build.bat
+git clone https://github.com/octxxiii/Nobody3.git
+cd Nobody3
+pyinstaller --onefile --windowed --name OctXXIII Nobody3.py
+install.bat
 ```
 
 #### macOS
 ```bash
-git clone https://github.com/your-username/OctXXIII.git
-cd OctXXIII
+git clone https://github.com/octxxiii/Nobody3.git
+cd Nobody3
 chmod +x build.sh
 ./build.sh
 ```
@@ -63,8 +69,8 @@ chmod +x build.sh
 
 1. **저장소 클론**
    ```bash
-   git clone https://github.com/your-username/OctXXIII.git
-   cd OctXXIII
+   git clone https://github.com/octxxiii/Nobody3.git
+   cd Nobody3
    ```
 
 2. **의존성 설치**
@@ -75,7 +81,7 @@ chmod +x build.sh
 3. **실행**
    ```bash
    # Windows
-   python Nobody33.py
+   python Nobody3.py
    
    # macOS
    python3 Nobody3.py
@@ -90,7 +96,7 @@ python build_all.py
 ```
 
 **생성되는 파일:**
-- Windows: `OctXXIII.msi` (설치 파일)
+- Windows: `OctXXIII.exe` (실행 파일) + `install.bat` (설치 스크립트)
 - macOS: `OctXXIII.dmg` (설치 파일)
 
 자세한 빌드 가이드는 [BUILD_README.md](BUILD_README.md)를 참조하세요.
@@ -137,23 +143,25 @@ python build_all.py
 
 ### 개발 환경 설정
 ```bash
-git clone https://github.com/your-username/OctXXIII.git
-cd OctXXIII
+git clone https://github.com/octxxiii/Nobody3.git
+cd Nobody3
 pip install -r requirements.txt
 python create_icon.py  # 아이콘 생성
 ```
 
 ### 프로젝트 구조
 ```
-OctXXIII/
-├── Nobody33.py          # Windows용 메인 파일
-├── Nobody3.py           # macOS용 메인 파일
+Nobody3/
+├── Nobody3.py           # 메인 애플리케이션 파일
 ├── resources_rc.py      # Qt 리소스 파일
 ├── requirements.txt     # Python 의존성
 ├── setup.py            # 빌드 설정
 ├── build_all.py        # 통합 빌드 스크립트
 ├── build_windows.py    # Windows 빌드
 ├── build_macos.py      # macOS 빌드
+├── install.bat         # Windows 설치 스크립트
+├── uninstall.bat       # Windows 제거 스크립트
+├── installer.iss       # Inno Setup 스크립트
 └── BUILD_README.md     # 빌드 가이드
 ```
 
@@ -171,7 +179,7 @@ OctXXIII/
 
 ## 📞 지원
 
-문제가 있거나 제안사항이 있으시면 [Issues](https://github.com/your-username/OctXXIII/issues)에 등록해주세요.
+문제가 있거나 제안사항이 있으시면 [Issues](https://github.com/octxxiii/Nobody3/issues)에 등록해주세요.
 
 ## 🎉 업데이트 히스토리
 
