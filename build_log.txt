@@ -1,0 +1,70 @@
+﻿경고: FFmpeg 바이너리를 찾을 수 없습니다. 포함하지 않고 빌드합니다.
+running build
+running build_exe
+C:\Users\win mini\AppData\Local\Programs\Python\Python312\python.exe : Traceback (most recent call last):
+위치 C:\Users\win mini\AppData\Local\Temp\ps-script-80a6c0d4-431f-47a6-991d-780c6235f74c.ps1:76 문자:1
++ C:\Users\"win mini"\AppData\Local\Programs\Python\Python312\python.ex ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\dev\Nobody3\setup.py", line 64, in <module>
+    setup(
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\cx_Freeze\__init__.py", line 69, in
+ setup
+    return setuptools.setup(**attrs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\setuptools\__init__.py", line 115, 
+in setup
+    return distutils.core.setup(**attrs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\setuptools\_distutils\core.py", lin
+e 186, in setup
+    return run_commands(dist)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\setuptools\_distutils\core.py", lin
+e 202, in run_commands
+    dist.run_commands()
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\setuptools\_distutils\dist.py", lin
+e 1002, in run_commands
+    self.run_command(cmd)
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\setuptools\dist.py", line 1102, in 
+run_command
+    super().run_command(command)
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\setuptools\_distutils\dist.py", lin
+e 1021, in run_command
+    cmd_obj.run()
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\setuptools\_distutils\command\build
+.py", line 135, in run
+    self.run_command(cmd_name)
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\setuptools\_distutils\cmd.py", line
+ 357, in run_command
+    self.distribution.run_command(command)
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\setuptools\dist.py", line 1102, in 
+run_command
+    super().run_command(command)
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\setuptools\_distutils\dist.py", lin
+e 1021, in run_command
+    cmd_obj.run()
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\cx_Freeze\command\build_exe.py", li
+ne 305, in run
+    freezer: Freezer = Freezer(
+                       ^^^^^^^^
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\cx_Freeze\freezer.py", line 877, in
+ __init__
+    Freezer.__init__(self, *args, **kwargs)
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\cx_Freeze\freezer.py", line 175, in
+ __init__
+    self.finder: ModuleFinder = self._get_module_finder()
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\cx_Freeze\freezer.py", line 433, in
+ _get_module_finder
+    finder.include_package(name)
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\cx_Freeze\finder.py", line 895, in 
+include_package
+    module = self._import_module(name, deferred_imports)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\win mini\AppData\Local\Programs\Python\Python312\Lib\site-packages\cx_Freeze\finder.py", line 316, in 
+_import_module
+    raise ImportError(msg)
+ImportError: No module named 'PyQt5.QtWebEngineWidgets'

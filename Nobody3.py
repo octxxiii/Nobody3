@@ -1,6 +1,8 @@
 import os
+import re
 import shutil
 import sys
+import logging
 import requests
 from PyQt5.QtGui import QPixmap, QIcon, QDesktopServices
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
@@ -49,6 +51,229 @@ def resolve_writable_cache_dir(application_name: str = "OctXXIII") -> str:
         return os.path.join(base, application_name)
 
 
+def setup_logging():
+    """로깅 시스템 초기화"""
+    log_dir = resolve_writable_cache_dir("OctXXIII")
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, "octxxiii.log")
+    
+    # 로깅 포맷 설정
+    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    date_format = '%Y-%m-%d %H:%M:%S'
+    
+    # 로깅 레벨 설정 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    logging.basicConfig(
+        level=logging.INFO,
+        format=log_format,
+        datefmt=date_format,
+        handlers=[
+            logging.FileHandler(log_file, encoding='utf-8'),
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+    
+    return logging.getLogger('OctXXIII')
+
+# 전역 로거 인스턴스 (resolve_writable_cache_dir 정의 후 초기화)
+logger = setup_logging()
+
+
+def find_ffmpeg_executable() -> str:
+    """Find FFmpeg executable path relative to the application.
+    
+    Checks in the following order:
+    1. Same directory as the executable (for frozen/packaged apps)
+    2. Current working directory
+    3. System PATH
+    
+    Returns the path to ffmpeg executable or 'ffmpeg' if not found.
+    """
+    # Get the directory where the executable is located
+    if getattr(sys, 'frozen', False):
+        # Running as a compiled executable
+        base_path = os.path.dirname(sys.executable)
+    else:
+        # Running as a script
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    
+    # Check for ffmpeg in the executable directory
+    if sys.platform.startswith("win"):
+        ffmpeg_name = "ffmpeg.exe"
+    else:
+        ffmpeg_name = "ffmpeg"
+    
+    # Try executable directory first
+    ffmpeg_path = os.path.join(base_path, ffmpeg_name)
+    if os.path.exists(ffmpeg_path) and os.path.isfile(ffmpeg_path):
+        return ffmpeg_path
+    
+    # Try current working directory
+    cwd_ffmpeg = os.path.join(os.getcwd(), ffmpeg_name)
+    if os.path.exists(cwd_ffmpeg) and os.path.isfile(cwd_ffmpeg):
+        return cwd_ffmpeg
+    
+    # Fall back to system PATH (just return 'ffmpeg')
+    return 'ffmpeg'
+
+
+def check_ffmpeg_exists() -> bool:
+    """Check if FFmpeg executable exists in the application directory.
+    
+    Returns True if ffmpeg is found, False otherwise.
+    """
+    ffmpeg_path = find_ffmpeg_executable()
+    # If it returns a path (not just 'ffmpeg'), check if it exists
+    if ffmpeg_path != 'ffmpeg':
+        return os.path.exists(ffmpeg_path) and os.path.isfile(ffmpeg_path)
+    # If it's just 'ffmpeg', check system PATH
+    import shutil
+    return shutil.which('ffmpeg') is not None
+
+
+def get_ffmpeg_download_url():
+    """Get FFmpeg download URL based on platform."""
+    import platform
+    if sys.platform.startswith("win"):
+        return "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
+    elif sys.platform == "darwin":
+        # macOS uses the same URL for both architectures
+        return "https://evermeet.cx/ffmpeg/getrelease/zip"
+    else:
+        # Linux - return None for now, user should install via package manager
+        return None
+
+
+def download_ffmpeg_quietly(base_path: str) -> bool:
+    """Download FFmpeg quietly in the background.
+    
+    Args:
+        base_path: Directory where the executable is located
+        
+    Returns:
+        True if download and extraction succeeded, False otherwise
+    """
+    try:
+        import urllib.request
+        import zipfile
+        import tempfile
+        import platform
+        
+        if sys.platform.startswith("win"):
+            # Windows: Download from GitHub releases
+            url = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
+            temp_zip = os.path.join(tempfile.gettempdir(), "ffmpeg_download.zip")
+            
+            # Download with progress callback (but don't show it)
+            def reporthook(blocknum, blocksize, totalsize):
+                # Silent download - no output
+                pass
+            
+            urllib.request.urlretrieve(url, temp_zip, reporthook)
+            
+            # Extract to temp directory
+            temp_extract = os.path.join(tempfile.gettempdir(), "ffmpeg_extract")
+            os.makedirs(temp_extract, exist_ok=True)
+            
+            with zipfile.ZipFile(temp_zip, 'r') as zip_ref:
+                zip_ref.extractall(temp_extract)
+            
+            # Find ffmpeg.exe and ffprobe.exe in extracted files
+            for root, dirs, files in os.walk(temp_extract):
+                for file in files:
+                    if file == "ffmpeg.exe":
+                        src = os.path.join(root, file)
+                        dst = os.path.join(base_path, "ffmpeg.exe")
+                        shutil.copy2(src, dst)
+                    elif file == "ffprobe.exe":
+                        src = os.path.join(root, file)
+                        dst = os.path.join(base_path, "ffprobe.exe")
+                        shutil.copy2(src, dst)
+            
+            # Cleanup
+            os.remove(temp_zip)
+            shutil.rmtree(temp_extract, ignore_errors=True)
+            return True
+            
+        elif sys.platform == "darwin":
+            # macOS: Download from evermeet.cx
+            # evermeet.cx provides zip files that contain the binaries
+            ffmpeg_url = "https://evermeet.cx/ffmpeg/getrelease/zip"
+            ffprobe_url = "https://evermeet.cx/ffmpeg/getrelease/ffprobe/zip"
+            
+            temp_dir = tempfile.gettempdir()
+            ffmpeg_zip = os.path.join(temp_dir, "ffmpeg_mac.zip")
+            ffprobe_zip = os.path.join(temp_dir, "ffprobe_mac.zip")
+            
+            # Download both
+            urllib.request.urlretrieve(ffmpeg_url, ffmpeg_zip)
+            urllib.request.urlretrieve(ffprobe_url, ffprobe_zip)
+            
+            # Extract
+            temp_extract_ffmpeg = os.path.join(temp_dir, "ffmpeg_extract")
+            temp_extract_ffprobe = os.path.join(temp_dir, "ffprobe_extract")
+            os.makedirs(temp_extract_ffmpeg, exist_ok=True)
+            os.makedirs(temp_extract_ffprobe, exist_ok=True)
+            
+            # Extract zip files
+            try:
+                with zipfile.ZipFile(ffmpeg_zip, 'r') as zip_ref:
+                    zip_ref.extractall(temp_extract_ffmpeg)
+                with zipfile.ZipFile(ffprobe_zip, 'r') as zip_ref:
+                    zip_ref.extractall(temp_extract_ffprobe)
+            except zipfile.BadZipFile:
+                # If not a zip file, try as direct binary download
+                shutil.move(ffmpeg_zip, os.path.join(temp_extract_ffmpeg, "ffmpeg"))
+                shutil.move(ffprobe_zip, os.path.join(temp_extract_ffprobe, "ffprobe"))
+            
+            # Find and move binaries (handle both zip extraction and direct download)
+            ffmpeg_src = None
+            ffprobe_src = None
+            
+            # Look for ffmpeg binary
+            for root, dirs, files in os.walk(temp_extract_ffmpeg):
+                if "ffmpeg" in files and not files[files.index("ffmpeg")].endswith('.zip'):
+                    ffmpeg_src = os.path.join(root, "ffmpeg")
+                    break
+            if not ffmpeg_src and os.path.exists(os.path.join(temp_extract_ffmpeg, "ffmpeg")):
+                ffmpeg_src = os.path.join(temp_extract_ffmpeg, "ffmpeg")
+            
+            # Look for ffprobe binary
+            for root, dirs, files in os.walk(temp_extract_ffprobe):
+                if "ffprobe" in files and not files[files.index("ffprobe")].endswith('.zip'):
+                    ffprobe_src = os.path.join(root, "ffprobe")
+                    break
+            if not ffprobe_src and os.path.exists(os.path.join(temp_extract_ffprobe, "ffprobe")):
+                ffprobe_src = os.path.join(temp_extract_ffprobe, "ffprobe")
+            
+            ffmpeg_dst = os.path.join(base_path, "ffmpeg")
+            ffprobe_dst = os.path.join(base_path, "ffprobe")
+            
+            if ffmpeg_src and os.path.exists(ffmpeg_src):
+                shutil.move(ffmpeg_src, ffmpeg_dst)
+                os.chmod(ffmpeg_dst, 0o755)
+            if ffprobe_src and os.path.exists(ffprobe_src):
+                shutil.move(ffprobe_src, ffprobe_dst)
+                os.chmod(ffprobe_dst, 0o755)
+            
+            # Cleanup
+            if os.path.exists(ffmpeg_zip):
+                os.remove(ffmpeg_zip)
+            if os.path.exists(ffprobe_zip):
+                os.remove(ffprobe_zip)
+            shutil.rmtree(temp_extract_ffmpeg, ignore_errors=True)
+            shutil.rmtree(temp_extract_ffprobe, ignore_errors=True)
+            return True
+            
+        else:
+            # Linux - not supported for auto-download
+            return False
+            
+    except Exception as e:
+        # Silent failure - just return False
+        logger.warning(f"FFmpeg 다운로드 실패: {e}")
+        return False
+
+
 class AppSettings:
     """애플리케이션 설정 관리 클래스"""
     def __init__(self):
@@ -80,9 +305,9 @@ class AppSettings:
             settings_file = self.get_settings_file_path()
             with open(settings_file, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, ensure_ascii=False, indent=2)
-            print(f"설정 저장 완료: {settings_file}")
+            logger.info(f"설정 저장 완료: {settings_file}")
         except Exception as e:
-            print(f"설정 저장 실패: {e}")
+            logger.error(f"설정 저장 실패: {e}")
     
     def load_settings(self):
         """파일에서 설정 로드"""
@@ -97,11 +322,11 @@ class AppSettings:
                     self.show_audio_formats = settings.get('show_audio_formats', True)
                     self.show_audio_only = settings.get('show_audio_only', True)
                     self.max_quality = settings.get('max_quality', 720)
-                print(f"설정 로드 완료: {settings_file}")
+                logger.info(f"설정 로드 완료: {settings_file}")
             else:
-                print(f"설정 파일이 없습니다. 기본값을 사용합니다: {settings_file}")
+                logger.info(f"설정 파일이 없습니다. 기본값을 사용합니다: {settings_file}")
         except Exception as e:
-            print(f"설정 로드 실패: {e}")
+            logger.error(f"설정 로드 실패: {e}")
 
 class FormatSettingsDialog(QDialog):
     """포맷 설정 다이얼로그"""
@@ -312,7 +537,7 @@ class SettingsDialog(QDialog):
         self.setModal(True)  # This makes the dialog modal
         self.setAttribute(Qt.WA_DeleteOnClose)  # Ensures it closes with the application
         self.Nobody = nobody_cache  # Receive the parameter here
-        self.setWindowTitle('Creator')
+        self.setWindowTitle('OctXXIII - 정보')
         self.layout = QVBoxLayout()
         # Initialize cache directory BEFORE building UI, as setupUI references it
         self.cacheDirectory = resolve_writable_cache_dir("OctXXIII")
@@ -515,10 +740,6 @@ class VideoDownloader(QDialog):
             except Exception as e:
                 print(f"Failed to create cache directory {self.cacheDirectory}: {e}")
 
-        # 지정된 경로에 폴더가 없으면 폴더 생성
-        if not os.path.exists(self.cacheDirectory):
-            os.makedirs(self.cacheDirectory)
-
         # 캐시 및 기타 설정 구성
         profile = QWebEngineProfile.defaultProfile()
         profile.setPersistentStoragePath(self.cacheDirectory)
@@ -531,7 +752,7 @@ class VideoDownloader(QDialog):
         settings.setAttribute(QWebEngineSettings.PluginsEnabled, True)
         settings.setAttribute(QWebEngineSettings.WebGLEnabled, True)
 
-        self.setWindowTitle("OctXXIII")
+        self.setWindowTitle("OctXXIII - YouTube/Music Converter & Player")
         self.player = QMediaPlayer(self)
         self.video_info_list = []
 
@@ -547,6 +768,11 @@ class VideoDownloader(QDialog):
         self.scrollTimer.start(300)  # Scroll title every 300 ms
 
         self.predefinedURL = "https://soundcloud.com/octxxiii"
+        
+        # FFmpeg 자동 체크 및 다운로드 시작 (백그라운드에서 조용히)
+        self.ffmpeg_checker = FFmpegChecker(self)
+        self.ffmpeg_checker.check_complete.connect(self.on_ffmpeg_check_complete)
+        self.ffmpeg_checker.start()
 
     def createMiniPlayer(self):
         """미니 플레이어 창 생성"""
@@ -779,9 +1005,7 @@ class VideoDownloader(QDialog):
 
     def changeEvent(self, event):
         """창 상태 변경 이벤트 처리"""
-        if event.type() == event.WindowStateChange:
-            if self.isMinimized() and not self.is_mini_mode:
-                self.switchToMiniMode()
+        # 최소화와 미니플레이어 기능 분리 - 최소화는 일반 최소화만 수행
         super().changeEvent(event)
 
     def switchToMiniMode(self):
@@ -791,6 +1015,11 @@ class VideoDownloader(QDialog):
             
         self.is_mini_mode = True
         self.normal_geometry = self.geometry()
+        
+        # 미니 플레이어 버튼 상태 업데이트
+        if hasattr(self, 'miniPlayerButton'):
+            self.miniPlayerButton.setEnabled(False)  # 미니 모드 중에는 비활성화
+            self.miniPlayerButton.setToolTip('미니 플레이어 모드 활성화됨')
         
         # 메인 창 숨기기
         self.hide()
@@ -817,6 +1046,11 @@ class VideoDownloader(QDialog):
             return
             
         self.is_mini_mode = False
+        
+        # 미니 플레이어 버튼 상태 업데이트
+        if hasattr(self, 'miniPlayerButton'):
+            self.miniPlayerButton.setEnabled(True)  # 다시 활성화
+            self.miniPlayerButton.setToolTip('미니 플레이어 모드')
         
         # 미니 플레이어 숨기기
         if self.mini_player:
@@ -858,7 +1092,15 @@ class VideoDownloader(QDialog):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return:
-            self.on_search()
+            # 엔터 키는 검색만 수행 (클립보드 복사는 📋 버튼으로만)
+            if hasattr(self, 'search_url'):
+                focused_widget = QApplication.focusWidget()
+                # search_url에 포커스가 있고 텍스트가 있을 때만 검색
+                if focused_widget == self.search_url and self.search_url.text().strip():
+                    self.on_search()
+                # 포커스가 없거나 비어있으면 아무 동작도 하지 않음
+            else:
+                self.on_search()
         elif event.key() == Qt.Key_Escape:
             self.lower()
         else:
@@ -939,6 +1181,12 @@ class VideoDownloader(QDialog):
         self.SCButton.clicked.connect(lambda: self.browser.setUrl(self.SCPageUrl))
         self.forwardButton = QPushButton('👉')
         self.forwardButton.clicked.connect(self.browser.forward)
+        
+        # 미니 플레이어 버튼 추가
+        self.miniPlayerButton = QPushButton('🎵')
+        self.miniPlayerButton.setFixedSize(30, 30)
+        self.miniPlayerButton.setToolTip('미니 플레이어 모드')
+        self.miniPlayerButton.clicked.connect(self.switchToMiniMode)
 
         # Navigation Layout
         self.navLayout = QHBoxLayout()
@@ -948,6 +1196,7 @@ class VideoDownloader(QDialog):
         self.navLayout.addWidget(self.homeButton)  # Adding the home button between back and forward
         self.navLayout.addWidget(self.musicButton)
         self.navLayout.addWidget(self.SCButton)
+        self.navLayout.addWidget(self.miniPlayerButton)  # 미니 플레이어 버튼 추가
         self.navLayout.addWidget(self.toggleDownButton)
 
         # Left Widget for Browser and Navigation
@@ -1463,19 +1712,24 @@ class VideoDownloader(QDialog):
             self.header.updateState()
 
     def copyUrlToClipboard(self):
+        """브라우저의 현재 URL을 클립보드에 복사하고 검색 필드에 설정한 후 검색"""
         currentUrl = self.browser.url().toString()
-        print(f"Current URL: {currentUrl}")  # Debug print
+        logger.debug(f"Current URL: {currentUrl}")
+        
+        # 클립보드에 복사
         clipboard = QApplication.clipboard()
         clipboard.setText(currentUrl)
-        self.search_url.setText(currentUrl)
-        self.search_url.clear()
-        self.search_url.setText(currentUrl)
-        self.on_search()
+        
+        # 검색 필드에 URL 설정
+        if hasattr(self, 'search_url'):
+            self.search_url.setText(currentUrl)
+            # 검색 실행 (중복 체크는 on_search에서 수행)
+            self.on_search()
 
     def navigateToLink(self):
         # Handle the predefined URL here. This could involve opening the URL in a web browser,
         # or performing another action based on the URL.
-        print(f"Navigate to: {self.predefinedURL}")
+        logger.debug(f"Navigate to: {self.predefinedURL}")
         # Example: Open the URL in a web browser
         QDesktopServices.openUrl(QUrl(self.predefinedURL))
 
@@ -1537,13 +1791,13 @@ class VideoDownloader(QDialog):
                 continue
             elif type_label == 'Audio-only' and not self.app_settings.show_audio_only:
                 continue
-            elif type_label in ['Video-only'] and not self.app_settings.show_audio_formats:
+            elif type_label == 'Video-only' and not self.app_settings.show_video_formats:
+                # Video-only는 비디오만 있는 포맷이므로 show_video_formats로 필터링
                 continue
             
             # 품질 제한 필터링 (비디오 포맷만)
             if type_label in ['Video', 'Video-only'] and self.app_settings.max_quality > 0:
                 # 해상도 추출 (예: "1920x1080" 형식)
-                import re
                 resolution_match = re.search(r'(\d+)x(\d+)', display_text)
                 if resolution_match:
                     height = int(resolution_match.group(2))
@@ -1556,9 +1810,70 @@ class VideoDownloader(QDialog):
     
     def applyFormatFilters(self):
         """현재 테이블의 모든 콤보박스에 포맷 필터 적용"""
-        # 이 메서드는 설정 변경 후 기존 테이블 항목들을 업데이트하는 용도
-        # 실제로는 새로운 검색 시에만 필터가 적용되므로 여기서는 메시지만 표시
-        pass
+        # 설정 변경 후 기존 테이블의 포맷 콤보박스를 업데이트
+        if not hasattr(self, 'video_table'):
+            return
+        
+        row_count = self.video_table.rowCount()
+        for row in range(row_count):
+            format_combo = self.video_table.cellWidget(row, 3)
+            if format_combo and isinstance(format_combo, QComboBox):
+                # 현재 선택된 포맷 저장
+                current_format_id = format_combo.currentData()
+                current_text = format_combo.currentText()
+                
+                # 모든 포맷 정보 수집
+                all_formats = []
+                for i in range(format_combo.count()):
+                    item_text = format_combo.itemText(i)
+                    item_data = format_combo.itemData(i)
+                    # 카테고리 헤더는 건너뛰기
+                    if item_data is not None:
+                        # type_label 추출 (display_text에서)
+                        type_label = 'Unknown'
+                        if '[Video]' in item_text:
+                            type_label = 'Video'
+                        elif '[Video-only]' in item_text:
+                            type_label = 'Video-only'
+                        elif '[Audio-only]' in item_text:
+                            type_label = 'Audio-only'
+                        
+                        # filesize 추출 (대략적으로)
+                        filesize = 0
+                        filesize_match = re.search(r'(\d+)MB', item_text)
+                        if filesize_match:
+                            filesize = int(filesize_match.group(1)) * 1024 * 1024
+                        
+                        all_formats.append((item_text, item_data, type_label, filesize))
+                
+                # 필터링 적용
+                filtered_formats = self.filterFormatsBySettings(all_formats)
+                
+                # 콤보박스 재구성
+                format_combo.clear()
+                current_category = None
+                found_current = False
+                
+                for display_text, format_id, type_label, filesize in filtered_formats:
+                    # 카테고리 헤더 추가
+                    if type_label != current_category:
+                        if format_combo.count() > 0 and current_category is not None:
+                            pass
+                        format_combo.addItem(f"--- {type_label} ---")
+                        format_combo.model().item(format_combo.count() - 1).setEnabled(False)
+                        current_category = type_label
+                    
+                    format_combo.addItem(display_text, userData=format_id)
+                    if format_id == current_format_id:
+                        format_combo.setCurrentIndex(format_combo.count() - 1)
+                        found_current = True
+                
+                # 현재 선택된 포맷이 필터링되어 제거된 경우, 첫 번째 유효한 항목 선택
+                if not found_current and format_combo.count() > 0:
+                    for i in range(format_combo.count()):
+                        if format_combo.model().item(i).isEnabled():
+                            format_combo.setCurrentIndex(i)
+                            break
 
     def refreshBrowser(self):
         """ Method to refresh the browser when the settings dialog is closed """
@@ -1635,7 +1950,8 @@ class VideoDownloader(QDialog):
         self.move(center_point - self.rect().center())
 
     def search_duplicate_urls(self, url):
-        return any(url == video_info[1] for video_info in self.video_info_list)
+        """중복 URL 검색 (is_duplicate_url과 동일한 기능 - 호환성을 위해 유지)"""
+        return self.is_duplicate_url(url)
 
     def toggle_loading_animation(self):
         current_value = self.progress_bar.value()
@@ -1659,10 +1975,9 @@ class VideoDownloader(QDialog):
         return any(url == existing_url for _, existing_url in self.video_info_list)
 
     def delete_selected_videos(self):
-        # This assumes you have a method to determine which videos are selected for deletion
-        selected_indexes = self.get_selected_video_indexes()
-        self.video_info_list = [info for idx, info in enumerate(self.video_info_list) if idx not in selected_indexes]
-        # Refresh the UI to reflect the changes
+        """선택된 비디오 삭제 (on_delete_selected와 동일한 기능 - 호환성을 위해 유지)"""
+        # on_delete_selected 메서드를 사용하도록 리다이렉트
+        self.on_delete_selected()
 
     @pyqtSlot()
     def on_search(self):
@@ -1713,13 +2028,22 @@ class VideoDownloader(QDialog):
         self.video_table.setItem(row_position, 2, title_item)
 
         if thumbnail_url:
-            response = requests.get(thumbnail_url)
-            pixmap = QPixmap()
-            if pixmap.loadFromData(response.content):
-                pixmap_resized = pixmap.scaled(30, 30, Qt.KeepAspectRatio)
-                thumbnail_item = QTableWidgetItem()
-                thumbnail_item.setData(Qt.DecorationRole, pixmap_resized)
-                self.video_table.setItem(row_position, 1, thumbnail_item)
+            try:
+                # 네트워크 요청에 타임아웃 추가 (10초)
+                response = requests.get(thumbnail_url, timeout=10)
+                response.raise_for_status()  # HTTP 에러 체크
+                pixmap = QPixmap()
+                if pixmap.loadFromData(response.content):
+                    pixmap_resized = pixmap.scaled(30, 30, Qt.KeepAspectRatio)
+                    thumbnail_item = QTableWidgetItem()
+                    thumbnail_item.setData(Qt.DecorationRole, pixmap_resized)
+                    self.video_table.setItem(row_position, 1, thumbnail_item)
+            except requests.exceptions.Timeout:
+                logger.warning(f"썸네일 다운로드 타임아웃: {thumbnail_url}")
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"썸네일 다운로드 실패: {thumbnail_url} - {str(e)}")
+            except Exception as e:
+                logger.error(f"썸네일 처리 중 오류: {str(e)}")
 
         # Format combo box with categorized and ordered formats
         format_combo = QComboBox()
@@ -1748,16 +2072,40 @@ class VideoDownloader(QDialog):
         default_index = -1
         preferred_format = self.app_settings.default_format.lower()
         
-        # 먼저 기본 설정 포맷과 일치하는 것을 찾기
+        # 먼저 기본 설정 포맷과 정확히 일치하는 것을 찾기
+        # 우선순위: 1) 포맷 ID에 포함, 2) 확장자 일치, 3) 텍스트에 포함
+        best_match_index = -1
+        partial_match_index = -1
+        
         for i in range(format_combo.count()):
             if format_combo.model().item(i).isEnabled():
                 item_text = format_combo.itemText(i).lower()
-                if preferred_format in item_text or (preferred_format == 'mp3' and 'mp3' in item_text):
-                    default_index = i
-                    break
+                item_data = format_combo.itemData(i)
+                
+                # 포맷 ID 확인 (가장 정확한 매칭)
+                if item_data:
+                    format_id_str = str(item_data).lower()
+                    if preferred_format in format_id_str:
+                        best_match_index = i
+                        break
+                
+                # 확장자 확인 (예: mp3, mp4 등)
+                if preferred_format in ['mp3', 'mp4', 'webm', 'm4a']:
+                    # 확장자가 명시적으로 표시된 경우
+                    if f'.{preferred_format}' in item_text or f' {preferred_format} ' in item_text:
+                        if best_match_index == -1:
+                            best_match_index = i
+                    # 텍스트에 포함된 경우 (부분 매칭)
+                    elif preferred_format in item_text and partial_match_index == -1:
+                        partial_match_index = i
         
-        # 기본 포맷을 찾지 못했다면 첫 번째 실제 선택 가능한 아이템을 기본값으로 설정
-        if default_index == -1:
+        # 최선의 매칭 사용, 없으면 부분 매칭, 둘 다 없으면 첫 번째 항목
+        if best_match_index != -1:
+            default_index = best_match_index
+        elif partial_match_index != -1:
+            default_index = partial_match_index
+        else:
+            # 기본 포맷을 찾지 못했다면 첫 번째 실제 선택 가능한 아이템을 기본값으로 설정
             for i in range(format_combo.count()):
                 if format_combo.model().item(i).isEnabled():
                     default_index = i
@@ -1768,6 +2116,16 @@ class VideoDownloader(QDialog):
 
         self.video_table.setCellWidget(row_position, 3, format_combo)
 
+    def on_ffmpeg_check_complete(self, success: bool, message: str):
+        """FFmpeg 체크 완료 시 호출되는 콜백 (조용히 로깅만 수행)"""
+        if success:
+            # 성공 시 조용히 로그만 남김 (사용자 방해 없음)
+            logger.info(f"FFmpeg: {message}")
+        else:
+            # 실패 시에도 조용히 로그만 남김 (사용자 방해 없음)
+            logger.warning(f"FFmpeg: {message}")
+            # 필요시 나중에 사용자가 다운로드를 시도할 때 알림을 표시할 수 있음
+    
     def search_finished(self):
         self.set_status('검색 완료.')
         self.progress_bar.setRange(0, 100)  # Reset the progress bar range
@@ -1813,7 +2171,7 @@ class VideoDownloader(QDialog):
             if row < len(self.video_info_list) and self.video_info_list[row] is not None:
                 video_url = self.video_info_list[row][1]
             else:
-                print(f"[Error] Invalid video_info_list entry at row {row}")
+                logger.error(f"Invalid video_info_list entry at row {row}")
                 continue
             
             # 포맷 ID 확인
@@ -1906,6 +2264,52 @@ class MainThreadSignalEmitter(QObject):
 main_thread_signal_emitter = MainThreadSignalEmitter()
 
 
+class FFmpegChecker(QThread):
+    """백그라운드에서 FFmpeg 존재 여부를 체크하고 필요시 자동 다운로드하는 스레드"""
+    check_complete = pyqtSignal(bool, str)  # (success, message)
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.base_path = None
+        
+    def run(self):
+        """FFmpeg 체크 및 다운로드 실행"""
+        try:
+            # Get the directory where the executable is located
+            if getattr(sys, 'frozen', False):
+                # Running as a compiled executable
+                self.base_path = os.path.dirname(sys.executable)
+            else:
+                # Running as a script
+                self.base_path = os.path.dirname(os.path.abspath(__file__))
+            
+            # Check if ffmpeg already exists
+            if check_ffmpeg_exists():
+                self.check_complete.emit(True, "FFmpeg가 이미 설치되어 있습니다.")
+                return
+            
+            # FFmpeg not found, try to download
+            if sys.platform.startswith("linux"):
+                # Linux는 자동 다운로드 지원 안 함
+                self.check_complete.emit(False, "Linux에서는 FFmpeg를 수동으로 설치해주세요.")
+                return
+            
+            # Download FFmpeg quietly
+            success = download_ffmpeg_quietly(self.base_path)
+            
+            if success:
+                # Verify the download
+                if check_ffmpeg_exists():
+                    self.check_complete.emit(True, "FFmpeg가 자동으로 다운로드되었습니다.")
+                else:
+                    self.check_complete.emit(False, "FFmpeg 다운로드 후 검증 실패")
+            else:
+                self.check_complete.emit(False, "FFmpeg 자동 다운로드 실패")
+                
+        except Exception as e:
+            self.check_complete.emit(False, f"FFmpeg 체크 중 오류: {str(e)}")
+
+
 class Searcher(QThread):
     updated_list = pyqtSignal(str, str, str, list)  # title, thumbnail_url, video_url, [(display_text, format_id, type_label, filesize)]
     search_progress = pyqtSignal(int, int)  # Signal with two arguments: current progress and total count
@@ -1933,26 +2337,26 @@ class Searcher(QThread):
             try:
                 result = ydl.extract_info(self.url, download=False)
                 if result is None:
-                    print("[Debug Searcher] yt_dlp result is None.")
+                    logger.debug("yt_dlp result is None.")
                     self.updated_list.emit("Video/Playlist not found", "", self.url, [])
                     return
                     
                 videos = result.get('entries', [result])
                 if not videos:
-                    print("[Debug Searcher] No videos/entries found in yt_dlp result.")
+                    logger.debug("No videos/entries found in yt_dlp result.")
                     self.updated_list.emit(result.get('title', 'Video/Playlist not found'), "", self.url, [])
                     return
 
                 for video_index, video in enumerate(videos):
                     if video is None:
-                        print(f"[Debug Searcher] Video {video_index + 1} is None, skipping.")
+                        logger.debug(f"Video {video_index + 1} is None, skipping.")
                         continue
                         
                     raw_formats = video.get('formats', [])
                     processed_format_list = []
 
                     if not raw_formats:
-                        print(f"[Debug Searcher] Video {video_index + 1} ('{video.get('title', 'N/A')}') has no raw formats from yt_dlp.")
+                        logger.debug(f"Video {video_index + 1} ('{video.get('title', 'N/A')}') has no raw formats from yt_dlp.")
 
                     # 최고 품질 오디오 포맷 찾기 (MP3 변환용)
                     best_audio = None
@@ -2029,7 +2433,7 @@ class Searcher(QThread):
                         processed_format_list.append((mp3_display_text, "bestaudio/best", "Audio-only", estimated_size))
                     
                     if not processed_format_list and raw_formats:
-                        print(f"[Debug Searcher] Video {video_index + 1} ('{video.get('title', 'N/A')}') - all formats were filtered out. This shouldn't happen with relaxed filters.")
+                        logger.warning(f"Video {video_index + 1} ('{video.get('title', 'N/A')}') - all formats were filtered out.")
                     
                     processed_format_list.sort(key=lambda x: (x[2] != 'Audio-only', x[2] != 'Video', x[2] != 'Video-only', -x[3]))
 
@@ -2040,9 +2444,7 @@ class Searcher(QThread):
                         processed_format_list
                     )
             except Exception as e:
-                print(f"[Error Searcher] An unexpected error occurred in Searcher thread: {str(e)}")
-                import traceback
-                traceback.print_exc()
+                logger.error(f"Searcher thread 오류: {str(e)}", exc_info=True)
                 self.updated_list.emit(f"Error: {str(e)}", "", self.url, []) # 에러 발생 시 빈 리스트와 함께 에러 메시지 전달
 
     def estimate_total_count(self, result):
@@ -2071,6 +2473,15 @@ class Downloader(QThread):
             # MP3 변환이 필요한지 확인
             is_mp3_conversion = format_id == "bestaudio/best" or "MP3" in title
             
+            # FFmpeg 경로 자동 탐지 (다운로드된 경로 우선 사용)
+            ffmpeg_path = find_ffmpeg_executable()
+            
+            # 다운로드된 ffmpeg 경로 확인 및 로깅
+            if ffmpeg_path != 'ffmpeg' and os.path.exists(ffmpeg_path):
+                logger.info(f"FFmpeg 사용 중인 경로: {ffmpeg_path}")
+            else:
+                logger.warning(f"FFmpeg 시스템 PATH에서 찾는 중 (경로: {ffmpeg_path})")
+            
             download_options = {
                 'format': format_id,
                 'outtmpl': os.path.join(self.download_directory, f"{safe_title}.%(ext)s"),
@@ -2088,7 +2499,7 @@ class Downloader(QThread):
                 'no_color': True,
                 'logtostderr': True,
                 'verbose': True,
-                'ffmpeg_location': 'ffmpeg',
+                'ffmpeg_location': ffmpeg_path,  # 다운로드된 절대 경로 또는 'ffmpeg' (시스템 PATH)
             }
             
             # MP3 변환 또는 일반 비디오 변환 설정
@@ -2101,7 +2512,7 @@ class Downloader(QThread):
             else:
                 download_options['postprocessors'] = [{
                     'key': 'FFmpegVideoConvertor',
-                    'preferedformat': 'mp4',
+                    'preferredformat': 'mp4',  # 오타 수정: preferedformat -> preferredformat
                 }]
                 download_options['merge_output_format'] = 'mp4'
                 download_options['postprocessor_args'] = [
@@ -2116,7 +2527,7 @@ class Downloader(QThread):
                     self.updated_status.emit(f"다운로드 완료: {title}")
                 except Exception as e:
                     error_msg = f"다운로드 실패 ({title}): {str(e)}"
-                    print(error_msg)  # 콘솔에 에러 출력
+                    logger.error(error_msg)
                     self.download_failed.emit(error_msg)
 
     def progress_hook(self, d):
@@ -2148,7 +2559,21 @@ class Downloader(QThread):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyle("fusion")  # Fusion 스타일을 설정합니다.
-    app.setWindowIcon(QIcon('st2.icns')) # 아이콘 설정 복원 (macOS 특정)
+    
+    # 플랫폼별 아이콘 설정
+    import platform
+    if platform.system() == "Windows":
+        # Windows용 아이콘 설정
+        if os.path.exists("icon.ico"):
+            app.setWindowIcon(QIcon("icon.ico"))
+        elif os.path.exists("st2.icns"):
+            app.setWindowIcon(QIcon("st2.icns"))
+    else:
+        # macOS/Linux용 아이콘 설정
+        if os.path.exists("icon.icns"):
+            app.setWindowIcon(QIcon("icon.icns"))
+        elif os.path.exists("st2.icns"):
+            app.setWindowIcon(QIcon("st2.icns"))
 
     # Enable hardware acceleration
     QWebEngineSettings.globalSettings().setAttribute(QWebEngineSettings.WebGLEnabled, True)
