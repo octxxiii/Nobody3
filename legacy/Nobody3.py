@@ -14,9 +14,9 @@ from PyQt5.QtWidgets import (QApplication, QDialog, QPushButton, QVBoxLayout, QL
                              QSlider, QGroupBox)
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, pyqtSlot, QObject, QTimer, QUrl, QSize
 import yt_dlp
-import resources_rc # resources_rc ?�포??복원
+import resources_rc # resources_rc 임포트 복원
 
-# Dark Theme ?��????�트 문자?�만 ?�깁?�다.
+# Dark Theme 스타일 시트 문자열만 남깁니다.
 DARK_THEME_STYLESHEET = """
         QDialog { background-color: #2D2D2D; }
         QPushButton { background-color: #333333; color: #FFFFFF; border: 2px solid #555555; border-radius: 5px; padding: 5px; }
@@ -34,7 +34,7 @@ DARK_THEME_STYLESHEET = """
 """
 
 
-def resolve_writable_cache_dir(application_name: str = "Nobody 3") -> str:
+def resolve_writable_cache_dir(application_name: str = "OctXXIII") -> str:
     """Return a user-writable cache directory for the given application.
 
     - Windows: %LOCALAPPDATA%\\<AppName>\\Caches
@@ -52,16 +52,16 @@ def resolve_writable_cache_dir(application_name: str = "Nobody 3") -> str:
 
 
 def setup_logging():
-    """로깅 ?�스??초기??""
-    log_dir = resolve_writable_cache_dir("Nobody 3")
+    """로깅 시스템 초기화"""
+    log_dir = resolve_writable_cache_dir("OctXXIII")
     os.makedirs(log_dir, exist_ok=True)
-    log_file = os.path.join(log_dir, "Nobody 3.log")
+    log_file = os.path.join(log_dir, "octxxiii.log")
     
-    # 로깅 ?�맷 ?�정
+    # 로깅 포맷 설정
     log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     date_format = '%Y-%m-%d %H:%M:%S'
     
-    # 로깅 ?�벨 ?�정 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    # 로깅 레벨 설정 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     logging.basicConfig(
         level=logging.INFO,
         format=log_format,
@@ -72,9 +72,9 @@ def setup_logging():
         ]
     )
     
-    return logging.getLogger('Nobody 3')
+    return logging.getLogger('OctXXIII')
 
-# ?�역 로거 ?�스?�스 (resolve_writable_cache_dir ?�의 ??초기??
+# 전역 로거 인스턴스 (resolve_writable_cache_dir 정의 후 초기화)
 logger = setup_logging()
 
 
@@ -270,29 +270,29 @@ def download_ffmpeg_quietly(base_path: str) -> bool:
             
     except Exception as e:
         # Silent failure - just return False
-        logger.warning(f"FFmpeg ?�운로드 ?�패: {e}")
+        logger.warning(f"FFmpeg 다운로드 실패: {e}")
         return False
 
 
 class AppSettings:
-    """?�플리�??�션 ?�정 관�??�래??""
+    """애플리케이션 설정 관리 클래스"""
     def __init__(self):
-        self.default_format = "mp3"  # 기본 ?�맷
-        self.show_video_formats = True  # 비디???�맷 ?�시
-        self.show_audio_formats = True  # ?�디???�맷 ?�시
-        self.show_audio_only = True  # ?�디???�용 ?�맷 ?�시
-        self.max_quality = 720  # 최�? ?�질 (480, 720, 1080, 0=무제??
+        self.default_format = "mp3"  # 기본 포맷
+        self.show_video_formats = True  # 비디오 포맷 표시
+        self.show_audio_formats = True  # 오디오 포맷 표시
+        self.show_audio_only = True  # 오디오 전용 포맷 표시
+        self.max_quality = 720  # 최대 품질 (480, 720, 1080, 0=무제한)
         
     def get_settings_file_path(self):
-        """?�정 ?�일 경로 반환"""
+        """설정 파일 경로 반환"""
         import os
-        cache_dir = resolve_writable_cache_dir("Nobody 3")
+        cache_dir = resolve_writable_cache_dir("OctXXIII")
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir, exist_ok=True)
         return os.path.join(cache_dir, 'settings.json')
     
     def save_settings(self):
-        """?�정???�일???�??""
+        """설정을 파일에 저장"""
         settings = {
             'default_format': self.default_format,
             'show_video_formats': self.show_video_formats,
@@ -305,12 +305,12 @@ class AppSettings:
             settings_file = self.get_settings_file_path()
             with open(settings_file, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, ensure_ascii=False, indent=2)
-            logger.info(f"?�정 ?�???�료: {settings_file}")
+            logger.info(f"설정 저장 완료: {settings_file}")
         except Exception as e:
-            logger.error(f"?�정 ?�???�패: {e}")
+            logger.error(f"설정 저장 실패: {e}")
     
     def load_settings(self):
-        """?�일?�서 ?�정 로드"""
+        """파일에서 설정 로드"""
         try:
             import json
             settings_file = self.get_settings_file_path()
@@ -322,60 +322,60 @@ class AppSettings:
                     self.show_audio_formats = settings.get('show_audio_formats', True)
                     self.show_audio_only = settings.get('show_audio_only', True)
                     self.max_quality = settings.get('max_quality', 720)
-                logger.info(f"?�정 로드 ?�료: {settings_file}")
+                logger.info(f"설정 로드 완료: {settings_file}")
             else:
-                logger.info(f"?�정 ?�일???�습?�다. 기본값을 ?�용?�니?? {settings_file}")
+                logger.info(f"설정 파일이 없습니다. 기본값을 사용합니다: {settings_file}")
         except Exception as e:
-            logger.error(f"?�정 로드 ?�패: {e}")
+            logger.error(f"설정 로드 실패: {e}")
 
 class FormatSettingsDialog(QDialog):
-    """?�맷 ?�정 ?�이?�로�?""
+    """포맷 설정 다이얼로그"""
     settingsChanged = pyqtSignal()
     
     def __init__(self, parent=None, app_settings=None):
         super(FormatSettingsDialog, self).__init__(parent)
         self.app_settings = app_settings or AppSettings()
-        self.setWindowTitle('?�맷 ?�정')
+        self.setWindowTitle('포맷 설정')
         self.setModal(True)
-        self.setFixedSize(450, 420)  # ?�기 증�?�??�유 공간 ?�보
+        self.setFixedSize(450, 420)  # 크기 증가로 여유 공간 확보
         self.setupUI()
         
     def setupUI(self):
         layout = QVBoxLayout()
-        layout.setContentsMargins(15, 15, 15, 15)  # ?�백 증�?
-        layout.setSpacing(15)  # 그룹 �?간격 증�?
+        layout.setContentsMargins(15, 15, 15, 15)  # 여백 증가
+        layout.setSpacing(15)  # 그룹 간 간격 증가
         
-        # 기본 ?�맷 ?�정
-        default_group = QGroupBox("기본 ?�맷")
+        # 기본 포맷 설정
+        default_group = QGroupBox("기본 포맷")
         default_layout = QVBoxLayout()
-        default_layout.setContentsMargins(10, 15, 10, 10)  # 그룹 ?��? ?�백
-        default_layout.setSpacing(8)  # ?�젯 �?간격
+        default_layout.setContentsMargins(10, 15, 10, 10)  # 그룹 내부 여백
+        default_layout.setSpacing(8)  # 위젯 간 간격
         
-        default_label = QLabel("기본 ?�택 ?�맷:")
+        default_label = QLabel("기본 선택 포맷:")
         self.default_format_combo = QComboBox()
         self.default_format_combo.addItems(['mp3', 'mp4', 'webm', 'm4a', 'best'])
         self.default_format_combo.setCurrentText(self.app_settings.default_format)
-        self.default_format_combo.setMinimumHeight(30)  # 콤보박스 ?�이 증�?
+        self.default_format_combo.setMinimumHeight(30)  # 콤보박스 높이 증가
         
         default_layout.addWidget(default_label)
         default_layout.addWidget(self.default_format_combo)
         default_group.setLayout(default_layout)
         
-        # ?�시???�맷 ?�정
-        display_group = QGroupBox("?�시???�맷")
+        # 표시할 포맷 설정
+        display_group = QGroupBox("표시할 포맷")
         display_layout = QVBoxLayout()
-        display_layout.setContentsMargins(10, 15, 10, 10)  # 그룹 ?��? ?�백
-        display_layout.setSpacing(5)  # 체크박스 �?간격 ?�절??조정
+        display_layout.setContentsMargins(10, 15, 10, 10)  # 그룹 내부 여백
+        display_layout.setSpacing(5)  # 체크박스 간 간격 적절히 조정
         
-        self.show_video_check = QCheckBox("비디???�맷 ?�시")
+        self.show_video_check = QCheckBox("비디오 포맷 표시")
         self.show_video_check.setChecked(self.app_settings.show_video_formats)
-        self.show_video_check.setMinimumHeight(20)  # 체크박스 ?�이 조정
+        self.show_video_check.setMinimumHeight(20)  # 체크박스 높이 조정
         
-        self.show_audio_check = QCheckBox("?�디???�맷 ?�시")
+        self.show_audio_check = QCheckBox("오디오 포맷 표시")
         self.show_audio_check.setChecked(self.app_settings.show_audio_formats)
         self.show_audio_check.setMinimumHeight(20)
         
-        self.show_audio_only_check = QCheckBox("?�디???�용 ?�맷 ?�시")
+        self.show_audio_only_check = QCheckBox("오디오 전용 포맷 표시")
         self.show_audio_only_check.setChecked(self.app_settings.show_audio_only)
         self.show_audio_only_check.setMinimumHeight(20)
         
@@ -384,18 +384,18 @@ class FormatSettingsDialog(QDialog):
         display_layout.addWidget(self.show_audio_only_check)
         display_group.setLayout(display_layout)
         
-        # ?�질 ?�정
-        quality_group = QGroupBox("최�? ?�질")
+        # 품질 설정
+        quality_group = QGroupBox("최대 품질")
         quality_layout = QVBoxLayout()
-        quality_layout.setContentsMargins(10, 15, 10, 10)  # 그룹 ?��? ?�백
+        quality_layout.setContentsMargins(10, 15, 10, 10)  # 그룹 내부 여백
         quality_layout.setSpacing(8)
         
-        quality_label = QLabel("최�? ?�질:")
+        quality_label = QLabel("최대 품질:")
         self.quality_combo = QComboBox()
-        self.quality_combo.addItems(['480p', '720p', '1080p', '무제??])
+        self.quality_combo.addItems(['480p', '720p', '1080p', '무제한'])
         quality_map = {480: 0, 720: 1, 1080: 2, 0: 3}
         self.quality_combo.setCurrentIndex(quality_map.get(self.app_settings.max_quality, 1))
-        self.quality_combo.setMinimumHeight(30)  # 콤보박스 ?�이 증�?
+        self.quality_combo.setMinimumHeight(30)  # 콤보박스 높이 증가
         
         quality_layout.addWidget(quality_label)
         quality_layout.addWidget(self.quality_combo)
@@ -403,12 +403,12 @@ class FormatSettingsDialog(QDialog):
         
         # 버튼
         button_layout = QHBoxLayout()
-        button_layout.setContentsMargins(0, 10, 0, 0)  # 버튼 ?�단 ?�백
-        button_layout.setSpacing(10)  # 버튼 �?간격
+        button_layout.setContentsMargins(0, 10, 0, 0)  # 버튼 상단 여백
+        button_layout.setSpacing(10)  # 버튼 간 간격
         
-        self.save_button = QPushButton("?�??)
+        self.save_button = QPushButton("저장")
         self.cancel_button = QPushButton("취소")
-        self.save_button.setMinimumHeight(35)  # 버튼 ?�이 증�?
+        self.save_button.setMinimumHeight(35)  # 버튼 높이 증가
         self.cancel_button.setMinimumHeight(35)
         self.save_button.clicked.connect(self.save_settings)
         self.cancel_button.clicked.connect(self.reject)
@@ -416,7 +416,7 @@ class FormatSettingsDialog(QDialog):
         button_layout.addWidget(self.save_button)
         button_layout.addWidget(self.cancel_button)
         
-        # ?�이?�웃 구성
+        # 레이아웃 구성
         layout.addWidget(default_group)
         layout.addWidget(display_group)
         layout.addWidget(quality_group)
@@ -424,7 +424,7 @@ class FormatSettingsDialog(QDialog):
         
         self.setLayout(layout)
         
-        # ?�크 ?�마 ?��????�용
+        # 다크 테마 스타일 적용
         self.setStyleSheet("""
             QDialog {
                 background-color: #2D2D2D;
@@ -516,7 +516,7 @@ class FormatSettingsDialog(QDialog):
         """)
         
     def save_settings(self):
-        """?�정 ?�??""
+        """설정 저장"""
         self.app_settings.default_format = self.default_format_combo.currentText()
         self.app_settings.show_video_formats = self.show_video_check.isChecked()
         self.app_settings.show_audio_formats = self.show_audio_check.isChecked()
@@ -537,10 +537,10 @@ class SettingsDialog(QDialog):
         self.setModal(True)  # This makes the dialog modal
         self.setAttribute(Qt.WA_DeleteOnClose)  # Ensures it closes with the application
         self.Nobody = nobody_cache  # Receive the parameter here
-        self.setWindowTitle('Nobody 3 - ?�보')
+        self.setWindowTitle('OctXXIII - 정보')
         self.layout = QVBoxLayout()
         # Initialize cache directory BEFORE building UI, as setupUI references it
-        self.cacheDirectory = resolve_writable_cache_dir("Nobody 3")
+        self.cacheDirectory = resolve_writable_cache_dir("OctXXIII")
         if not os.path.exists(self.cacheDirectory):
             try:
                 os.makedirs(self.cacheDirectory, exist_ok=True)
@@ -549,43 +549,43 @@ class SettingsDialog(QDialog):
         self.setupUI()
 
         # Define the URL and the descriptive text with HTML for line breaks
-        self.predefinedURL = "https://soundcloud.com/Nobody 3"
+        self.predefinedURL = "https://soundcloud.com/octxxiii"
         predefinedText = """
             <p style="text-align: center;">
-            <h1>Nobody 3 v2.0</h1>
+            <h1>OctXXIII v2.0</h1>
             <div>Youtube/Music Converter & Player</div>
             <div>Release: 2025-01-03</div>
             </p>
             <br>
             <p>
-            <h3>2025 ?�데?�트</h3>
+            <h3>2025 업데이트</h3>
                 <ul>
-                    <li>미니 ?�레?�어 모드 추�?</li>
-                    <li>최상??고정 ?��? 기능</li>
-                    <li>최�???버튼 ?�성??/li>
-                    <li>FFmpeg ?�함 빌드 ?�스??/li>
-                    <li>?�로???�랫??지??/li>
+                    <li>미니 플레이어 모드 추가</li>
+                    <li>최상위 고정 토글 기능</li>
+                    <li>최대화 버튼 활성화</li>
+                    <li>FFmpeg 포함 빌드 시스템</li>
+                    <li>크로스 플랫폼 지원</li>
                 </ul>
 
-                <h3>?�용방법</h3>
+                <h3>사용방법</h3>
                 <ol>
-                    <li>브라?��??�서 ?�하???�상/?�레?�리?�트 ?�택</li>
-                    <li>CopyURL ?�릭 ?�는 URL ?�력 ??검??/li>
-                    <li>?�이블에???�맷 ?�택 ???�운로드</li>
+                    <li>브라우저에서 원하는 영상/플레이리스트 선택</li>
+                    <li>CopyURL 클릭 또는 URL 입력 후 검색</li>
+                    <li>테이블에서 포맷 선택 후 다운로드</li>
                 </ol>
 
-                <h3>?�전 버전??(2024)</h3>
+                <h3>이전 버전들 (2024)</h3>
                 <ul>
-                    <li>v1.0 (240408): ?�재 브라?��? 비디???�디??컨트�??�널 추�?</li>
-                    <li>240405: ?�립보드 복사, ?�로고침, SoundCloud 지??/li>
-                    <li>240401: 브라?��? ?�기�? YouTube Music 지??/li>
-                    <li>240328: 브라?��? ?�합, ?�마 ?�스??/li>
-                    <li>240327: ?�레?�리?�트 지?? URL 관�?/li>
-                    <li>240326: 기본 ?�운로드 기능, ?�네??지??/li>
+                    <li>v1.0 (240408): 현재 브라우저 비디오/오디오 컨트롤 패널 추가</li>
+                    <li>240405: 클립보드 복사, 새로고침, SoundCloud 지원</li>
+                    <li>240401: 브라우저 숨기기, YouTube Music 지원</li>
+                    <li>240328: 브라우저 통합, 테마 시스템</li>
+                    <li>240327: 플레이리스트 지원, URL 관리</li>
+                    <li>240326: 기본 다운로드 기능, 썸네일 지원</li>
                 </ul>
             </p>
             <h2>
-            Creator: nobody ?�� 
+            Creator: nobody 😜 
             <br>
             Last Updated: 2025-09-04
             </h2>
@@ -718,27 +718,29 @@ class VideoHandler(QObject):
 class VideoDownloader(QDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint) # 최소?? 최�??? ?�기 버튼 ?�성??        self.settingsDialog = None
-        self.formatSettingsDialog = None  # ?�맷 ?�정 ?�이?�로�?참조
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint | Qt.WindowCloseButtonHint) # 최소화, 최대화, 닫기 버튼 활성화
+        self.settingsDialog = None
+        self.formatSettingsDialog = None  # 포맷 설정 다이얼로그 참조
         self.Nobody = resolve_writable_cache_dir("Nobody")  # Define here
         
-        # ???�정 초기??�?로드
+        # 앱 설정 초기화 및 로드
         self.app_settings = AppSettings()
         self.app_settings.load_settings()
         
-        # 미니 ?�레?�어 관??변??        self.is_mini_mode = False
+        # 미니 플레이어 관련 변수
+        self.is_mini_mode = False
         self.normal_geometry = None
         self.mini_player = None
-        self.mini_always_on_top = True  # 기본?�으�?최상??고정
+        self.mini_always_on_top = True  # 기본적으로 최상위 고정
         # Use a user-writable cache directory to avoid permission issues under Program Files
-        self.cacheDirectory = resolve_writable_cache_dir("Nobody 3")
+        self.cacheDirectory = resolve_writable_cache_dir("OctXXIII")
         if not os.path.exists(self.cacheDirectory):
             try:
                 os.makedirs(self.cacheDirectory, exist_ok=True)
             except Exception as e:
                 print(f"Failed to create cache directory {self.cacheDirectory}: {e}")
 
-        # 캐시 �?기�? ?�정 구성
+        # 캐시 및 기타 설정 구성
         profile = QWebEngineProfile.defaultProfile()
         profile.setPersistentStoragePath(self.cacheDirectory)
         profile.setHttpCacheType(QWebEngineProfile.NoCache)
@@ -750,7 +752,7 @@ class VideoDownloader(QDialog):
         settings.setAttribute(QWebEngineSettings.PluginsEnabled, True)
         settings.setAttribute(QWebEngineSettings.WebGLEnabled, True)
 
-        self.setWindowTitle("Nobody 3 - YouTube/Music Converter & Player")
+        self.setWindowTitle("Nobody 3")
         self.player = QMediaPlayer(self)
         self.video_info_list = []
 
@@ -765,26 +767,26 @@ class VideoDownloader(QDialog):
         self.scrollTimer.timeout.connect(self.scrollTitle)
         self.scrollTimer.start(300)  # Scroll title every 300 ms
 
-        self.predefinedURL = "https://soundcloud.com/Nobody 3"
+        self.predefinedURL = "https://soundcloud.com/octxxiii"
         
-        # FFmpeg ?�동 체크 �??�운로드 ?�작 (백그?�운?�에??조용??
+        # FFmpeg 자동 체크 및 다운로드 시작 (백그라운드에서 조용히)
         self.ffmpeg_checker = FFmpegChecker(self)
         self.ffmpeg_checker.check_complete.connect(self.on_ffmpeg_check_complete)
         self.ffmpeg_checker.start()
 
     def createMiniPlayer(self):
-        """미니 ?�레?�어 �??�성"""
+        """미니 플레이어 창 생성"""
         self.mini_player = QDialog(self)
-        self.mini_player.setWindowTitle("Nobody 3 - Mini Player")
+        self.mini_player.setWindowTitle("OctXXIII - Mini Player")
         self.mini_player.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint)
-        self.mini_player.setFixedSize(300, 100)  # ?�이�?120?�서 100?�로 줄임
+        self.mini_player.setFixedSize(300, 100)  # 높이를 120에서 100으로 줄임
         
-        # 미니 ?�레?�어 ?�이?�웃
+        # 미니 플레이어 레이아웃
         mini_layout = QVBoxLayout(self.mini_player)
-        mini_layout.setContentsMargins(1, 1, 1, 1)  # ?�백??10?�서 1�?줄임
-        mini_layout.setSpacing(2)  # 간격??5?�서 2�?줄임
+        mini_layout.setContentsMargins(1, 1, 1, 1)  # 여백을 10에서 1로 줄임
+        mini_layout.setSpacing(2)  # 간격을 5에서 2로 줄임
         
-        # ?�목 ?�이�?(미니 버전)
+        # 제목 레이블 (미니 버전)
         self.mini_title_label = QLabel()
         self.mini_title_label.setAlignment(Qt.AlignCenter)
         self.mini_title_label.setStyleSheet("""
@@ -800,54 +802,54 @@ class VideoDownloader(QDialog):
         """)
         self.mini_title_label.setWordWrap(False)
         
-        # ?�레?�어 컨트�?(미니 버전)
+        # 플레이어 컨트롤 (미니 버전)
         mini_player_layout = QHBoxLayout()
-        mini_player_layout.setSpacing(2)  # 간격??5?�서 2�?줄임
-        mini_player_layout.setContentsMargins(0, 0, 0, 0)  # ?�백 ?�거
+        mini_player_layout.setSpacing(2)  # 간격을 5에서 2로 줄임
+        mini_player_layout.setContentsMargins(0, 0, 0, 0)  # 여백 제거
         
-        self.mini_back_button = QPushButton("??��")
-        self.mini_back_button.setFixedSize(28, 28)  # ?�기�?30?�서 28�?줄임
+        self.mini_back_button = QPushButton("⏮️")
+        self.mini_back_button.setFixedSize(28, 28)  # 크기를 30에서 28로 줄임
         self.mini_back_button.clicked.connect(self.play_back)
         
-        self.mini_play_button = QPushButton("??��")
-        self.mini_play_button.setFixedSize(32, 28)  # ?�기�?35x30?�서 32x28�?줄임
+        self.mini_play_button = QPushButton("⏯️")
+        self.mini_play_button.setFixedSize(32, 28)  # 크기를 35x30에서 32x28로 줄임
         self.mini_play_button.clicked.connect(self.play)
         
-        self.mini_next_button = QPushButton("??��")
-        self.mini_next_button.setFixedSize(28, 28)  # ?�기�?30?�서 28�?줄임
+        self.mini_next_button = QPushButton("⏭️")
+        self.mini_next_button.setFixedSize(28, 28)  # 크기를 30에서 28로 줄임
         self.mini_next_button.clicked.connect(self.play_next)
         
-        # 볼륨 ?�라?�더 (미니 ?�용)
+        # 볼륨 슬라이더 (미니 전용)
         self.mini_volume_slider = QSlider(Qt.Horizontal)
         self.mini_volume_slider.setRange(0, 100)
         self.mini_volume_slider.setValue(50)
-        self.mini_volume_slider.setFixedHeight(20)  # ?�이�??�정, ?�비???�동 조정
+        self.mini_volume_slider.setFixedHeight(20)  # 높이만 설정, 너비는 자동 조정
         self.mini_volume_slider.setToolTip("볼륨")
         self.mini_volume_slider.valueChanged.connect(self.mini_on_volume_changed)
         
-        # 최상??고정 ?��? 버튼
-        self.always_on_top_button = QPushButton("?��")
-        self.always_on_top_button.setFixedSize(28, 28)  # ?�기�?30?�서 28�?줄임
+        # 최상위 고정 토글 버튼
+        self.always_on_top_button = QPushButton("📌")
+        self.always_on_top_button.setFixedSize(28, 28)  # 크기를 30에서 28로 줄임
         self.always_on_top_button.clicked.connect(self.toggleAlwaysOnTop)
-        self.always_on_top_button.setToolTip("최상??고정 ?��?")
+        self.always_on_top_button.setToolTip("최상위 고정 토글")
         
         # 복원 버튼
-        self.restore_button = QPushButton("?��")
-        self.restore_button.setFixedSize(28, 28)  # ?�기�?30?�서 28�?줄임
+        self.restore_button = QPushButton("🔼")
+        self.restore_button.setFixedSize(28, 28)  # 크기를 30에서 28로 줄임
         self.restore_button.clicked.connect(self.restoreFromMini)
-        self.restore_button.setToolTip("?�래 ?�기�?복원")
+        self.restore_button.setToolTip("원래 크기로 복원")
         
         mini_player_layout.addWidget(self.mini_back_button)
         mini_player_layout.addWidget(self.mini_play_button)
         mini_player_layout.addWidget(self.mini_next_button)
-        mini_player_layout.addWidget(self.mini_volume_slider, 1)  # stretch factor 1�??�정?�여 공간 차�?
+        mini_player_layout.addWidget(self.mini_volume_slider, 1)  # stretch factor 1로 설정하여 공간 차지
         mini_player_layout.addWidget(self.always_on_top_button)
         mini_player_layout.addWidget(self.restore_button)
         
         mini_layout.addWidget(self.mini_title_label)
         mini_layout.addLayout(mini_player_layout)
         
-        # 미니 ?�레?�어 ?��????�용
+        # 미니 플레이어 스타일 적용
         self.mini_player.setStyleSheet("""
             QDialog { 
                 background-color: #2D2D2D; 
@@ -882,41 +884,44 @@ class VideoDownloader(QDialog):
             }
         """)
         
-        # 미니 ?�레?�어 ?�기 ?�벤??처리
+        # 미니 플레이어 닫기 이벤트 처리
         self.mini_player.closeEvent = self.miniPlayerCloseEvent
         
-        # 마키 초기??        self.mini_scroll_timer = QTimer(self)
+        # 마키 초기화
+        self.mini_scroll_timer = QTimer(self)
         self.mini_scroll_timer.timeout.connect(self._mini_scroll_step)
         self.mini_original_title = ""
         self.mini_scroll_pos = 0
         
-        # 볼륨 초기??        self.current_volume = 0.5  # 기본 볼륨 50%
+        # 볼륨 초기화
+        self.current_volume = 0.5  # 기본 볼륨 50%
         
-        # 볼륨 ?��? ?�?�머
+        # 볼륨 유지 타이머
         self.volume_maintain_timer = QTimer(self)
         self.volume_maintain_timer.timeout.connect(self.maintain_volume)
-        self.volume_maintain_timer.start(1000)  # 1초마??볼륨 ?�인
+        self.volume_maintain_timer.start(1000)  # 1초마다 볼륨 확인
 
     def _update_mini_title_immediate(self):
-        """미니 ?�레?�어 ?�목 즉시 반영 �??�크�??�요???�?�머 ?�작"""
+        """미니 플레이어 제목 즉시 반영 및 스크롤 필요시 타이머 시작"""
         title = getattr(self, 'mini_original_title', '') or ''
         max_visible = 24
         
-        # ?�크�??�치 초기??        self.mini_scroll_pos = 0
+        # 스크롤 위치 초기화
+        self.mini_scroll_pos = 0
         
         if len(title) > max_visible:
-            # �??�목??경우 처음 부분을 보여주고 ?�크�??�작
+            # 긴 제목의 경우 처음 부분을 보여주고 스크롤 시작
             self.mini_title_label.setText(title[:max_visible])
             if hasattr(self, 'mini_scroll_timer'):
                 self.mini_scroll_timer.start(300)
         else:
-            # 짧�? ?�목??경우 그�?�??�시?�고 ?�크�?중�?
+            # 짧은 제목의 경우 그대로 표시하고 스크롤 중지
             self.mini_title_label.setText(title)
             if hasattr(self, 'mini_scroll_timer'):
                 self.mini_scroll_timer.stop()
 
     def _mini_scroll_step(self):
-        """미니 ?�레?�어 ?�목 ?�크�????�텝"""
+        """미니 플레이어 제목 스크롤 한 스텝"""
         title = getattr(self, 'mini_original_title', '') or ''
         if not title:
             return
@@ -927,15 +932,16 @@ class VideoDownloader(QDialog):
             return
         
         pos = getattr(self, 'mini_scroll_pos', 0)
-        # ?�목 ?�까지 ?�달?�면 처음?�로 ?�아가�?        if pos >= len(title):
+        # 제목 끝까지 도달하면 처음으로 돌아가기
+        if pos >= len(title):
             pos = 0
         
-        # ?�재 ?�치부??max_visible만큼 ?�시
+        # 현재 위치부터 max_visible만큼 표시
         display_text = title[pos:pos + max_visible]
         
-        # ?�목???�면보다 길면 ?�크�??�과�??�해 공백 추�?
+        # 제목이 화면보다 길면 스크롤 효과를 위해 공백 추가
         if len(title) > max_visible:
-            # ?�목 ?�에 ?�달?�면 처음 부분을 보여주기 ?�해 ?�환
+            # 제목 끝에 도달하면 처음 부분을 보여주기 위해 순환
             if pos + max_visible > len(title):
                 remaining = max_visible - (len(title) - pos)
                 display_text = title[pos:] + "   " + title[:remaining]
@@ -944,10 +950,10 @@ class VideoDownloader(QDialog):
         self.mini_scroll_pos = pos + 1
 
     def mini_on_volume_changed(self, value):
-        # 0-100 ??0.0-1.0 변?�하????비디??볼륨 ?�용
+        # 0-100 → 0.0-1.0 변환하여 웹 비디오 볼륨 적용
         vol = max(0.0, min(1.0, value / 100.0))
         
-        # ?�재 볼륨 값을 ?�?�하???�동 리셋 방�?
+        # 현재 볼륨 값을 저장하여 자동 리셋 방지
         self.current_volume = vol
         
         js = f"""
@@ -955,7 +961,7 @@ class VideoDownloader(QDialog):
             var v = document.querySelector('video');
             if (v) {{ 
                 v.volume = {vol}; 
-                // 볼륨 변�??�벤??리스??추�??�여 ?�동 리셋 방�?
+                // 볼륨 변경 이벤트 리스너 추가하여 자동 리셋 방지
                 v.addEventListener('volumechange', function() {{
                     if (v.volume !== {vol}) {{
                         v.volume = {vol};
@@ -973,7 +979,7 @@ class VideoDownloader(QDialog):
             print(f"mini_on_volume_changed js error: {e}")
 
     def maintain_volume(self):
-        """볼륨???�동?�로 변경되지 ?�도�??��?"""
+        """볼륨이 자동으로 변경되지 않도록 유지"""
         if hasattr(self, 'current_volume') and hasattr(self, 'browser') and self.browser:
             js = f"""
             (function() {{
@@ -987,45 +993,47 @@ class VideoDownloader(QDialog):
             try:
                 self.browser.page().runJavaScript(js)
             except Exception as e:
-                pass  # 조용??무시
+                pass  # 조용히 무시
 
     def miniPlayerCloseEvent(self, event):
-        """미니 ?�레?�어 ?�기 ??메인 창도 ?�기"""
-        # 볼륨 ?��? ?�?�머 중�?
+        """미니 플레이어 닫기 시 메인 창도 닫기"""
+        # 볼륨 유지 타이머 중지
         if hasattr(self, 'volume_maintain_timer'):
             self.volume_maintain_timer.stop()
         self.close()
         event.accept()
 
     def changeEvent(self, event):
-        """�??�태 변�??�벤??처리"""
-        # 최소?��? 미니?�레?�어 기능 분리 - 최소?�는 ?�반 최소?�만 ?�행
+        """창 상태 변경 이벤트 처리"""
+        # 최소화와 미니플레이어 기능 분리 - 최소화는 일반 최소화만 수행
         super().changeEvent(event)
 
     def switchToMiniMode(self):
-        """미니 ?�레?�어 모드�??�환"""
+        """미니 플레이어 모드로 전환"""
         if self.is_mini_mode:
             return
             
         self.is_mini_mode = True
         self.normal_geometry = self.geometry()
         
-        # 미니 ?�레?�어 버튼 ?�태 ?�데?�트
+        # 미니 플레이어 버튼 상태 업데이트
         if hasattr(self, 'miniPlayerButton'):
-            self.miniPlayerButton.setEnabled(False)  # 미니 모드 중에??비활?�화
-            self.miniPlayerButton.setToolTip('미니 ?�레?�어 모드 ?�성?�됨')
+            self.miniPlayerButton.setEnabled(False)  # 미니 모드 중에는 비활성화
+            self.miniPlayerButton.setToolTip('미니 플레이어 모드 활성화됨')
         
-        # 메인 �??�기�?        self.hide()
+        # 메인 창 숨기기
+        self.hide()
         
-        # 미니 ?�레?�어 ?�시
+        # 미니 플레이어 표시
         if self.mini_player:
-            # ?�재 ?�목??미니 ?�레?�어???�기??            if hasattr(self, 'title_label') and self.title_label.text():
+            # 현재 제목을 미니 플레이어에 동기화
+            if hasattr(self, 'title_label') and self.title_label.text():
                 title_text = self.title_label.text()
                 if len(title_text) > 30:
                     title_text = title_text[:27] + "..."
                 self.mini_title_label.setText(title_text)
             
-            # 미니 ?�레?�어�??�면 ?�하?�에 ?�치
+            # 미니 플레이어를 화면 우하단에 위치
             screen = QApplication.desktop().screenGeometry()
             self.mini_player.move(screen.width() - 320, screen.height() - 200)
             self.mini_player.show()
@@ -1033,20 +1041,22 @@ class VideoDownloader(QDialog):
             self.mini_player.activateWindow()
 
     def restoreFromMini(self):
-        """미니 ?�레?�어?�서 ?�래 ?�기�?복원"""
+        """미니 플레이어에서 원래 크기로 복원"""
         if not self.is_mini_mode:
             return
             
         self.is_mini_mode = False
         
-        # 미니 ?�레?�어 버튼 ?�태 ?�데?�트
+        # 미니 플레이어 버튼 상태 업데이트
         if hasattr(self, 'miniPlayerButton'):
-            self.miniPlayerButton.setEnabled(True)  # ?�시 ?�성??            self.miniPlayerButton.setToolTip('미니 ?�레?�어 모드')
+            self.miniPlayerButton.setEnabled(True)  # 다시 활성화
+            self.miniPlayerButton.setToolTip('미니 플레이어 모드')
         
-        # 미니 ?�레?�어 ?�기�?        if self.mini_player:
+        # 미니 플레이어 숨기기
+        if self.mini_player:
             self.mini_player.hide()
         
-        # 메인 �?복원
+        # 메인 창 복원
         self.show()
         if self.normal_geometry:
             self.setGeometry(self.normal_geometry)
@@ -1055,25 +1065,26 @@ class VideoDownloader(QDialog):
         self.activateWindow()
 
     def toggleAlwaysOnTop(self):
-        """미니 ?�레?�어 최상??고정 ?��?"""
+        """미니 플레이어 최상위 고정 토글"""
         if not self.mini_player:
             return
             
         self.mini_always_on_top = not self.mini_always_on_top
         
-        # ?�재 ?�치 ?�??        current_pos = self.mini_player.pos()
+        # 현재 위치 저장
+        current_pos = self.mini_player.pos()
         
-        # ?�도???�래�??�데?�트
+        # 윈도우 플래그 업데이트
         if self.mini_always_on_top:
             self.mini_player.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint)
-            self.always_on_top_button.setText("?��")
-            self.always_on_top_button.setToolTip("최상??고정 ?�제")
+            self.always_on_top_button.setText("📌")
+            self.always_on_top_button.setToolTip("최상위 고정 해제")
         else:
             self.mini_player.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
-            self.always_on_top_button.setText("?��")
-            self.always_on_top_button.setToolTip("최상??고정")
+            self.always_on_top_button.setText("📍")
+            self.always_on_top_button.setToolTip("최상위 고정")
         
-        # ?�치 복원 �??�시 ?�시
+        # 위치 복원 및 다시 표시
         self.mini_player.move(current_pos)
         self.mini_player.show()
         self.mini_player.raise_()
@@ -1081,12 +1092,13 @@ class VideoDownloader(QDialog):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return:
-            # ?�터 ?�는 검?�만 ?�행 (?�립보드 복사???�� 버튼?�로�?
+            # 엔터 키는 검색만 수행 (클립보드 복사는 📋 버튼으로만)
             if hasattr(self, 'search_url'):
                 focused_widget = QApplication.focusWidget()
-                # search_url???�커?��? ?�고 ?�스?��? ?�을 ?�만 검??                if focused_widget == self.search_url and self.search_url.text().strip():
+                # search_url에 포커스가 있고 텍스트가 있을 때만 검색
+                if focused_widget == self.search_url and self.search_url.text().strip():
                     self.on_search()
-                # ?�커?��? ?�거??비어?�으�??�무 ?�작???��? ?�음
+                # 포커스가 없거나 비어있으면 아무 동작도 하지 않음
             else:
                 self.on_search()
         elif event.key() == Qt.Key_Escape:
@@ -1095,17 +1107,17 @@ class VideoDownloader(QDialog):
             super().keyPressEvent(event)  # Handle other key events normally
     
     def closeEvent(self, event):
-        """?�플리�??�션 종료 ???�정 ?�??""
+        """애플리케이션 종료 시 설정 저장"""
         try:
             self.app_settings.save_settings()
         except Exception as e:
-            print(f"?�정 ?�??�??�류: {e}")
+            print(f"설정 저장 중 오류: {e}")
         
-        # 미니 ?�레?�어가 ?�다�??�기
+        # 미니 플레이어가 있다면 닫기
         if hasattr(self, 'mini_player') and self.mini_player:
             self.mini_player.close()
         
-        # 볼륨 ?��? ?�?�머 중�?
+        # 볼륨 유지 타이머 중지
         if hasattr(self, 'volume_maintain_timer'):
             self.volume_maintain_timer.stop()
             
@@ -1114,13 +1126,13 @@ class VideoDownloader(QDialog):
     def get_video_info(url):
         ydl_opts = {
             'quiet': True,
-            'no_warnings': False, # WARNING 메시지�?보기 ?�해 False�??�정
+            'no_warnings': False, # WARNING 메시지를 보기 위해 False로 설정
             'skip_download': True,
-            'ignoreerrors': True, # ?��? ?�류 무시
-            'ignore_no_formats_error': True, # ?�맷 ?�는 ?�류 무시
-            # 'allow_unplayable_formats': True, # ?�버깅용
-            # 'verbose': True, # ???�세??로그
-            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', # mp4 ?�호
+            'ignoreerrors': True, # 일부 오류 무시
+            'ignore_no_formats_error': True, # 포맷 없는 오류 무시
+            # 'allow_unplayable_formats': True, # 디버깅용
+            # 'verbose': True, # 더 자세한 로그
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', # mp4 선호
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             result = ydl.extract_info(url, download=False)
@@ -1145,35 +1157,35 @@ class VideoDownloader(QDialog):
         self.musicPageUrl = QUrl("https://music.youtube.com")
         self.SCPageUrl = QUrl("https://soundcloud.com/")
 
-        self.toggleDownButton = QPushButton("?��", self)
+        self.toggleDownButton = QPushButton("💥", self)
         self.toggleDownButton.clicked.connect(self.toggleBrowser)
         self.toggleDownButton.setFixedSize(30, 30)
 
         # Navigation Buttons
-        self.backButton = QPushButton('?��')
+        self.backButton = QPushButton('👈')
         self.backButton.clicked.connect(self.browser.back)
-        self.refreshButton = QPushButton('?��')
+        self.refreshButton = QPushButton('🔄')
         self.refreshButton.setFixedSize(30, 30)
         self.refreshButton.clicked.connect(self.browser.reload)
         self.homeButton = QPushButton()
         self.homeButton.setFixedSize(30, 30)
-        self.homeButton.setIcon(QIcon(':/homeIcon')) # ?�이�??�정 복원
+        self.homeButton.setIcon(QIcon(':/homeIcon')) # 아이콘 설정 복원
         self.homeButton.clicked.connect(lambda: self.browser.setUrl(self.homePageUrl))
         self.musicButton = QPushButton()
         self.musicButton.setFixedSize(30, 30)
-        self.musicButton.setIcon(QIcon(':/musicIcon')) # ?�이�??�정 복원
+        self.musicButton.setIcon(QIcon(':/musicIcon')) # 아이콘 설정 복원
         self.musicButton.clicked.connect(lambda: self.browser.setUrl(self.musicPageUrl))
         self.SCButton = QPushButton()
         self.SCButton.setFixedSize(30, 30)
-        self.SCButton.setIcon(QIcon(':/soundCloudIcon')) # ?�이�??�정 복원
+        self.SCButton.setIcon(QIcon(':/soundCloudIcon')) # 아이콘 설정 복원
         self.SCButton.clicked.connect(lambda: self.browser.setUrl(self.SCPageUrl))
-        self.forwardButton = QPushButton('?��')
+        self.forwardButton = QPushButton('👉')
         self.forwardButton.clicked.connect(self.browser.forward)
         
-        # 미니 ?�레?�어 버튼 추�?
-        self.miniPlayerButton = QPushButton('?��')
+        # 미니 플레이어 버튼 추가
+        self.miniPlayerButton = QPushButton('🎵')
         self.miniPlayerButton.setFixedSize(30, 30)
-        self.miniPlayerButton.setToolTip('미니 ?�레?�어 모드')
+        self.miniPlayerButton.setToolTip('미니 플레이어 모드')
         self.miniPlayerButton.clicked.connect(self.switchToMiniMode)
 
         # Navigation Layout
@@ -1184,7 +1196,7 @@ class VideoDownloader(QDialog):
         self.navLayout.addWidget(self.homeButton)  # Adding the home button between back and forward
         self.navLayout.addWidget(self.musicButton)
         self.navLayout.addWidget(self.SCButton)
-        self.navLayout.addWidget(self.miniPlayerButton)  # 미니 ?�레?�어 버튼 추�?
+        self.navLayout.addWidget(self.miniPlayerButton)  # 미니 플레이어 버튼 추가
         self.navLayout.addWidget(self.toggleDownButton)
 
         # Left Widget for Browser and Navigation
@@ -1220,7 +1232,7 @@ class VideoDownloader(QDialog):
 
         self.browser.loadFinished.connect(self.updateButtonStates)
         
-        # 미니 ?�레?�어 ?�성
+        # 미니 플레이어 생성
         self.createMiniPlayer()
 
     def setupRightLayout(self):
@@ -1231,19 +1243,19 @@ class VideoDownloader(QDialog):
         self.rightLayout = QVBoxLayout(self.downLayoutWidget)
 
         # Initialize all widgets for the right side layout
-        # self.theme_selector = QComboBox() # ?�마 ?�택 콤보박스 ??��
-        # self.theme_selector.setFixedSize(356, 30) # ?�마 ?�택 콤보박스 ??��
-        self.browHideButton = QPushButton('?��')
+        # self.theme_selector = QComboBox() # 테마 선택 콤보박스 삭제
+        # self.theme_selector.setFixedSize(356, 30) # 테마 선택 콤보박스 삭제
+        self.browHideButton = QPushButton('🦕')
         self.browHideButton.setFixedSize(30, 30)
         self.browHideButton.clicked.connect(self.toggleBrowWidgetVisibility)
-        self.createrButton = QPushButton('?��')
+        self.createrButton = QPushButton('💬')
         self.createrButton.setFixedSize(30, 30)
         self.createrButton.clicked.connect(self.openSettingsDialog)
-        self.formatSettingsButton = QPushButton('?�️')
+        self.formatSettingsButton = QPushButton('⚙️')
         self.formatSettingsButton.setFixedSize(30, 30)
         self.formatSettingsButton.clicked.connect(self.openFormatSettingsDialog)
-        self.formatSettingsButton.setToolTip('?�맷 ?�정')
-        self.copyUrlButton = QPushButton('?��')
+        self.formatSettingsButton.setToolTip('포맷 설정')
+        self.copyUrlButton = QPushButton('📋')
         self.copyUrlButton.setFixedSize(30, 30)
         self.search_url = QLineEdit()
         self.search_url.setStyleSheet("""
@@ -1257,23 +1269,23 @@ class VideoDownloader(QDialog):
         """)
         self.search_url.setFixedSize(356, 30)
         self.search_url.setClearButtonEnabled(True)
-        self.search_button = QPushButton('?��')
+        self.search_button = QPushButton('🔍')
         self.search_button.setFixedSize(30, 30)
-        self.download_list = QPushButton('?��')
+        self.download_list = QPushButton('📍')
         self.download_list.setFixedSize(100, 30)
-        self.later_list = QPushButton('?��')
+        self.later_list = QPushButton('📌')
         self.later_list.setFixedSize(100, 30)
         self.video_table = QTableWidget()
-        self.download_button = QPushButton('?��')
-        self.delete_button = QPushButton('??)
+        self.download_button = QPushButton('📥')
+        self.delete_button = QPushButton('❌')
         self.status_label = QLabel('Ready')
         self.progress_bar = QProgressBar()
 
-        self.back_button = QPushButton("??��", self)
+        self.back_button = QPushButton("⏮️", self)
         self.back_button.clicked.connect(self.play_back)
-        self.play_button = QPushButton("??��", self)
+        self.play_button = QPushButton("⏯️", self)
         self.play_button.clicked.connect(self.play)
-        self.next_button = QPushButton("??��", self)
+        self.next_button = QPushButton("⏭️", self)
         self.next_button.clicked.connect(self.play_next)  # Connect the button to the play_next method
         self.title_label = QLabel()
         self.title_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)  # Align text to the left and vertically center
@@ -1288,8 +1300,8 @@ class VideoDownloader(QDialog):
             """)
         self.title_label.setWordWrap(False)
 
-        # self.theme_selector.addItems(themes.keys()) # ?�마 ?�택 콤보박스 관??코드 ??��
-        # self.theme_selector.currentIndexChanged.connect(self.applySelectedTheme) # ?�마 ?�택 콤보박스 관??코드 ??��
+        # self.theme_selector.addItems(themes.keys()) # 테마 선택 콤보박스 관련 코드 삭제
+        # self.theme_selector.currentIndexChanged.connect(self.applySelectedTheme) # 테마 선택 콤보박스 관련 코드 삭제
         self.search_button.clicked.connect(self.on_search)
         self.copyUrlButton.clicked.connect(self.copyUrlToClipboard)
         self.download_button.clicked.connect(self.on_download)
@@ -1301,21 +1313,21 @@ class VideoDownloader(QDialog):
         self.animation_timer.timeout.connect(self.toggle_loading_animation)
         self.direction = 1
 
-        # settingsLayout?� ?�제 비게 ?��?�? 관???�젯 추�? 코드�??�거?�니??
+        # settingsLayout은 이제 비게 되므로, 관련 위젯 추가 코드를 제거합니다.
         settingsLayout = QHBoxLayout()
         settingsLayout.setContentsMargins(0, 0, 0, 0)  # Set the margins to 0
         settingsLayout.setSpacing(5)  # Set the spacing between widgets
-        # settingsLayout.addWidget(self.browHideButton) # titleLayout?�로 ?�동
-        # settingsLayout.addWidget(self.createrButton) # titleLayout?�로 ?�동
-        # settingsLayout.addStretch(1) # ?�젯???�으므�??�트?�치???�거
+        # settingsLayout.addWidget(self.browHideButton) # titleLayout으로 이동
+        # settingsLayout.addWidget(self.createrButton) # titleLayout으로 이동
+        # settingsLayout.addStretch(1) # 위젯이 없으므로 스트레치도 제거
 
         titleLayout = QHBoxLayout()
         titleLayout.setContentsMargins(0, 0, 0, 0)
-        titleLayout.setSpacing(5) # 버튼�??�이�??�이 간격 ?�정
-        titleLayout.addWidget(self.browHideButton) # titleLayout 좌측??추�?
-        titleLayout.addWidget(self.title_label) # title_label??중앙?�로 ?�동
-        titleLayout.addWidget(self.formatSettingsButton) # ?�맷 ?�정 버튼 추�?
-        titleLayout.addWidget(self.createrButton) # createrButton??titleLayout ?�측??추�?
+        titleLayout.setSpacing(5) # 버튼과 레이블 사이 간격 설정
+        titleLayout.addWidget(self.browHideButton) # titleLayout 좌측에 추가
+        titleLayout.addWidget(self.title_label) # title_label을 중앙으로 이동
+        titleLayout.addWidget(self.formatSettingsButton) # 포맷 설정 버튼 추가
+        titleLayout.addWidget(self.createrButton) # createrButton을 titleLayout 우측에 추가
 
         playerLayout = QHBoxLayout()
         playerLayout.setContentsMargins(0, 0, 0, 0)
@@ -1355,7 +1367,7 @@ class VideoDownloader(QDialog):
         actionLayout.addWidget(self.delete_button)
 
         # Add grouped layouts to the main right layout
-        # self.rightLayout.addLayout(settingsLayout) # settingsLayout??비었?��?�??�거
+        # self.rightLayout.addLayout(settingsLayout) # settingsLayout이 비었으므로 제거
         self.rightLayout.addLayout(titleLayout)
         self.rightLayout.addLayout(playerLayout)
         # self.rightLayout.addLayout(positionLayout)
@@ -1371,7 +1383,7 @@ class VideoDownloader(QDialog):
         self.resetTimer.timeout.connect(self.performResetMediaControls)  # Connect timeout signal to the reset method
         self.browser.urlChanged.connect(self.checkAndTriggerReset)
 
-        self.setStyleSheet(DARK_THEME_STYLESHEET) # ?�크 ?�마 직접 ?�용
+        self.setStyleSheet(DARK_THEME_STYLESHEET) # 다크 테마 직접 적용
 
     def checkAndTriggerReset(self, url):
         """Check the URL and trigger the reset with a delay if it is the YouTube homepage."""
@@ -1383,7 +1395,7 @@ class VideoDownloader(QDialog):
         # self.positionSlider.setValue(0)
         # self.durationLabel.setText("00:00 / 00:00")
         self.play_button.setIcon(QIcon(":/play_icon"))  # Reset to play icon
-        self.play_button.setText("?�️")
+        self.play_button.setText("▶️")
 
     # def setupMediaControls(self):
     #     # Timer to update the position slider and duration label
@@ -1512,13 +1524,13 @@ class VideoDownloader(QDialog):
             self.scrollTimer.stop()
         self.title_label.setText(newTitle)  # Set title immediately without scrolling
         
-        # 미니 ?�레?�어 ?�목???�데?�트 (마키 ?�용)
+        # 미니 플레이어 제목도 업데이트 (마키 적용)
         if hasattr(self, 'mini_player') and self.mini_player and hasattr(self, 'mini_title_label'):
             self.mini_original_title = newTitle
             self.mini_scroll_pos = 0
             self._update_mini_title_immediate()
 
-        # ?�생 ?�태 ?�인 �?버튼 ?�데?�트
+        # 재생 상태 확인 및 버튼 업데이트
         self.checkPlaybackState()
 
     def checkPlaybackState(self):
@@ -1567,7 +1579,7 @@ class VideoDownloader(QDialog):
         self.back_button.setEnabled(not is_youtube_music)
 
         if is_youtube_music:
-            self.title_label.setText("YouTube Music?�서??컨트롤이 ?�동?��? ?�습?�다.")
+            self.title_label.setText("YouTube Music에서는 컨트롤이 작동하지 않습니다.")
         else:
             self.title_label.setText("")
 
@@ -1631,19 +1643,21 @@ class VideoDownloader(QDialog):
     @pyqtSlot(str)
     def updatePlayButtonIcon(self, state):
         if state == 'playing':
-            self.play_button.setText("?�️")  # Update to pause icon
-            # 미니 ?�레?�어 버튼???�기??            if hasattr(self, 'mini_play_button'):
-                self.mini_play_button.setText("?�️")
+            self.play_button.setText("⏸️")  # Update to pause icon
+            # 미니 플레이어 버튼도 동기화
+            if hasattr(self, 'mini_play_button'):
+                self.mini_play_button.setText("⏸️")
         elif state == 'paused':
-            self.play_button.setText("?�️")  # Update to play icon
-            # 미니 ?�레?�어 버튼???�기??            if hasattr(self, 'mini_play_button'):
-                self.mini_play_button.setText("?�️")
+            self.play_button.setText("▶️")  # Update to play icon
+            # 미니 플레이어 버튼도 동기화
+            if hasattr(self, 'mini_play_button'):
+                self.mini_play_button.setText("▶️")
         else:
             # Optionally handle 'unknown' state or other states if necessary
             pass
 
     def play_next(self):
-        # JavaScript 코드�??�음 ?�상?�로 ?�동?�고 ?�생 ?��? ?�인
+        # JavaScript 코드로 다음 영상으로 이동하고 재생 여부 확인
         jsCode = """
         (function() {
             const host = window.location.host;
@@ -1669,7 +1683,7 @@ class VideoDownloader(QDialog):
             return 'unknown';
         })();
         """
-        # JavaScript ?�행 ??반환???�생 ?�태???�라 버튼 ?�이�??�데?�트
+        # JavaScript 실행 후 반환된 재생 상태에 따라 버튼 아이콘 업데이트
         self.browser.page().runJavaScript(jsCode, self.updatePlayButtonIcon)
 
     def setupVideoTable(self):
@@ -1690,26 +1704,26 @@ class VideoDownloader(QDialog):
         self.video_table.setColumnWidth(2, 300)
         self.video_table.setColumnWidth(3, 180)
 
-        self.video_table.itemChanged.connect(self.handle_item_changed) # itemChanged ?�그???�결
+        self.video_table.itemChanged.connect(self.handle_item_changed) # itemChanged 시그널 연결
 
     def handle_item_changed(self, item):
-        """?�이�??�이??변�????�출?�어 ?�더 체크박스 ?�태 ?�데?�트"""
-        if item.column() == 0: # �?번째 ??(체크박스 ?????�이?�이 변경된 경우
+        """테이블 아이템 변경 시 호출되어 헤더 체크박스 상태 업데이트"""
+        if item.column() == 0: # 첫 번째 열 (체크박스 열)의 아이템이 변경된 경우
             self.header.updateState()
 
     def copyUrlToClipboard(self):
-        """브라?��????�재 URL???�립보드??복사?�고 검???�드???�정????검??""
+        """브라우저의 현재 URL을 클립보드에 복사하고 검색 필드에 설정한 후 검색"""
         currentUrl = self.browser.url().toString()
         logger.debug(f"Current URL: {currentUrl}")
         
-        # ?�립보드??복사
+        # 클립보드에 복사
         clipboard = QApplication.clipboard()
         clipboard.setText(currentUrl)
         
-        # 검???�드??URL ?�정
+        # 검색 필드에 URL 설정
         if hasattr(self, 'search_url'):
             self.search_url.setText(currentUrl)
-            # 검???�행 (중복 체크??on_search?�서 ?�행)
+            # 검색 실행 (중복 체크는 on_search에서 수행)
             self.on_search()
 
     def navigateToLink(self):
@@ -1727,9 +1741,9 @@ class VideoDownloader(QDialog):
                 self.settingsDialog.finished.connect(self.onSettingsDialogClosed)
                 self.settingsDialog.show()
             except Exception as e:
-                # ?�외�??�이 종료?��? ?�도�?방어
+                # 예외로 앱이 종료되지 않도록 방어
                 self.settingsDialog = None
-                QMessageBox.critical(self, "Error", f"?�보 창을 ?�는 �??�류가 발생?�습?�다:\n{e}")
+                QMessageBox.critical(self, "Error", f"정보 창을 여는 중 오류가 발생했습니다:\n{e}")
         else:
             self.settingsDialog.raise_()  # Brings the dialog to the front if already open
 
@@ -1738,7 +1752,7 @@ class VideoDownloader(QDialog):
         self.settingsDialog = None  # Clear the reference after the dialog is closed
     
     def openFormatSettingsDialog(self):
-        """?�맷 ?�정 ?�이?�로�??�기"""
+        """포맷 설정 다이얼로그 열기"""
         if not self.formatSettingsDialog:
             try:
                 self.formatSettingsDialog = FormatSettingsDialog(self, self.app_settings)
@@ -1746,42 +1760,44 @@ class VideoDownloader(QDialog):
                 self.formatSettingsDialog.finished.connect(self.onFormatSettingsDialogClosed)
                 self.formatSettingsDialog.show()
             except Exception as e:
-                # ?�외�??�이 종료?��? ?�도�?방어
+                # 예외로 앱이 종료되지 않도록 방어
                 self.formatSettingsDialog = None
-                QMessageBox.critical(self, "Error", f"?�맷 ?�정 창을 ?�는 �??�류가 발생?�습?�다:\n{e}")
+                QMessageBox.critical(self, "Error", f"포맷 설정 창을 여는 중 오류가 발생했습니다:\n{e}")
         else:
             self.formatSettingsDialog.raise_()  # Brings the dialog to the front if already open
 
     def onFormatSettingsDialogClosed(self):
-        """?�맷 ?�정 ?�이?�로�??�힘 처리"""
+        """포맷 설정 다이얼로그 닫힘 처리"""
         if self.formatSettingsDialog:
             self.formatSettingsDialog.deleteLater()
             self.formatSettingsDialog = None
 
     def onFormatSettingsChanged(self):
-        """?�맷 ?�정 변�????�출"""
-        # ?�재 ?�이블의 모든 ?�을 ?�시 ?�터링하???�데?�트
+        """포맷 설정 변경 시 호출"""
+        # 현재 테이블의 모든 행을 다시 필터링하여 업데이트
         self.applyFormatFilters()
-        self.status_label.setText("?�맷 ?�정???�용?�었?�니??")
+        self.status_label.setText("포맷 설정이 적용되었습니다.")
     
     def filterFormatsBySettings(self, formats_info_list):
-        """?�정???�라 ?�맷 리스???�터�?""
+        """설정에 따라 포맷 리스트 필터링"""
         if not formats_info_list:
             return formats_info_list
         
         filtered_formats = []
         
         for display_text, format_id, type_label, filesize in formats_info_list:
-            # ?�맷 ?�?�별 ?�터�?            if type_label == 'Video' and not self.app_settings.show_video_formats:
+            # 포맷 타입별 필터링
+            if type_label == 'Video' and not self.app_settings.show_video_formats:
                 continue
             elif type_label == 'Audio-only' and not self.app_settings.show_audio_only:
                 continue
             elif type_label == 'Video-only' and not self.app_settings.show_video_formats:
-                # Video-only??비디?�만 ?�는 ?�맷?��?�?show_video_formats�??�터�?                continue
+                # Video-only는 비디오만 있는 포맷이므로 show_video_formats로 필터링
+                continue
             
-            # ?�질 ?�한 ?�터�?(비디???�맷�?
+            # 품질 제한 필터링 (비디오 포맷만)
             if type_label in ['Video', 'Video-only'] and self.app_settings.max_quality > 0:
-                # ?�상??추출 (?? "1920x1080" ?�식)
+                # 해상도 추출 (예: "1920x1080" 형식)
                 resolution_match = re.search(r'(\d+)x(\d+)', display_text)
                 if resolution_match:
                     height = int(resolution_match.group(2))
@@ -1793,8 +1809,8 @@ class VideoDownloader(QDialog):
         return filtered_formats
     
     def applyFormatFilters(self):
-        """?�재 ?�이블의 모든 콤보박스???�맷 ?�터 ?�용"""
-        # ?�정 변�???기존 ?�이블의 ?�맷 콤보박스�??�데?�트
+        """현재 테이블의 모든 콤보박스에 포맷 필터 적용"""
+        # 설정 변경 후 기존 테이블의 포맷 콤보박스를 업데이트
         if not hasattr(self, 'video_table'):
             return
         
@@ -1802,17 +1818,18 @@ class VideoDownloader(QDialog):
         for row in range(row_count):
             format_combo = self.video_table.cellWidget(row, 3)
             if format_combo and isinstance(format_combo, QComboBox):
-                # ?�재 ?�택???�맷 ?�??                current_format_id = format_combo.currentData()
+                # 현재 선택된 포맷 저장
+                current_format_id = format_combo.currentData()
                 current_text = format_combo.currentText()
                 
-                # 모든 ?�맷 ?�보 ?�집
+                # 모든 포맷 정보 수집
                 all_formats = []
                 for i in range(format_combo.count()):
                     item_text = format_combo.itemText(i)
                     item_data = format_combo.itemData(i)
-                    # 카테고리 ?�더??건너?�기
+                    # 카테고리 헤더는 건너뛰기
                     if item_data is not None:
-                        # type_label 추출 (display_text?�서)
+                        # type_label 추출 (display_text에서)
                         type_label = 'Unknown'
                         if '[Video]' in item_text:
                             type_label = 'Video'
@@ -1821,7 +1838,7 @@ class VideoDownloader(QDialog):
                         elif '[Audio-only]' in item_text:
                             type_label = 'Audio-only'
                         
-                        # filesize 추출 (?�?�적?�로)
+                        # filesize 추출 (대략적으로)
                         filesize = 0
                         filesize_match = re.search(r'(\d+)MB', item_text)
                         if filesize_match:
@@ -1829,15 +1846,16 @@ class VideoDownloader(QDialog):
                         
                         all_formats.append((item_text, item_data, type_label, filesize))
                 
-                # ?�터�??�용
+                # 필터링 적용
                 filtered_formats = self.filterFormatsBySettings(all_formats)
                 
-                # 콤보박스 ?�구??                format_combo.clear()
+                # 콤보박스 재구성
+                format_combo.clear()
                 current_category = None
                 found_current = False
                 
                 for display_text, format_id, type_label, filesize in filtered_formats:
-                    # 카테고리 ?�더 추�?
+                    # 카테고리 헤더 추가
                     if type_label != current_category:
                         if format_combo.count() > 0 and current_category is not None:
                             pass
@@ -1850,7 +1868,7 @@ class VideoDownloader(QDialog):
                         format_combo.setCurrentIndex(format_combo.count() - 1)
                         found_current = True
                 
-                # ?�재 ?�택???�맷???�터링되???�거??경우, �?번째 ?�효????�� ?�택
+                # 현재 선택된 포맷이 필터링되어 제거된 경우, 첫 번째 유효한 항목 선택
                 if not found_current and format_combo.count() > 0:
                     for i in range(format_combo.count()):
                         if format_combo.model().item(i).isEnabled():
@@ -1867,58 +1885,59 @@ class VideoDownloader(QDialog):
     def toggleBrowser(self):
         if self.downLayoutWidget.isVisible():
             self.downLayoutWidget.hide()
-            self.toggleDownButton.setText("?��")
+            self.toggleDownButton.setText("😜")
             self.adjustMainLayoutSize()
         else:
             self.downLayoutWidget.show()
-            self.toggleDownButton.setText("?��")
+            self.toggleDownButton.setText("💥")
             self.resetMainLayoutSize()
 
     def toggleBrowWidgetVisibility(self):
         if self.browWidget.isVisible():
             self.browWidget.hide()
-            self.browHideButton.setText('?��')  # Example icon when visible
+            self.browHideButton.setText('💥')  # Example icon when visible
             self.adjustMainLayoutSize()
 
         else:
             self.browWidget.show()
-            self.browHideButton.setText('?��')  # Example icon when hidden
+            self.browHideButton.setText('🦕')  # Example icon when hidden
             self.resetMainLayoutSize()
 
     def adjustMainLayoutSize(self):
         if not self.browWidget.isVisible():
-            # ?�도?��? 축소?��? ?�도�?최소 ?�기 ?�정
+            # 윈도우가 축소되지 않도록 최소 크기 설정
             self.setMinimumSize(450, 560)
 
-            # ?�른�??�젯??맞추�??�해 메인 ?�도???�기 조정
-            # 참고: ?�하???�른 ?�작???�다�?조정?????�습?�다.
+            # 오른쪽 위젯을 맞추기 위해 메인 윈도우 크기 조정
+            # 참고: 원하는 다른 동작이 있다면 조정할 수 있습니다.
             self.resize(450, 560)
 
-            # downLayoutWidget???�호?�는 최소 ?�기가 ?�는지 ?�인?�니??
+            # downLayoutWidget에 선호하는 최소 크기가 있는지 확인합니다.
             self.downLayoutWidget.setMinimumSize(450, 560)
 
-            # browWidget??최소 ?�기�?조정?�여 ?�전??축소가 가?�하?�록 ?�니??
+            # browWidget의 최소 크기를 조정하여 완전한 축소가 가능하도록 합니다.
             self.browWidget.setMinimumSize(0, 0)
         else:
-            # browWidget???�시 ?�시?�면 ?�도?��? ?�장?�도�??�니??
-            # ?�체 ?�도?�에 ?�리?�인 최소 ?�기�??�정?�니??
+            # browWidget이 다시 표시되면 윈도우가 확장되도록 합니다.
+            # 전체 윈도우에 합리적인 최소 크기를 설정합니다.
             self.setMinimumSize(980, 560)
 
-            # ???�젯???�용?�기 ?�해 메인 ?�도???�기 조정
-            # ?�요???�라 ?�기�??�의 ?�전 ?�기�??�?�하�?복원?????�습?�다.
+            # 두 위젯을 수용하기 위해 메인 윈도우 크기 조정
+            # 필요에 따라 숨기기 전의 이전 크기를 저장하고 복원할 수 있습니다.
             self.resize(980, 560)
 
-            # ???�젯??최소 ?�기�?복원?�니??
-            self.browWidget.setMinimumSize(500, 560)  # 컨텐츠에 맞게 ?�요???�라 조정?�니??
+            # 두 위젯의 최소 크기를 복원합니다.
+            self.browWidget.setMinimumSize(500, 560)  # 컨텐츠에 맞게 필요에 따라 조정합니다.
             self.downLayoutWidget.setMinimumSize(450, 560)
 
     def resetMainLayoutSize(self):
         # When making the browser visible again, adjust the layout to accommodate both widgets.
-        self.setMinimumSize(1100, 560) # 최소 ?�기�??�마 ?�택�??�외???�기�?조정 가??        self.browWidget.setMinimumSize(500, 560)
-        self.downLayoutWidget.setMinimumSize(450, 560) # ?�른�??�이?�웃 최소 ?�비 고정
+        self.setMinimumSize(1100, 560) # 최소 크기를 테마 선택기 제외한 크기로 조정 가능
+        self.browWidget.setMinimumSize(500, 560)
+        self.downLayoutWidget.setMinimumSize(450, 560) # 오른쪽 레이아웃 최소 너비 고정
 
         # Adjust splitter sizes to distribute space according to your preference.
-        self.splitter.setSizes([500, 450]) # ?�플리터 ?�기 조정
+        self.splitter.setSizes([500, 450]) # 스플리터 크기 조정
 
     def center_on_screen(self):
         # Get the main screen's geometry
@@ -1931,7 +1950,7 @@ class VideoDownloader(QDialog):
         self.move(center_point - self.rect().center())
 
     def search_duplicate_urls(self, url):
-        """중복 URL 검??(is_duplicate_url�??�일??기능 - ?�환?�을 ?�해 ?��?)"""
+        """중복 URL 검색 (is_duplicate_url과 동일한 기능 - 호환성을 위해 유지)"""
         return self.is_duplicate_url(url)
 
     def toggle_loading_animation(self):
@@ -1956,20 +1975,21 @@ class VideoDownloader(QDialog):
         return any(url == existing_url for _, existing_url in self.video_info_list)
 
     def delete_selected_videos(self):
-        """?�택??비디????�� (on_delete_selected?� ?�일??기능 - ?�환?�을 ?�해 ?��?)"""
-        # on_delete_selected 메서?��? ?�용?�도�?리다?�렉??        self.on_delete_selected()
+        """선택된 비디오 삭제 (on_delete_selected와 동일한 기능 - 호환성을 위해 유지)"""
+        # on_delete_selected 메서드를 사용하도록 리다이렉트
+        self.on_delete_selected()
 
     @pyqtSlot()
     def on_search(self):
         url = self.search_url.text().strip()
 
         if self.is_duplicate_url(url):
-            self.status_label.setText("??비디?�는 ?��? 목록??추�??�었?�니??")
+            self.status_label.setText("이 비디오는 이미 목록에 추가되었습니다.")
             return
 
         self.search_button.setEnabled(False)
         self.animation_timer.start(50)
-        self.set_status('로딩 �?..')
+        self.set_status('로딩 중...')
         self.progress_bar.setRange(0, 0)  # Set to indeterminate mode
 
         self.search_thread = Searcher(url)
@@ -1982,7 +2002,7 @@ class VideoDownloader(QDialog):
     def check_results(self):
         # Assuming self.video_info_list is updated with search results
         if not self.video_info_list:
-            self.status_label.setText("검??결과가 ?�습?�다.")
+            self.status_label.setText("검색 결과가 없습니다.")
 
     def enable_search_button(self):
         self.search_button.setEnabled(True)
@@ -2009,9 +2029,9 @@ class VideoDownloader(QDialog):
 
         if thumbnail_url:
             try:
-                # ?�트?�크 ?�청???�?�아??추�? (10�?
+                # 네트워크 요청에 타임아웃 추가 (10초)
                 response = requests.get(thumbnail_url, timeout=10)
-                response.raise_for_status()  # HTTP ?�러 체크
+                response.raise_for_status()  # HTTP 에러 체크
                 pixmap = QPixmap()
                 if pixmap.loadFromData(response.content):
                     pixmap_resized = pixmap.scaled(30, 30, Qt.KeepAspectRatio)
@@ -2019,37 +2039,41 @@ class VideoDownloader(QDialog):
                     thumbnail_item.setData(Qt.DecorationRole, pixmap_resized)
                     self.video_table.setItem(row_position, 1, thumbnail_item)
             except requests.exceptions.Timeout:
-                logger.warning(f"?�네???�운로드 ?�?�아?? {thumbnail_url}")
+                logger.warning(f"썸네일 다운로드 타임아웃: {thumbnail_url}")
             except requests.exceptions.RequestException as e:
-                logger.warning(f"?�네???�운로드 ?�패: {thumbnail_url} - {str(e)}")
+                logger.warning(f"썸네일 다운로드 실패: {thumbnail_url} - {str(e)}")
             except Exception as e:
-                logger.error(f"?�네??처리 �??�류: {str(e)}")
+                logger.error(f"썸네일 처리 중 오류: {str(e)}")
 
         # Format combo box with categorized and ordered formats
         format_combo = QComboBox()
 
-        # ?�정???�라 ?�맷 ?�터�?        filtered_formats = self.filterFormatsBySettings(formats_info_list)
+        # 설정에 따라 포맷 필터링
+        filtered_formats = self.filterFormatsBySettings(formats_info_list)
 
-        # 카테고리별로 ?�맷 추�?
+        # 카테고리별로 포맷 추가
         current_category = None
-        if not filtered_formats: # ?�맷 ?�보가 ?�으�?            format_combo.addItem("No available formats", None) # userData??None
+        if not filtered_formats: # 포맷 정보가 없으면
+            format_combo.addItem("No available formats", None) # userData도 None
         else:
             for display_text, format_id, type_label, filesize in filtered_formats:
-                # 카테고리 ?�더 추�? (type_label 변�???
+                # 카테고리 헤더 추가 (type_label 변경 시)
                 if type_label != current_category:
-                    if format_combo.count() > 0 and current_category is not None: # �?카테고리가 ?�니�? ?�전 카테고리가 ?�었?�면 구분??고려 가??                        pass # 구분???�??카테고리명으�?구분
-                    format_combo.addItem(f"--- {type_label} --- ") # 카테고리 명칭 ?�시
-                    format_combo.model().item(format_combo.count() - 1).setEnabled(False) # 카테고리명�? ?�택 불�?
+                    if format_combo.count() > 0 and current_category is not None: # 첫 카테고리가 아니고, 이전 카테고리가 있었다면 구분선 고려 가능
+                        pass # 구분선 대신 카테고리명으로 구분
+                    format_combo.addItem(f"--- {type_label} --- ") # 카테고리 명칭 표시
+                    format_combo.model().item(format_combo.count() - 1).setEnabled(False) # 카테고리명은 선택 불가
                     current_category = type_label
                 
-                format_combo.addItem(display_text, userData=format_id) # userData??format_id ?�??
+                format_combo.addItem(display_text, userData=format_id) # userData에 format_id 저장
+
         # Set the default format if available
-        # ?�정??기본 ?�맷??찾아???�정
+        # 설정된 기본 포맷을 찾아서 설정
         default_index = -1
         preferred_format = self.app_settings.default_format.lower()
         
-        # 먼�? 기본 ?�정 ?�맷�??�확???�치?�는 것을 찾기
-        # ?�선?�위: 1) ?�맷 ID???�함, 2) ?�장???�치, 3) ?�스?�에 ?�함
+        # 먼저 기본 설정 포맷과 정확히 일치하는 것을 찾기
+        # 우선순위: 1) 포맷 ID에 포함, 2) 확장자 일치, 3) 텍스트에 포함
         best_match_index = -1
         partial_match_index = -1
         
@@ -2058,30 +2082,30 @@ class VideoDownloader(QDialog):
                 item_text = format_combo.itemText(i).lower()
                 item_data = format_combo.itemData(i)
                 
-                # ?�맷 ID ?�인 (가???�확??매칭)
+                # 포맷 ID 확인 (가장 정확한 매칭)
                 if item_data:
                     format_id_str = str(item_data).lower()
                     if preferred_format in format_id_str:
                         best_match_index = i
                         break
                 
-                # ?�장???�인 (?? mp3, mp4 ??
+                # 확장자 확인 (예: mp3, mp4 등)
                 if preferred_format in ['mp3', 'mp4', 'webm', 'm4a']:
-                    # ?�장?��? 명시?�으�??�시??경우
+                    # 확장자가 명시적으로 표시된 경우
                     if f'.{preferred_format}' in item_text or f' {preferred_format} ' in item_text:
                         if best_match_index == -1:
                             best_match_index = i
-                    # ?�스?�에 ?�함??경우 (부�?매칭)
+                    # 텍스트에 포함된 경우 (부분 매칭)
                     elif preferred_format in item_text and partial_match_index == -1:
                         partial_match_index = i
         
-        # 최선??매칭 ?�용, ?�으�?부�?매칭, ?????�으�?�?번째 ??��
+        # 최선의 매칭 사용, 없으면 부분 매칭, 둘 다 없으면 첫 번째 항목
         if best_match_index != -1:
             default_index = best_match_index
         elif partial_match_index != -1:
             default_index = partial_match_index
         else:
-            # 기본 ?�맷??찾�? 못했?�면 �?번째 ?�제 ?�택 가?�한 ?�이?�을 기본값으�??�정
+            # 기본 포맷을 찾지 못했다면 첫 번째 실제 선택 가능한 아이템을 기본값으로 설정
             for i in range(format_combo.count()):
                 if format_combo.model().item(i).isEnabled():
                     default_index = i
@@ -2093,22 +2117,22 @@ class VideoDownloader(QDialog):
         self.video_table.setCellWidget(row_position, 3, format_combo)
 
     def on_ffmpeg_check_complete(self, success: bool, message: str):
-        """FFmpeg 체크 ?�료 ???�출?�는 콜백 (조용??로깅�??�행)"""
+        """FFmpeg 체크 완료 시 호출되는 콜백 (조용히 로깅만 수행)"""
         if success:
-            # ?�공 ??조용??로그�??��? (?�용??방해 ?�음)
+            # 성공 시 조용히 로그만 남김 (사용자 방해 없음)
             logger.info(f"FFmpeg: {message}")
         else:
-            # ?�패 ?�에??조용??로그�??��? (?�용??방해 ?�음)
+            # 실패 시에도 조용히 로그만 남김 (사용자 방해 없음)
             logger.warning(f"FFmpeg: {message}")
-            # ?�요???�중???�용?��? ?�운로드�??�도?????�림???�시?????�음
+            # 필요시 나중에 사용자가 다운로드를 시도할 때 알림을 표시할 수 있음
     
     def search_finished(self):
-        self.set_status('검???�료.')
+        self.set_status('검색 완료.')
         self.progress_bar.setRange(0, 100)  # Reset the progress bar range
         self.progress_bar.setValue(100)  # Set completion value
 
     def download_finished(self):
-        self.status_label.setText('?�운로드 ?�료.')
+        self.status_label.setText('다운로드 완료.')
 
     def set_status(self, message):
         self.status_label.setText(message)
@@ -2133,22 +2157,24 @@ class VideoDownloader(QDialog):
 
         for row in range(self.video_table.rowCount()):
             checkbox = self.video_table.item(row, 0)
-            # 체크????���??�운로드
+            # 체크된 항목만 다운로드
             if not (checkbox and checkbox.checkState() == Qt.Checked):
                 continue
 
-            # 변?�들??먼�? 초기??            title_item = self.video_table.item(row, 2)
+            # 변수들을 먼저 초기화
+            title_item = self.video_table.item(row, 2)
             format_combo_box = self.video_table.cellWidget(row, 3)
             selected_format_id = None
             
-            # ?�목�?URL 가?�오�?            modified_title = title_item.text() if title_item else "Untitled"
+            # 제목과 URL 가져오기
+            modified_title = title_item.text() if title_item else "Untitled"
             if row < len(self.video_info_list) and self.video_info_list[row] is not None:
                 video_url = self.video_info_list[row][1]
             else:
                 logger.error(f"Invalid video_info_list entry at row {row}")
                 continue
             
-            # ?�맷 ID ?�인
+            # 포맷 ID 확인
             if format_combo_box:
                 selected_format_id = format_combo_box.currentData()
                 if selected_format_id is None:
@@ -2167,13 +2193,13 @@ class VideoDownloader(QDialog):
             selected_videos.append((modified_title, video_url, selected_format_id))
 
         if invalid_selection:
-            self.status_label.setText("�?비디?�에 ?�???�효???�맷???�택??주세??")
+            self.status_label.setText("각 비디오에 대해 유효한 포맷을 선택해 주세요.")
             return
 
         if selected_videos:
             self.start_download(selected_videos)
         else:
-            self.status_label.setText("?�운로드??비디?��? 최소 ?�나 ?�상 ?�택??주세??")
+            self.status_label.setText("다운로드할 비디오를 최소 하나 이상 선택해 주세요.")
 
     def start_download(self, selected_videos):
         # This method should initiate the download process for the selected videos.
@@ -2181,7 +2207,7 @@ class VideoDownloader(QDialog):
 
         download_directory = self.select_download_directory()
         if not download_directory:
-            self.status_label.setText("?�효???�운로드 ?�렉?�리�??�택??주세??")
+            self.status_label.setText("유효한 다운로드 디렉토리를 선택해 주세요.")
             return
 
         # Initialize and start the Downloader thread
@@ -2192,34 +2218,35 @@ class VideoDownloader(QDialog):
         self.downloader_thread.start()
 
     def download_failed(self, message):
-        self.set_status(f"?�운로드 ?�패: {message}")
+        self.set_status(f"다운로드 실패: {message}")
 
     def select_download_directory(self):
-        dir_path = QFileDialog.getExistingDirectory(self, "?�운로드 ?�렉?�리 ?�택", os.path.expanduser("~"))
+        dir_path = QFileDialog.getExistingDirectory(self, "다운로드 디렉토리 선택", os.path.expanduser("~"))
         return dir_path if dir_path else None
 
     @pyqtSlot()
     def on_delete_selected(self):
-        # ?�이블에???�택???�들????��?�로 ?�회?�며 ??��
-        # ??��?�로 ?�는 ?�유??????�� ???�덱?��? 변경되??것을 방�??�기 ?�함
+        # 테이블에서 선택된 행들을 역순으로 순회하며 삭제
+        # 역순으로 하는 이유는 행 삭제 시 인덱스가 변경되는 것을 방지하기 위함
         rows_to_delete = []
         for row in range(self.video_table.rowCount()):
-            checkbox_item = self.video_table.item(row, 0) # 체크박스??�?번째 ?�에 ?�다�?가??            if checkbox_item and checkbox_item.checkState() == Qt.Checked:
+            checkbox_item = self.video_table.item(row, 0) # 체크박스는 첫 번째 열에 있다고 가정
+            if checkbox_item and checkbox_item.checkState() == Qt.Checked:
                 rows_to_delete.append(row)
 
         if not rows_to_delete:
-            self.status_label.setText("??��??비디?��? ?�택??주세??")
+            self.status_label.setText("삭제할 비디오를 선택해 주세요.")
             return
 
         for row in sorted(rows_to_delete, reverse=True):
-            # video_info_list?�서???�당 ?�보 ??�� (?�덱??주의)
+            # video_info_list에서도 해당 정보 삭제 (인덱스 주의)
             if row < len(self.video_info_list):
                 self.video_info_list.pop(row)
-            # ?�이블에??????��
+            # 테이블에서 행 삭제
             self.video_table.removeRow(row)
         
-        self.header.updateState() # ?�더 체크박스 ?�태 ?�데?�트
-        self.status_label.setText(f"{len(rows_to_delete)}�?비디????�� ?�료.")
+        self.header.updateState() # 헤더 체크박스 상태 업데이트
+        self.status_label.setText(f"{len(rows_to_delete)}개 비디오 삭제 완료.")
 
 
 class MainThreadSignalEmitter(QObject):
@@ -2238,7 +2265,7 @@ main_thread_signal_emitter = MainThreadSignalEmitter()
 
 
 class FFmpegChecker(QThread):
-    """백그?�운?�에??FFmpeg 존재 ?��?�?체크?�고 ?�요???�동 ?�운로드?�는 ?�레??""
+    """백그라운드에서 FFmpeg 존재 여부를 체크하고 필요시 자동 다운로드하는 스레드"""
     check_complete = pyqtSignal(bool, str)  # (success, message)
     
     def __init__(self, parent=None):
@@ -2246,7 +2273,7 @@ class FFmpegChecker(QThread):
         self.base_path = None
         
     def run(self):
-        """FFmpeg 체크 �??�운로드 ?�행"""
+        """FFmpeg 체크 및 다운로드 실행"""
         try:
             # Get the directory where the executable is located
             if getattr(sys, 'frozen', False):
@@ -2258,12 +2285,13 @@ class FFmpegChecker(QThread):
             
             # Check if ffmpeg already exists
             if check_ffmpeg_exists():
-                self.check_complete.emit(True, "FFmpeg가 ?��? ?�치?�어 ?�습?�다.")
+                self.check_complete.emit(True, "FFmpeg가 이미 설치되어 있습니다.")
                 return
             
             # FFmpeg not found, try to download
             if sys.platform.startswith("linux"):
-                # Linux???�동 ?�운로드 지??????                self.check_complete.emit(False, "Linux?�서??FFmpeg�??�동?�로 ?�치?�주?�요.")
+                # Linux는 자동 다운로드 지원 안 함
+                self.check_complete.emit(False, "Linux에서는 FFmpeg를 수동으로 설치해주세요.")
                 return
             
             # Download FFmpeg quietly
@@ -2272,14 +2300,14 @@ class FFmpegChecker(QThread):
             if success:
                 # Verify the download
                 if check_ffmpeg_exists():
-                    self.check_complete.emit(True, "FFmpeg가 ?�동?�로 ?�운로드?�었?�니??")
+                    self.check_complete.emit(True, "FFmpeg가 자동으로 다운로드되었습니다.")
                 else:
-                    self.check_complete.emit(False, "FFmpeg ?�운로드 ??검�??�패")
+                    self.check_complete.emit(False, "FFmpeg 다운로드 후 검증 실패")
             else:
-                self.check_complete.emit(False, "FFmpeg ?�동 ?�운로드 ?�패")
+                self.check_complete.emit(False, "FFmpeg 자동 다운로드 실패")
                 
         except Exception as e:
-            self.check_complete.emit(False, f"FFmpeg 체크 �??�류: {str(e)}")
+            self.check_complete.emit(False, f"FFmpeg 체크 중 오류: {str(e)}")
 
 
 class Searcher(QThread):
@@ -2291,18 +2319,19 @@ class Searcher(QThread):
         self.url = url
 
     def run(self):
-        # extract_flat ?�션???�거?�거??False�??�정?�여 ?�체 ?�맷 ?�보�?가?�옵?�다.
+        # extract_flat 옵션을 제거하거나 False로 설정하여 전체 포맷 정보를 가져옵니다.
         ydl_opts = {
             'quiet': True,
-            'no_warnings': True, # WARNING 메시지 ?��??�로 ?�도 ?�상
+            'no_warnings': True, # WARNING 메시지 숨김으로 속도 향상
             'skip_download': True,
-            'ignoreerrors': True, # ?��? ?�류 무시
-            'ignore_no_formats_error': True, # ?�맷 ?�는 ?�류 무시
-            'extract_flat': False, # ?�체 ?�맷 ?�보 가?�오�?            'format': 'best[height<=480]/best[height<=720]/best', # 480p ?�선, ?�으�?720p, 최후??best
-            'socket_timeout': 10, # ?�?�아???�정
-            'retries': 2, # ?�시???�수 ?�한
-            'fragment_retries': 2, # ?�래그먼???�시???�한
-            'concurrent_fragment_downloads': 1, # ?�시 ?�운로드 ?�한
+            'ignoreerrors': True, # 일부 오류 무시
+            'ignore_no_formats_error': True, # 포맷 없는 오류 무시
+            'extract_flat': False, # 전체 포맷 정보 가져오기
+            'format': 'best[height<=480]/best[height<=720]/best', # 480p 우선, 없으면 720p, 최후에 best
+            'socket_timeout': 10, # 타임아웃 설정
+            'retries': 2, # 재시도 횟수 제한
+            'fragment_retries': 2, # 프래그먼트 재시도 제한
+            'concurrent_fragment_downloads': 1, # 동시 다운로드 제한
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             try:
@@ -2329,7 +2358,7 @@ class Searcher(QThread):
                     if not raw_formats:
                         logger.debug(f"Video {video_index + 1} ('{video.get('title', 'N/A')}') has no raw formats from yt_dlp.")
 
-                    # 최고 ?�질 ?�디???�맷 찾기 (MP3 변?�용)
+                    # 최고 품질 오디오 포맷 찾기 (MP3 변환용)
                     best_audio = None
                     best_audio_bitrate = 0
                     
@@ -2343,7 +2372,7 @@ class Searcher(QThread):
                         if not format_id or not ext or 'storyboard' in format_id.lower():
                             continue
 
-                        # filesize가 ?�더?�도 0?�로 처리?�여 ?�함. N/A ?�시??display_text?�서.
+                        # filesize가 없더라도 0으로 처리하여 포함. N/A 표시는 display_text에서.
                         filesize = f.get('filesize') or f.get('filesize_approx') or 0
 
                         type_label = 'Unknown'
@@ -2352,18 +2381,18 @@ class Searcher(QThread):
                         vcodec = f.get('vcodec', 'none')
                         acodec = f.get('acodec', 'none')
 
-                        # 최고 ?�질 ?�디???�맷 추적
+                        # 최고 품질 오디오 포맷 추적
                         abr = f.get('abr') or 0
                         if acodec != 'none' and abr > best_audio_bitrate:
                             best_audio = f
                             best_audio_bitrate = abr
 
-                        # ?�??결정 로직 개선
+                        # 타입 결정 로직 개선
                         if vcodec != 'none' and acodec != 'none':
                             type_label = 'Video' # Muxed (Video+Audio)
                             if f.get('width') and f.get('height'): quality_desc.append(f"{f.get('width')}x{f.get('height')}")
                             if f.get('fps'): quality_desc.append(f"{f.get('fps')}fps")
-                            # 비디??비트?�이?�나 ?�디??비트?�이??�??�나?�도 ?�시
+                            # 비디오 비트레이트나 오디오 비트레이트 중 하나라도 표시
                             if f.get('vbr'): quality_desc.append(f"V:{round(f.get('vbr'))}k")
                             elif f.get('abr'): quality_desc.append(f"A:{round(f.get('abr'))}k")
                         elif vcodec != 'none':
@@ -2374,7 +2403,7 @@ class Searcher(QThread):
                         elif acodec != 'none':
                             type_label = 'Audio-only'
                             if f.get('abr'): quality_desc.append(f"A:{round(f.get('abr'))}k")
-                        # Unknown ?�?��? ?�터링하지 ?�고, ?�보가 부족하�?그�?�??�시
+                        # Unknown 타입은 필터링하지 않고, 정보가 부족하면 그대로 표시
                         
                         quality_str = ' / '.join(filter(None, quality_desc))
                         filesize_mb_str = f"{(filesize // 1024 // 1024)}MB" if filesize > 0 else "N/A"
@@ -2383,14 +2412,14 @@ class Searcher(QThread):
                         
                         processed_format_list.append((display_text, format_id, type_label, filesize))
                     
-                    # MP3 변???�션 추�?
+                    # MP3 변환 옵션 추가
                     if best_audio:
-                        # 추정 ?�일 ?�기 계산
+                        # 추정 파일 크기 계산
                         estimated_size = best_audio.get('filesize', 0)
                         if estimated_size > 0:
                             estimated_size_mb = f"{estimated_size // 1024 // 1024}MB"
                         else:
-                            # ?�일 ?�기�?모르??경우 비트?�이?�로 추정
+                            # 파일 크기를 모르는 경우 비트레이트로 추정
                             duration = video.get('duration', 0)
                             if duration and best_audio_bitrate:
                                 estimated_size = int(duration * best_audio_bitrate * 1000 / 8)  # bytes
@@ -2398,8 +2427,8 @@ class Searcher(QThread):
                             else:
                                 estimated_size_mb = "N/A"
                         
-                        # MP3 ?�션 추�?
-                        mp3_quality = f"A:{round(min(320, best_audio_bitrate))}k"  # 최�? 320kbps
+                        # MP3 옵션 추가
+                        mp3_quality = f"A:{round(min(320, best_audio_bitrate))}k"  # 최대 320kbps
                         mp3_display_text = f"[Audio-only] MP3 bestaudio (MP3 Conversion / {mp3_quality}) - {estimated_size_mb}"
                         processed_format_list.append((mp3_display_text, "bestaudio/best", "Audio-only", estimated_size))
                     
@@ -2415,8 +2444,8 @@ class Searcher(QThread):
                         processed_format_list
                     )
             except Exception as e:
-                logger.error(f"Searcher thread ?�류: {str(e)}", exc_info=True)
-                self.updated_list.emit(f"Error: {str(e)}", "", self.url, []) # ?�러 발생 ??�?리스?��? ?�께 ?�러 메시지 ?�달
+                logger.error(f"Searcher thread 오류: {str(e)}", exc_info=True)
+                self.updated_list.emit(f"Error: {str(e)}", "", self.url, []) # 에러 발생 시 빈 리스트와 함께 에러 메시지 전달
 
     def estimate_total_count(self, result):
         if 'entries' in result:
@@ -2441,17 +2470,17 @@ class Downloader(QThread):
         for title, url, format_id in self.videos:
             safe_title = title.replace("/", "_").replace("\\", "_")
             
-            # MP3 변?�이 ?�요?��? ?�인
+            # MP3 변환이 필요한지 확인
             is_mp3_conversion = format_id == "bestaudio/best" or "MP3" in title
             
-            # FFmpeg 경로 ?�동 ?��? (?�운로드??경로 ?�선 ?�용)
+            # FFmpeg 경로 자동 탐지 (다운로드된 경로 우선 사용)
             ffmpeg_path = find_ffmpeg_executable()
             
-            # ?�운로드??ffmpeg 경로 ?�인 �?로깅
+            # 다운로드된 ffmpeg 경로 확인 및 로깅
             if ffmpeg_path != 'ffmpeg' and os.path.exists(ffmpeg_path):
-                logger.info(f"FFmpeg ?�용 중인 경로: {ffmpeg_path}")
+                logger.info(f"FFmpeg 사용 중인 경로: {ffmpeg_path}")
             else:
-                logger.warning(f"FFmpeg ?�스??PATH?�서 찾는 �?(경로: {ffmpeg_path})")
+                logger.warning(f"FFmpeg 시스템 PATH에서 찾는 중 (경로: {ffmpeg_path})")
             
             download_options = {
                 'format': format_id,
@@ -2470,20 +2499,20 @@ class Downloader(QThread):
                 'no_color': True,
                 'logtostderr': True,
                 'verbose': True,
-                'ffmpeg_location': ffmpeg_path,  # ?�운로드???��? 경로 ?�는 'ffmpeg' (?�스??PATH)
+                'ffmpeg_location': ffmpeg_path,  # 다운로드된 절대 경로 또는 'ffmpeg' (시스템 PATH)
             }
             
-            # MP3 변???�는 ?�반 비디??변???�정
+            # MP3 변환 또는 일반 비디오 변환 설정
             if is_mp3_conversion:
                 download_options['postprocessors'] = [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
-                    'preferredquality': '320',  # 최�? 320kbps
+                    'preferredquality': '320',  # 최대 320kbps
                 }]
             else:
                 download_options['postprocessors'] = [{
                     'key': 'FFmpegVideoConvertor',
-                    'preferredformat': 'mp4',  # ?��? ?�정: preferedformat -> preferredformat
+                    'preferredformat': 'mp4',  # 오타 수정: preferedformat -> preferredformat
                 }]
                 download_options['merge_output_format'] = 'mp4'
                 download_options['postprocessor_args'] = [
@@ -2493,11 +2522,11 @@ class Downloader(QThread):
 
             with yt_dlp.YoutubeDL(download_options) as ydl:
                 try:
-                    self.updated_status.emit(f"?�운로드 ?�작: {title}")
+                    self.updated_status.emit(f"다운로드 시작: {title}")
                     ydl.download([url])
-                    self.updated_status.emit(f"?�운로드 ?�료: {title}")
+                    self.updated_status.emit(f"다운로드 완료: {title}")
                 except Exception as e:
-                    error_msg = f"?�운로드 ?�패 ({title}): {str(e)}"
+                    error_msg = f"다운로드 실패 ({title}): {str(e)}"
                     logger.error(error_msg)
                     self.download_failed.emit(error_msg)
 
@@ -2529,18 +2558,18 @@ class Downloader(QThread):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    app.setStyle("fusion")  # Fusion ?��??�을 ?�정?�니??
+    app.setStyle("fusion")  # Fusion 스타일을 설정합니다.
     
-    # ?�랫?�별 ?�이�??�정
+    # 플랫폼별 아이콘 설정
     import platform
     if platform.system() == "Windows":
-        # Windows???�이�??�정
+        # Windows용 아이콘 설정
         if os.path.exists("icon.ico"):
             app.setWindowIcon(QIcon("icon.ico"))
         elif os.path.exists("st2.icns"):
             app.setWindowIcon(QIcon("st2.icns"))
     else:
-        # macOS/Linux???�이�??�정
+        # macOS/Linux용 아이콘 설정
         if os.path.exists("icon.icns"):
             app.setWindowIcon(QIcon("icon.icns"))
         elif os.path.exists("st2.icns"):
