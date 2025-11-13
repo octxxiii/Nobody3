@@ -1,18 +1,18 @@
 @echo off
-echo === Windows용 OctXXIII 빌드 ===
+echo === Windows??Nobody 3 빌드 ===
 echo.
 
-REM Python 버전 확인
+REM Python 버전 ?�인
 python --version
 if %errorlevel% neq 0 (
-    echo Python이 설치되지 않았거나 PATH에 없습니다.
+    echo Python???�치?��? ?�았거나 PATH???�습?�다.
     pause
     exit /b 1
 )
 
-REM 빌드 스크립트 실행
+REM 빌드 ?�크립트 ?�행
 python build_windows.py
 
 echo.
-echo 빌드가 완료되었습니다!
+echo 빌드가 ?�료?�었?�니??
 pause

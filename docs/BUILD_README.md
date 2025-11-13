@@ -1,17 +1,17 @@
-# OctXXIII 빌드 가이드
+# Nobody 3 빌드 가?�드
 
-FFmpeg를 포함한 설치 파일을 생성하는 방법입니다.
+FFmpeg�??�함???�치 ?�일???�성?�는 방법?�니??
 
-## 필요 조건
+## ?�요 조건
 
 ### Windows
-- Python 3.8 이상
+- Python 3.8 ?�상
 - pip
-- WiX Toolset (MSI 생성용, 선택사항)
-  - 다운로드: https://wixtoolset.org/releases/
+- WiX Toolset (MSI ?�성?? ?�택?�항)
+  - ?�운로드: https://wixtoolset.org/releases/
 
 ### macOS
-- Python 3.8 이상
+- Python 3.8 ?�상
 - pip
 - Xcode Command Line Tools
   ```bash
@@ -20,116 +20,116 @@ FFmpeg를 포함한 설치 파일을 생성하는 방법입니다.
 
 ## 빌드 방법
 
-### Windows에서 빌드
+### Windows?�서 빌드
 
-1. **자동 빌드 (권장)**
+1. **?�동 빌드 (권장)**
    ```cmd
    build.bat
    ```
 
-2. **수동 빌드**
+2. **?�동 빌드**
    ```cmd
    python build_windows.py
    ```
 
-### macOS에서 빌드
+### macOS?�서 빌드
 
-1. **자동 빌드 (권장)**
+1. **?�동 빌드 (권장)**
    ```bash
    ./build.sh
    ```
 
-2. **수동 빌드**
+2. **?�동 빌드**
    ```bash
    python3 build_macos.py
    ```
 
 ## 빌드 과정
 
-### 자동으로 수행되는 작업:
+### ?�동?�로 ?�행?�는 ?�업:
 
-1. **FFmpeg 다운로드**
-   - Windows: 최신 Windows용 FFmpeg 바이너리
-   - macOS: Apple Silicon/Intel 맞춤 FFmpeg 바이너리
+1. **FFmpeg ?�운로드**
+   - Windows: 최신 Windows??FFmpeg 바이?�리
+   - macOS: Apple Silicon/Intel 맞춤 FFmpeg 바이?�리
 
-2. **의존성 설치**
+2. **?�존???�치**
    - PyQt5
    - yt-dlp
    - requests
-   - cx_Freeze (빌드 도구)
+   - cx_Freeze (빌드 ?�구)
 
-3. **실행 파일 생성**
-   - 모든 의존성을 포함한 독립 실행 파일
+3. **?�행 ?�일 ?�성**
+   - 모든 ?�존?�을 ?�함???�립 ?�행 ?�일
 
-4. **설치 파일 생성**
-   - Windows: MSI 설치 파일
-   - macOS: DMG 설치 파일
+4. **?�치 ?�일 ?�성**
+   - Windows: MSI ?�치 ?�일
+   - macOS: DMG ?�치 ?�일
 
-## 생성되는 파일
-
-### Windows
-- `build/exe.win-amd64-3.x/` - 실행 파일 폴더
-- `OctXXIII.msi` - MSI 설치 파일
-
-### macOS
-- `OctXXIII.app` - 앱 번들
-- `OctXXIII.dmg` - DMG 설치 파일
-
-## 문제 해결
+## ?�성?�는 ?�일
 
 ### Windows
+- `build/exe.win-amd64-3.x/` - ?�행 ?�일 ?�더
+- `Nobody 3.msi` - MSI ?�치 ?�일
 
-**WiX Toolset 없음**
-- MSI 파일이 생성되지 않지만 실행 파일은 정상 생성됩니다
-- WiX Toolset 설치 후 다시 빌드하세요
+### macOS
+- `Nobody 3.app` - ??번들
+- `Nobody 3.dmg` - DMG ?�치 ?�일
 
-**FFmpeg 다운로드 실패**
-- 인터넷 연결을 확인하세요
-- 방화벽이 다운로드를 차단하지 않는지 확인하세요
+## 문제 ?�결
+
+### Windows
+
+**WiX Toolset ?�음**
+- MSI ?�일???�성?��? ?��?�??�행 ?�일?� ?�상 ?�성?�니??
+- WiX Toolset ?�치 ???�시 빌드?�세??
+
+**FFmpeg ?�운로드 ?�패**
+- ?�터???�결???�인?�세??
+- 방화벽이 ?�운로드�?차단?��? ?�는지 ?�인?�세??
 
 ### macOS
 
-**권한 오류**
+**권한 ?�류**
 ```bash
 chmod +x build.sh
-sudo xattr -rd com.apple.quarantine OctXXIII.app
+sudo xattr -rd com.apple.quarantine Nobody 3.app
 ```
 
-**DMG 생성 실패**
-- dmgbuild 패키지가 설치되지 않은 경우:
+**DMG ?�성 ?�패**
+- dmgbuild ?�키지가 ?�치?��? ?��? 경우:
 ```bash
 pip3 install dmgbuild
 ```
 
-**앱 서명 (선택사항)**
+**???�명 (?�택?�항)**
 ```bash
-codesign --deep --force --verify --verbose --sign "Developer ID Application: Your Name" OctXXIII.app
+codesign --deep --force --verify --verbose --sign "Developer ID Application: Your Name" Nobody 3.app
 ```
 
 ## 배포
 
 ### Windows
-- `OctXXIII.msi` 파일을 배포
-- 사용자는 MSI 파일을 실행하여 설치
+- `Nobody 3.msi` ?�일??배포
+- ?�용?�는 MSI ?�일???�행?�여 ?�치
 
 ### macOS
-- `OctXXIII.dmg` 파일을 배포
-- 사용자는 DMG를 마운트하고 앱을 Applications 폴더로 드래그
+- `Nobody 3.dmg` ?�일??배포
+- ?�용?�는 DMG�?마운?�하�??�을 Applications ?�더�??�래�?
 
-## 주의사항
+## 주의?�항
 
-1. **FFmpeg 라이선스**: FFmpeg는 GPL 라이선스입니다
-2. **코드 서명**: macOS에서 배포하려면 Apple Developer 계정이 필요할 수 있습니다
-3. **바이러스 검사**: Windows Defender가 실행 파일을 차단할 수 있습니다
+1. **FFmpeg ?�이?�스**: FFmpeg??GPL ?�이?�스?�니??
+2. **코드 ?�명**: macOS?�서 배포?�려�?Apple Developer 계정???�요?????�습?�다
+3. **바이?�스 검??*: Windows Defender가 ?�행 ?�일??차단?????�습?�다
 
-## 지원 플랫폼
+## 지???�랫??
 
 - Windows 10/11 (64-bit)
 - macOS 10.15+ (Intel/Apple Silicon)
 
-## 빌드 시간
+## 빌드 ?�간
 
-- Windows: 약 5-10분
-- macOS: 약 5-10분
+- Windows: ??5-10�?
+- macOS: ??5-10�?
 
-(인터넷 속도에 따라 FFmpeg 다운로드 시간이 달라집니다)
+(?�터???�도???�라 FFmpeg ?�운로드 ?�간???�라집니??

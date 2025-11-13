@@ -17,20 +17,20 @@ class VideoPresenter(QObject):
         self.search_thread = None
         self.downloader_thread = None
 
-    # 검색 -----------------------------------------------------------------
+    # Search ------------------------------------------------------------
 
     def start_search(self, url: str):
         url = (url or "").strip()
         if not url:
-            self.view.set_status("URL을 입력해 주세요.")
+            self.view.set_status("Please enter a URL to search.")
             return
         if self.view.is_duplicate_url(url):
-            self.view.set_status("이 비디오는 이미 목록에 추가되었습니다.")
+            self.view.set_status("This video is already in the list.")
             return
 
         self.view.search_button.setEnabled(False)
         self.view.animation_timer.start(50)
-        self.view.set_status("로딩 중...")
+        self.view.set_status("Searching...")
         self.view.progress_bar.setRange(0, 0)
 
         self.search_thread = Searcher(url)
@@ -47,19 +47,19 @@ class VideoPresenter(QObject):
     def _handle_search_finished(self):
         self.view.progress_bar.setRange(0, 100)
         self.view.progress_bar.setValue(100)
-        self.view.set_status("검색 완료.")
+        self.view.set_status("Search completed.")
         self.search_thread = None
 
-    # 다운로드 --------------------------------------------------------------
+    # Download ----------------------------------------------------------
 
     def start_download(self, videos):
         if not videos:
-            self.view.set_status("다운로드할 비디오를 최소 하나 이상 선택해 주세요.")
+            self.view.set_status("Select at least one video to download.")
             return
 
         directory = self.view.select_download_directory()
         if not directory:
-            self.view.set_status("유효한 다운로드 디렉토리를 선택해 주세요.")
+            self.view.set_status("Select a valid download directory.")
             return
 
         self.downloader_thread = Downloader(videos, directory)
@@ -68,4 +68,4 @@ class VideoPresenter(QObject):
         self.downloader_thread.updated_progress.connect(self.view.update_progress_bar)
         self.downloader_thread.start()
 
-        logger.info("다운로드 스레드 시작 (%d개 항목)", len(videos))
+        logger.info("Download process started (%d items)", len(videos))

@@ -1,8 +1,12 @@
-"""서비스 모듈 (백그라운드 작업)"""
+"""Service layer package."""
 
-from .ffmpeg_checker import FFmpegChecker
 from .searcher import Searcher
 from .downloader import Downloader
+from .ffmpeg_checker import FFmpegChecker
 
-__all__ = ['FFmpegChecker', 'Searcher', 'Downloader']
+__all__ = [
+    "Searcher",
+    "Downloader",
+    "FFmpegChecker",
+]
 

@@ -24,7 +24,7 @@ class LayoutBuilder:
 
     def __init__(self, host):
         self.host = host
-        self.table_manager = None
+        self.table_manager: VideoTableManager | None = None
 
     def build_left_panel(self):
         host = self.host
@@ -34,14 +34,14 @@ class LayoutBuilder:
         host.musicPageUrl = QUrl("https://music.youtube.com")
         host.SCPageUrl = QUrl("https://soundcloud.com/")
 
-        host.toggleDownButton = QPushButton("💥", host)
+        host.toggleDownButton = QPushButton("Toggle", host)
         host.toggleDownButton.clicked.connect(host.toggleBrowser)
         host.toggleDownButton.setFixedSize(30, 30)
 
-        host.backButton = QPushButton("👈")
+        host.backButton = QPushButton("Back")
         host.backButton.clicked.connect(host.browser.back)
 
-        host.refreshButton = QPushButton("🔄")
+        host.refreshButton = QPushButton("Reload")
         host.refreshButton.setFixedSize(30, 30)
         host.refreshButton.clicked.connect(host.browser.reload)
 
@@ -60,12 +60,12 @@ class LayoutBuilder:
         host.SCButton.setIcon(QIcon(":/soundCloudIcon"))
         host.SCButton.clicked.connect(lambda: host.browser.setUrl(host.SCPageUrl))
 
-        host.forwardButton = QPushButton("👉")
+        host.forwardButton = QPushButton("Forward")
         host.forwardButton.clicked.connect(host.browser.forward)
 
-        host.miniPlayerButton = QPushButton("🎵")
+        host.miniPlayerButton = QPushButton("Mini")
         host.miniPlayerButton.setFixedSize(30, 30)
-        host.miniPlayerButton.setToolTip("미니 플레이어 모드")
+        host.miniPlayerButton.setToolTip("Switch to mini player")
         host.mini_player_controller.bind_toggle_button(host.miniPlayerButton)
 
         host.navLayout = QHBoxLayout()
@@ -91,20 +91,20 @@ class LayoutBuilder:
         host.downLayoutWidget.setFixedSize(450, 560)
         host.rightLayout = QVBoxLayout(host.downLayoutWidget)
 
-        host.browHideButton = QPushButton("🦕")
+        host.browHideButton = QPushButton("Browser")
         host.browHideButton.setFixedSize(30, 30)
         host.browHideButton.clicked.connect(host.toggleBrowWidgetVisibility)
 
-        host.createrButton = QPushButton("💬")
+        host.createrButton = QPushButton("Info")
         host.createrButton.setFixedSize(30, 30)
         host.createrButton.clicked.connect(host.openSettingsDialog)
 
-        host.formatSettingsButton = QPushButton("⚙️")
+        host.formatSettingsButton = QPushButton("Formats")
         host.formatSettingsButton.setFixedSize(30, 30)
         host.formatSettingsButton.clicked.connect(host.openFormatSettingsDialog)
-        host.formatSettingsButton.setToolTip("포맷 설정")
+        host.formatSettingsButton.setToolTip("Open format settings")
 
-        host.copyUrlButton = QPushButton("📋")
+        host.copyUrlButton = QPushButton("Copy")
         host.copyUrlButton.setFixedSize(30, 30)
 
         host.search_url = QLineEdit()
@@ -122,36 +122,36 @@ class LayoutBuilder:
         host.search_url.setFixedSize(356, 30)
         host.search_url.setClearButtonEnabled(True)
 
-        host.search_button = QPushButton("🔍")
+        host.search_button = QPushButton("Go")
         host.search_button.setFixedSize(30, 30)
         host.search_button.clicked.connect(host.on_search)
         host.copyUrlButton.clicked.connect(host.copyUrlToClipboard)
 
-        host.download_list = QPushButton("📍")
+        host.download_list = QPushButton("Downloads")
         host.download_list.setFixedSize(100, 30)
-        host.later_list = QPushButton("📌")
+        host.later_list = QPushButton("Later")
         host.later_list.setFixedSize(100, 30)
 
         host.video_table = QTableWidget()
         self.table_manager = VideoTableManager(host, host.video_table)
         self.table_manager.initialize()
 
-        host.download_button = QPushButton("📥")
+        host.download_button = QPushButton("Download")
         host.download_button.clicked.connect(host.on_download)
 
-        host.delete_button = QPushButton("❌")
+        host.delete_button = QPushButton("Delete")
         host.delete_button.clicked.connect(host.on_delete_selected)
 
         host.status_label = QLabel("Ready")
         host.progress_bar = QProgressBar()
 
-        host.back_button = QPushButton("⏮️", host)
+        host.back_button = QPushButton("Prev", host)
         host.back_button.clicked.connect(host.play_back)
 
-        host.play_button = QPushButton("⏯️", host)
+        host.play_button = QPushButton("Play", host)
         host.play_button.clicked.connect(host.play)
 
-        host.next_button = QPushButton("⏭️", host)
+        host.next_button = QPushButton("Next", host)
         host.next_button.clicked.connect(host.play_next)
 
         host.title_label = QLabel()
@@ -163,7 +163,7 @@ class LayoutBuilder:
                 border: 2px solid #555;
                 border-radius: 5px;
                 background-color: #333;
-                padding: 4px 4px 4px 4px;
+                padding: 4px;
             }
             """
         )
@@ -199,18 +199,31 @@ class LayoutBuilder:
         statusLayout.addWidget(host.progress_bar)
         statusLayout.addWidget(host.status_label)
 
-        actionLayout = QHBoxLayout()
-        actionLayout.addWidget(host.download_button)
-        actionLayout.addWidget(host.delete_button)
+        buttonLayout = QHBoxLayout()
+        buttonLayout.setSpacing(10)
+        buttonLayout.addWidget(host.download_button)
+        buttonLayout.addWidget(host.delete_button)
+
+        host.video_table.setStyleSheet(DARK_THEME_STYLESHEET)
+
+        rightSplitter = QSplitter(Qt.Vertical)
+        rightSplitter.addWidget(host.video_table)
+        controlsWidget = QWidget()
+        controlsLayout = QVBoxLayout(controlsWidget)
+        controlsLayout.setContentsMargins(0, 0, 0, 0)
+        controlsLayout.setSpacing(6)
+        controlsLayout.addLayout(playerLayout)
+        controlsLayout.addLayout(buttonLayout)
+        controlsLayout.addLayout(statusLayout)
+        rightSplitter.addWidget(controlsWidget)
+        rightSplitter.setSizes([400, 160])
 
         host.rightLayout.addLayout(titleLayout)
-        host.rightLayout.addLayout(playerLayout)
         host.rightLayout.addLayout(searchLayout)
-        host.rightLayout.addWidget(host.video_table)
-        host.rightLayout.addLayout(statusLayout)
-        host.rightLayout.addLayout(actionLayout)
+        host.rightLayout.addWidget(host.download_list)
+        host.rightLayout.addWidget(host.later_list)
+        host.rightLayout.addWidget(rightSplitter)
 
-        host.setStyleSheet(DARK_THEME_STYLESHEET)
         return host.downLayoutWidget
 
     def build_splitter(self, left_widget, right_widget):

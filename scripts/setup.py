@@ -3,11 +3,11 @@ import os
 from cx_Freeze import setup, Executable
 import platform
 
-# 현재 플랫폼 확인
+# ?�재 ?�랫???�인
 is_windows = platform.system() == "Windows"
 is_mac = platform.system() == "Darwin"
 
-# 기본 설정
+# 기본 ?�정
 build_exe_options = {
     "packages": ["PyQt5.QtCore", "PyQt5.QtGui", "PyQt5.QtWidgets", "PyQt5.QtWebEngineWidgets", "PyQt5.QtWebChannel", "PyQt5.QtMultimedia", "yt_dlp", "requests", "urllib3", "http", "urllib", "ssl", "certifi"],
     "excludes": ["tkinter", "unittest", "pydoc", "PyQt5.QtQml", "PyQt5.QtQuick"],
@@ -18,9 +18,9 @@ build_exe_options = {
     "build_exe": "build_new",
 }
 
-# FFmpeg 바이너리 포함 (선택사항)
+# FFmpeg 바이?�리 ?�함 (?�택?�항)
 if is_windows:
-    # Windows용 FFmpeg 바이너리 경로
+    # Windows??FFmpeg 바이?�리 경로
     ffmpeg_files = []
     if os.path.exists("ffmpeg/windows/ffmpeg.exe"):
         ffmpeg_files.append(("ffmpeg/windows/ffmpeg.exe", "ffmpeg.exe"))
@@ -29,10 +29,10 @@ if is_windows:
     if ffmpeg_files:
         build_exe_options["include_files"].extend(ffmpeg_files)
     else:
-        print("경고: FFmpeg 바이너리를 찾을 수 없습니다. 포함하지 않고 빌드합니다.")
+        print("경고: FFmpeg 바이?�리�?찾을 ???�습?�다. ?�함?��? ?�고 빌드?�니??")
     
 elif is_mac:
-    # macOS용 FFmpeg 바이너리 경로
+    # macOS??FFmpeg 바이?�리 경로
     ffmpeg_files = []
     if os.path.exists("ffmpeg/macos/ffmpeg"):
         ffmpeg_files.append(("ffmpeg/macos/ffmpeg", "ffmpeg"))
@@ -41,10 +41,10 @@ elif is_mac:
     if ffmpeg_files:
         build_exe_options["include_files"].extend(ffmpeg_files)
     else:
-        print("경고: FFmpeg 바이너리를 찾을 수 없습니다. 포함하지 않고 빌드합니다.")
+        print("경고: FFmpeg 바이?�리�?찾을 ???�습?�다. ?�함?��? ?�고 빌드?�니??")
 
-# 실행 파일 설정
-# 아이콘 파일 우선순위: icon.ico/icon.icns > st2.icns
+# ?�행 ?�일 ?�정
+# ?�이�??�일 ?�선?�위: icon.ico/icon.icns > st2.icns
 if is_windows:
     icon_path = None
     if os.path.exists("icon.ico"):
@@ -54,9 +54,9 @@ if is_windows:
     
     executables = [
         Executable(
-            "Nobody3.py",
+            "Nobody/main.py",
             base="Win32GUI",
-            target_name="OctXXIII.exe",
+            target_name="Nobody 3.exe",
             icon=icon_path
         )
     ]
@@ -69,14 +69,14 @@ else:
     
     executables = [
         Executable(
-            "Nobody3.py",
-            target_name="OctXXIII",
+            "Nobody/main.py",
+            target_name="Nobody 3",
             icon=icon_path
         )
     ]
 
 setup(
-    name="OctXXIII",
+    name="Nobody 3",
     version="1.0",
     description="YouTube/Music Converter & Player",
     author="nobody",

@@ -1,34 +1,34 @@
 #!/usr/bin/env python3
 """
-Windows용 ICO 아이콘 파일 생성 스크립트
+Windows??ICO ?�이�??�일 ?�성 ?�크립트
 """
 
 import os
 import sys
 
 def create_icon_ico():
-    """Windows용 ICO 파일 생성"""
+    """Windows??ICO ?�일 ?�성"""
     try:
         from PIL import Image, ImageDraw, ImageFont
         
-        # 아이콘 크기들 (Windows ICO 파일에 포함될 크기)
+        # ?�이�??�기??(Windows ICO ?�일???�함???�기)
         sizes = [16, 32, 48, 64, 128, 256]
         icon_images = []
         
         for size in sizes:
-            # 새 이미지 생성 (투명 배경)
+            # ???��?지 ?�성 (?�명 배경)
             img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
             draw = ImageDraw.Draw(img)
             
-            # 원형 배경 (다크 테마)
+            # ?�형 배경 (?�크 ?�마)
             margin = size // 8
             draw.ellipse([margin, margin, size-margin, size-margin], 
                         fill=(45, 45, 45, 255), outline=(85, 85, 85, 255), width=max(1, size//32))
             
-            # 텍스트 추가
+            # ?�스??추�?
             try:
                 font_size = size // 3
-                # Windows에서 사용 가능한 폰트 시도
+                # Windows?�서 ?�용 가?�한 ?�트 ?�도
                 font_paths = [
                     "C:/Windows/Fonts/arial.ttf",
                     "C:/Windows/Fonts/calibri.ttf",
@@ -60,34 +60,34 @@ def create_icon_ico():
             
             icon_images.append(img)
         
-        # ICO 파일 생성 (여러 크기 포함)
+        # ICO ?�일 ?�성 (?�러 ?�기 ?�함)
         if icon_images:
-            # ICO 파일에는 보통 작은 크기만 포함 (16, 32, 48, 64)
+            # ICO ?�일?�는 보통 ?��? ?�기�??�함 (16, 32, 48, 64)
             ico_sizes = [img for img in icon_images if img.size[0] in [16, 32, 48, 64]]
             if ico_sizes:
                 ico_sizes[0].save('icon.ico', format='ICO', sizes=[(img.size[0], img.size[1]) for img in ico_sizes])
-                print("✓ Windows 아이콘 생성됨: icon.ico")
+                print("??Windows ?�이�??�성?? icon.ico")
             else:
                 icon_images[0].save('icon.ico', format='ICO', sizes=[(img.size[0], img.size[1]) for img in icon_images[:4]])
-                print("✓ Windows 아이콘 생성됨: icon.ico")
+                print("??Windows ?�이�??�성?? icon.ico")
         else:
-            print("❌ 아이콘 이미지를 생성할 수 없습니다.")
+            print("???�이�??��?지�??�성?????�습?�다.")
             
     except ImportError:
-        print("❌ PIL(Pillow) 패키지가 필요합니다:")
+        print("??PIL(Pillow) ?�키지가 ?�요?�니??")
         print("   pip install Pillow")
         return False
     except Exception as e:
-        print(f"❌ 아이콘 생성 중 오류 발생: {e}")
+        print(f"???�이�??�성 �??�류 발생: {e}")
         return False
     
     return True
 
 if __name__ == "__main__":
     if create_icon_ico():
-        print("✓ icon.ico 파일이 생성되었습니다.")
+        print("??icon.ico ?�일???�성?�었?�니??")
         sys.exit(0)
     else:
-        print("⚠ 아이콘 생성에 실패했습니다. 수동으로 icon.ico 파일을 생성하거나 제공하세요.")
+        print("???�이�??�성???�패?�습?�다. ?�동?�로 icon.ico ?�일???�성?�거???�공?�세??")
         sys.exit(1)
 

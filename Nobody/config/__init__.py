@@ -1,6 +1,6 @@
-"""설정 및 상수 모듈"""
+"""Configuration helpers for the Nobody 3 application."""
 
 from .constants import DARK_THEME_STYLESHEET
 
-__all__ = ['DARK_THEME_STYLESHEET']
+__all__ = ["DARK_THEME_STYLESHEET"]
 

@@ -1,15 +1,15 @@
-; Inno Setup script for OctXXIII v2.0
-; Builds a Windows installer that includes the PyInstaller output in dist\OctXXIII
+; Inno Setup script for Nobody 3 v2.0
+; Builds a Windows installer that includes the PyInstaller output in dist\Nobody 3
 
 [Setup]
-AppName=OctXXIII
+AppName=Nobody 3
 AppVersion=2.0
-AppId=OctXXIII
+AppId=Nobody 3
 AppPublisher=nobody
-DefaultDirName={autopf}\OctXXIII
-DefaultGroupName=OctXXIII
+DefaultDirName={autopf}\Nobody 3
+DefaultGroupName=Nobody 3
 OutputDir=dist
-OutputBaseFilename=OctXXIII-Setup-v2.0
+OutputBaseFilename=Nobody 3-Setup-v2.0
 Compression=lzma
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64
@@ -25,11 +25,11 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "Create &Desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
 
 [Files]
-Source: "dist\\OctXXIII.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\\Nobody 3.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\\OctXXIII"; Filename: "{app}\\OctXXIII.exe"
-Name: "{commondesktop}\\OctXXIII"; Filename: "{app}\\OctXXIII.exe"; Tasks: desktopicon
+Name: "{group}\\Nobody 3"; Filename: "{app}\\Nobody 3.exe"
+Name: "{commondesktop}\\Nobody 3"; Filename: "{app}\\Nobody 3.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\\OctXXIII.exe"; Description: "Run OctXXIII"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\\Nobody 3.exe"; Description: "Run Nobody 3"; Flags: nowait postinstall skipifsilent

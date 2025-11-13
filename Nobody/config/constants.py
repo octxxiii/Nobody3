@@ -1,6 +1,4 @@
-"""애플리케이션 상수 정의"""
-
-# Dark Theme 스타일 시트
+# Default dark theme stylesheet used across dialogs
 DARK_THEME_STYLESHEET = """
         QDialog { background-color: #2D2D2D; }
         QPushButton { background-color: #333333; color: #FFFFFF; border: 2px solid #555555; border-radius: 5px; padding: 5px; }

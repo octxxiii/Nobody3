@@ -1,4 +1,4 @@
-"""뷰 모듈 (UI 컴포넌트)"""
+"""UI components package."""
 
 from .components import CheckBoxHeader, VideoHandler, MainThreadSignalEmitter, main_thread_signal_emitter
 from .format_settings_dialog import FormatSettingsDialog
@@ -9,14 +9,14 @@ from .presenter import VideoPresenter
 from .main_window import VideoDownloader
 
 __all__ = [
-    'CheckBoxHeader',
-    'VideoHandler',
-    'MainThreadSignalEmitter',
-    'main_thread_signal_emitter',
-    'FormatSettingsDialog',
-    'SettingsDialog',
-    'MiniPlayerController',
-    'VideoTableManager',
-    'VideoPresenter',
-    'VideoDownloader'
+    "CheckBoxHeader",
+    "VideoHandler",
+    "MainThreadSignalEmitter",
+    "main_thread_signal_emitter",
+    "FormatSettingsDialog",
+    "SettingsDialog",
+    "MiniPlayerController",
+    "VideoTableManager",
+    "VideoPresenter",
+    "VideoDownloader",
 ]

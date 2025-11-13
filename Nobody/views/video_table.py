@@ -6,15 +6,10 @@ from typing import List, Tuple, Optional
 import requests
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import (
-    QComboBox,
-    QTableWidget,
-    QTableWidgetItem,
-)
+from PyQt5.QtWidgets import QComboBox, QTableWidget, QTableWidgetItem
 
 from ..utils.logging import logger
 from .components import CheckBoxHeader
-
 
 FormatInfo = Tuple[str, Optional[str], str, int]
 
@@ -25,6 +20,7 @@ class VideoTableManager:
     def __init__(self, host, table: QTableWidget):
         self.host = host
         self.table = table
+        self.header: CheckBoxHeader | None = None
 
     def initialize(self):
         """Initial table setup."""
@@ -46,7 +42,13 @@ class VideoTableManager:
         self.table.itemChanged.connect(self._handle_item_changed)
         self.header = header
 
-    def update_video_list(self, title: str, thumbnail_url: str, video_url: str, formats_info_list: List[FormatInfo]):
+    def update_video_list(
+        self,
+        title: str,
+        thumbnail_url: str,
+        video_url: str,
+        formats_info_list: List[FormatInfo],
+    ):
         """Add a new video row with thumbnail and format dropdown."""
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
@@ -71,7 +73,7 @@ class VideoTableManager:
         if not filtered_formats:
             format_combo.addItem("No available formats", None)
         else:
-            for display_text, format_id, type_label, filesize in filtered_formats:
+            for display_text, format_id, type_label, _ in filtered_formats:
                 if type_label != current_category:
                     if format_combo.count() > 0 and current_category is not None:
                         pass
@@ -134,7 +136,7 @@ class VideoTableManager:
     # Internal helpers -------------------------------------------------
 
     def _handle_item_changed(self, item):
-        if item.column() == 0 and hasattr(self, "header"):
+        if item.column() == 0 and self.header:
             self.header.updateState()
 
     def _load_thumbnail(self, row_position: int, thumbnail_url: str):
@@ -148,11 +150,11 @@ class VideoTableManager:
                 thumbnail_item.setData(Qt.DecorationRole, pixmap_resized)
                 self.table.setItem(row_position, 1, thumbnail_item)
         except requests.exceptions.Timeout:
-            logger.warning("썸네일 다운로드 타임아웃: %s", thumbnail_url)
+            logger.warning("Thumbnail request timed out: %s", thumbnail_url)
         except requests.exceptions.RequestException as exc:
-            logger.warning("썸네일 다운로드 실패: %s - %s", thumbnail_url, exc)
+            logger.warning("Thumbnail download failed: %s - %s", thumbnail_url, exc)
         except Exception as exc:  # pragma: no cover - defensive
-            logger.error("썸네일 처리 중 오류: %s", exc)
+            logger.error("Thumbnail processing error: %s", exc)
 
     def _filter_formats(self, formats_info_list: List[FormatInfo]) -> List[FormatInfo]:
         if not formats_info_list:
@@ -199,14 +201,43 @@ class VideoTableManager:
                         best_match_index = i
                 elif preferred_format in item_text and partial_match_index == -1:
                     partial_match_index = i
+            elif preferred_format in item_text and partial_match_index == -1:
+                partial_match_index = i
 
-        if best_match_index != -1:
-            combo.setCurrentIndex(best_match_index)
-        elif partial_match_index != -1:
-            combo.setCurrentIndex(partial_match_index)
-        else:
+        target_index = best_match_index
+        if target_index == -1:
+            target_index = partial_match_index
+        if target_index == -1:
             for i in range(combo.count()):
                 if combo.model().item(i).isEnabled():
-                    combo.setCurrentIndex(i)
+                    target_index = i
                     break
+
+        if target_index != -1:
+            combo.setCurrentIndex(target_index)
+
+    def delete_selected_videos(self):
+        rows_to_remove = []
+        for row in range(self.table.rowCount()):
+            item = self.table.item(row, 0)
+            if item and item.checkState() == Qt.Checked:
+                rows_to_remove.append(row)
+
+        for row in reversed(rows_to_remove):
+            self.table.removeRow(row)
+            if 0 <= row < len(self.host.video_info_list):
+                del self.host.video_info_list[row]
+
+    def get_selected_videos(self):
+        selected_videos = []
+        for row in range(self.table.rowCount()):
+            item = self.table.item(row, 0)
+            if item and item.checkState() == Qt.Checked:
+                url = self.host.video_info_list[row][1]
+                combo = self.table.cellWidget(row, 3)
+                format_id = None
+                if isinstance(combo, QComboBox):
+                    format_id = combo.currentData()
+                selected_videos.append((row, url, format_id))
+        return selected_videos
 

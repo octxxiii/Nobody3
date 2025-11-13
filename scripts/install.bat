@@ -1,57 +1,57 @@
 @echo off
 echo ========================================
-echo    OctXXIII 설치 프로그램 v2.0
+echo    Nobody 3 ?�치 ?�로그램 v2.0
 echo ========================================
 echo.
 
-REM 관리자 권한 확인
+REM 관리자 권한 ?�인
 net session >nul 2>&1
 if %errorLevel% == 0 (
-    echo 관리자 권한으로 실행 중...
+    echo 관리자 권한?�로 ?�행 �?..
 ) else (
-    echo 경고: 관리자 권한이 필요할 수 있습니다.
+    echo 경고: 관리자 권한???�요?????�습?�다.
     echo.
 )
 
-REM 설치 디렉토리 생성
-set "INSTALL_DIR=%ProgramFiles%\OctXXIII"
-echo 설치 디렉토리: %INSTALL_DIR%
+REM ?�치 ?�렉?�리 ?�성
+set "INSTALL_DIR=%ProgramFiles%\Nobody 3"
+echo ?�치 ?�렉?�리: %INSTALL_DIR%
 
 if not exist "%INSTALL_DIR%" (
-    echo 디렉토리 생성 중...
+    echo ?�렉?�리 ?�성 �?..
     mkdir "%INSTALL_DIR%"
 )
 
-REM 실행 파일 복사
-echo OctXXIII.exe 복사 중...
-copy "dist\OctXXIII.exe" "%INSTALL_DIR%\" /Y
+REM ?�행 ?�일 복사
+echo Nobody 3.exe 복사 �?..
+copy "dist\Nobody 3.exe" "%INSTALL_DIR%\" /Y
 
-REM 바탕화면 바로가기 생성
-echo 바탕화면 바로가기 생성 중...
+REM 바탕?�면 바로가�??�성
+echo 바탕?�면 바로가�??�성 �?..
 set "DESKTOP=%USERPROFILE%\Desktop"
-echo [InternetShortcut] > "%DESKTOP%\OctXXIII.url"
-echo URL=file:///%INSTALL_DIR%\OctXXIII.exe >> "%DESKTOP%\OctXXIII.url"
-echo IconFile=%INSTALL_DIR%\OctXXIII.exe >> "%DESKTOP%\OctXXIII.url"
-echo IconIndex=0 >> "%DESKTOP%\OctXXIII.url"
+echo [InternetShortcut] > "%DESKTOP%\Nobody 3.url"
+echo URL=file:///%INSTALL_DIR%\Nobody 3.exe >> "%DESKTOP%\Nobody 3.url"
+echo IconFile=%INSTALL_DIR%\Nobody 3.exe >> "%DESKTOP%\Nobody 3.url"
+echo IconIndex=0 >> "%DESKTOP%\Nobody 3.url"
 
-REM 시작 메뉴 바로가기 생성
-echo 시작 메뉴 바로가기 생성 중...
+REM ?�작 메뉴 바로가�??�성
+echo ?�작 메뉴 바로가�??�성 �?..
 set "START_MENU=%APPDATA%\Microsoft\Windows\Start Menu\Programs"
-if not exist "%START_MENU%\OctXXIII" mkdir "%START_MENU%\OctXXIII"
-echo [InternetShortcut] > "%START_MENU%\OctXXIII\OctXXIII.url"
-echo URL=file:///%INSTALL_DIR%\OctXXIII.exe >> "%START_MENU%\OctXXIII\OctXXIII.url"
-echo IconFile=%INSTALL_DIR%\OctXXIII.exe >> "%START_MENU%\OctXXIII\OctXXIII.url"
-echo IconIndex=0 >> "%START_MENU%\OctXXIII\OctXXIII.url"
+if not exist "%START_MENU%\Nobody 3" mkdir "%START_MENU%\Nobody 3"
+echo [InternetShortcut] > "%START_MENU%\Nobody 3\Nobody 3.url"
+echo URL=file:///%INSTALL_DIR%\Nobody 3.exe >> "%START_MENU%\Nobody 3\Nobody 3.url"
+echo IconFile=%INSTALL_DIR%\Nobody 3.exe >> "%START_MENU%\Nobody 3\Nobody 3.url"
+echo IconIndex=0 >> "%START_MENU%\Nobody 3\Nobody 3.url"
 
 echo.
 echo ========================================
-echo    설치가 완료되었습니다!
+echo    ?�치가 ?�료?�었?�니??
 echo ========================================
 echo.
-echo 설치 위치: %INSTALL_DIR%
-echo 바탕화면 바로가기: %DESKTOP%\OctXXIII.url
-echo 시작 메뉴: %START_MENU%\OctXXIII\OctXXIII.url
+echo ?�치 ?�치: %INSTALL_DIR%
+echo 바탕?�면 바로가�? %DESKTOP%\Nobody 3.url
+echo ?�작 메뉴: %START_MENU%\Nobody 3\Nobody 3.url
 echo.
-echo OctXXIII를 실행하려면 바탕화면의 바로가기를 더블클릭하세요.
+echo Nobody 3�??�행?�려�?바탕?�면??바로가기�? ?�블?�릭?�세??
 echo.
 pause

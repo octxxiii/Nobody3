@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-OctXXIII MSI 설치 파일 생성 스크립트
-PyInstaller + Advanced Installer 또는 cx_Freeze + WiX 사용
+Nobody 3 MSI ?�치 ?�일 ?�성 ?�크립트
+PyInstaller + Advanced Installer ?�는 cx_Freeze + WiX ?�용
 """
 
 import os
@@ -13,38 +13,38 @@ from pathlib import Path
 
 class MSIBuilder:
     def __init__(self):
-        self.app_name = "OctXXIII"
+        self.app_name = "Nobody 3"
         self.version = "1.0.0"
-        self.author = "octxxiii"
+        self.author = "Nobody 3"
         self.description = "YouTube/Music Converter & Player"
         self.main_script = "Nobody3.py"
         self.build_dir = Path("build")
         self.dist_dir = Path("dist")
         
     def check_dependencies(self):
-        """필요한 도구들이 설치되어 있는지 확인"""
-        print("의존성 확인 중...")
+        """?�요???�구?�이 ?�치?�어 ?�는지 ?�인"""
+        print("?�존???�인 �?..")
         
-        # Python 패키지 확인
+        # Python ?�키지 ?�인
         required_packages = ["PyQt5", "yt-dlp", "requests", "pyinstaller"]
         missing_packages = []
         
         for package in required_packages:
             try:
                 __import__(package.replace("-", "_"))
-                print(f"✓ {package}")
+                print(f"??{package}")
             except ImportError:
                 missing_packages.append(package)
-                print(f"✗ {package} (누락)")
+                print(f"??{package} (?�락)")
         
         if missing_packages:
-            print(f"\n누락된 패키지 설치 중: {', '.join(missing_packages)}")
+            print(f"\n?�락???�키지 ?�치 �? {', '.join(missing_packages)}")
             subprocess.run([sys.executable, "-m", "pip", "install"] + missing_packages)
         
         return True
     
     def create_pyinstaller_spec(self):
-        """PyInstaller spec 파일 생성"""
+        """PyInstaller spec ?�일 ?�성"""
         spec_content = f'''# -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
@@ -85,7 +85,7 @@ a = Analysis(
     noarchive=False,
 )
 
-# 불필요한 바이너리 제거
+# 불필?�한 바이?�리 ?�거
 a.binaries = [x for x in a.binaries if x[0] is not None]
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
@@ -124,11 +124,11 @@ coll = COLLECT(
         with open(f"{self.app_name}.spec", "w", encoding="utf-8") as f:
             f.write(spec_content)
         
-        print(f"✓ {self.app_name}.spec 파일 생성됨")
+        print(f"??{self.app_name}.spec ?�일 ?�성??)
     
     def build_with_pyinstaller(self):
-        """PyInstaller로 실행 파일 빌드"""
-        print("PyInstaller로 실행 파일 빌드 중...")
+        """PyInstaller�??�행 ?�일 빌드"""
+        print("PyInstaller�??�행 ?�일 빌드 �?..")
         
         self.create_pyinstaller_spec()
         
@@ -142,15 +142,15 @@ coll = COLLECT(
         result = subprocess.run(cmd, capture_output=True, text=True)
         
         if result.returncode != 0:
-            print(f"PyInstaller 빌드 실패:")
+            print(f"PyInstaller 빌드 ?�패:")
             print(result.stderr)
             return False
         
-        print("✓ PyInstaller 빌드 완료")
+        print("??PyInstaller 빌드 ?�료")
         return True
     
     def create_advanced_installer_project(self):
-        """Advanced Installer 프로젝트 파일 생성"""
+        """Advanced Installer ?�로?�트 ?�일 ?�성"""
         aip_content = f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <DOCUMENT Type="Advanced Installer" CreateVersion="20.0" version="20.0" Modules="simple" RootPath="." Language="en" Id="{{12345678-1234-1234-1234-123456789012}}">
   <COMPONENT cid="caphyon.advinst.msicomp.ProjectOptionsComponent">
@@ -161,9 +161,9 @@ coll = COLLECT(
     <ROW Property="ALLUSERS" Value="1"/>
     <ROW Property="ARPCOMMENTS" Value="{self.description}"/>
     <ROW Property="ARPCONTACT" Value="{self.author}"/>
-    <ROW Property="ARPHELPLINK" Value="https://github.com/octxxiii/Nobody3"/>
+    <ROW Property="ARPHELPLINK" Value="https://github.com/Nobody 3/Nobody3"/>
     <ROW Property="ARPPRODUCTICON" Value="icon.exe" Type="8"/>
-    <ROW Property="ARPURLINFOABOUT" Value="https://github.com/octxxiii/Nobody3"/>
+    <ROW Property="ARPURLINFOABOUT" Value="https://github.com/Nobody 3/Nobody3"/>
     <ROW Property="Manufacturer" Value="{self.author}"/>
     <ROW Property="ProductCode" Value="1033"/>
     <ROW Property="ProductLanguage" Value="1033"/>
@@ -214,13 +214,13 @@ coll = COLLECT(
         with open(f"{self.app_name}.aip", "w", encoding="utf-8") as f:
             f.write(aip_content)
         
-        print(f"✓ {self.app_name}.aip 프로젝트 파일 생성됨")
+        print(f"??{self.app_name}.aip ?�로?�트 ?�일 ?�성??)
     
     def build_with_advanced_installer(self):
-        """Advanced Installer로 MSI 빌드"""
-        print("Advanced Installer로 MSI 빌드 중...")
+        """Advanced Installer�?MSI 빌드"""
+        print("Advanced Installer�?MSI 빌드 �?..")
         
-        # Advanced Installer 설치 확인
+        # Advanced Installer ?�치 ?�인
         ai_paths = [
             r"C:\Program Files (x86)\Caphyon\Advanced Installer 20.0\bin\x86\AdvancedInstaller.com",
             r"C:\Program Files\Caphyon\Advanced Installer 20.0\bin\x86\AdvancedInstaller.com",
@@ -233,8 +233,8 @@ coll = COLLECT(
                 break
         
         if not ai_exe:
-            print("Advanced Installer가 설치되지 않았습니다.")
-            print("https://www.advancedinstaller.com/ 에서 다운로드하세요.")
+            print("Advanced Installer가 ?�치?��? ?�았?�니??")
+            print("https://www.advancedinstaller.com/ ?�서 ?�운로드?�세??")
             return False
         
         self.create_advanced_installer_project()
@@ -244,46 +244,46 @@ coll = COLLECT(
         result = subprocess.run(cmd, capture_output=True, text=True)
         
         if result.returncode != 0:
-            print(f"Advanced Installer 빌드 실패:")
+            print(f"Advanced Installer 빌드 ?�패:")
             print(result.stderr)
             return False
         
-        print("✓ MSI 파일 생성 완료")
+        print("??MSI ?�일 ?�성 ?�료")
         return True
     
     def create_simple_msi_with_cx_freeze(self):
-        """cx_Freeze와 간단한 MSI 생성"""
-        print("cx_Freeze로 간단한 MSI 생성 중...")
+        """cx_Freeze?� 간단??MSI ?�성"""
+        print("cx_Freeze�?간단??MSI ?�성 �?..")
         
-        # cx_Freeze 설치 확인
+        # cx_Freeze ?�치 ?�인
         try:
             import cx_Freeze
         except ImportError:
-            print("cx_Freeze 설치 중...")
+            print("cx_Freeze ?�치 �?..")
             subprocess.run([sys.executable, "-m", "pip", "install", "cx_Freeze"])
         
-        # setup.py 실행
+        # setup.py ?�행
         if os.path.exists("setup.py"):
             cmd = [sys.executable, "setup.py", "bdist_msi"]
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode == 0:
-                print("✓ cx_Freeze MSI 생성 완료")
+                print("??cx_Freeze MSI ?�성 ?�료")
                 return True
             else:
-                print(f"cx_Freeze MSI 생성 실패: {result.stderr}")
+                print(f"cx_Freeze MSI ?�성 ?�패: {result.stderr}")
         
         return False
     
     def create_inno_setup_script(self):
-        """Inno Setup 스크립트 생성 (MSI 대안)"""
+        """Inno Setup ?�크립트 ?�성 (MSI ?�??"""
         iss_content = f'''[Setup]
 AppName={self.app_name}
 AppVersion={self.version}
 AppPublisher={self.author}
-AppPublisherURL=https://github.com/octxxiii/Nobody3
-AppSupportURL=https://github.com/octxxiii/Nobody3
-AppUpdatesURL=https://github.com/octxxiii/Nobody3
+AppPublisherURL=https://github.com/Nobody 3/Nobody3
+AppSupportURL=https://github.com/Nobody 3/Nobody3
+AppUpdatesURL=https://github.com/Nobody 3/Nobody3
 DefaultDirName={{autopf}}\\{self.app_name}
 DefaultGroupName={self.app_name}
 AllowNoIcons=yes
@@ -316,13 +316,13 @@ Filename: "{{app}}\\{self.app_name}.exe"; Description: "{{cm:LaunchProgram,{self
         with open(f"{self.app_name}.iss", "w", encoding="utf-8") as f:
             f.write(iss_content)
         
-        print(f"✓ {self.app_name}.iss 스크립트 생성됨")
+        print(f"??{self.app_name}.iss ?�크립트 ?�성??)
     
     def build_with_inno_setup(self):
-        """Inno Setup으로 설치 파일 생성"""
-        print("Inno Setup으로 설치 파일 생성 중...")
+        """Inno Setup?�로 ?�치 ?�일 ?�성"""
+        print("Inno Setup?�로 ?�치 ?�일 ?�성 �?..")
         
-        # Inno Setup 설치 확인
+        # Inno Setup ?�치 ?�인
         iscc_paths = [
             r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
             r"C:\Program Files\Inno Setup 6\ISCC.exe",
@@ -335,43 +335,43 @@ Filename: "{{app}}\\{self.app_name}.exe"; Description: "{{cm:LaunchProgram,{self
                 break
         
         if not iscc_exe:
-            print("Inno Setup이 설치되지 않았습니다.")
-            print("https://jrsoftware.org/isinfo.php 에서 다운로드하세요.")
+            print("Inno Setup???�치?��? ?�았?�니??")
+            print("https://jrsoftware.org/isinfo.php ?�서 ?�운로드?�세??")
             return False
         
         self.create_inno_setup_script()
         
-        # 설치 파일 빌드
+        # ?�치 ?�일 빌드
         cmd = [iscc_exe, f"{self.app_name}.iss"]
         result = subprocess.run(cmd, capture_output=True, text=True)
         
         if result.returncode != 0:
-            print(f"Inno Setup 빌드 실패:")
+            print(f"Inno Setup 빌드 ?�패:")
             print(result.stderr)
             return False
         
-        print("✓ 설치 파일 생성 완료")
+        print("???�치 ?�일 ?�성 ?�료")
         return True
     
     def build(self):
-        """전체 빌드 프로세스"""
-        print(f"=== {self.app_name} MSI 빌드 시작 ===")
+        """?�체 빌드 ?�로?�스"""
+        print(f"=== {self.app_name} MSI 빌드 ?�작 ===")
         
         if not self.check_dependencies():
             return False
         
-        # 1단계: PyInstaller로 실행 파일 빌드
+        # 1?�계: PyInstaller�??�행 ?�일 빌드
         if not self.build_with_pyinstaller():
-            print("실행 파일 빌드에 실패했습니다.")
+            print("?�행 ?�일 빌드???�패?�습?�다.")
             return False
         
-        # 2단계: MSI 생성 (여러 방법 시도)
-        print("\nMSI 생성 방법을 선택하세요:")
+        # 2?�계: MSI ?�성 (?�러 방법 ?�도)
+        print("\nMSI ?�성 방법???�택?�세??")
         print("1. Advanced Installer (권장)")
         print("2. cx_Freeze (간단)")
-        print("3. Inno Setup (EXE 설치 파일)")
+        print("3. Inno Setup (EXE ?�치 ?�일)")
         
-        choice = input("선택 (1-3): ").strip()
+        choice = input("?�택 (1-3): ").strip()
         
         if choice == "1":
             success = self.build_with_advanced_installer()
@@ -380,23 +380,23 @@ Filename: "{{app}}\\{self.app_name}.exe"; Description: "{{cm:LaunchProgram,{self
         elif choice == "3":
             success = self.build_with_inno_setup()
         else:
-            print("잘못된 선택입니다. cx_Freeze를 사용합니다.")
+            print("?�못???�택?�니?? cx_Freeze�??�용?�니??")
             success = self.create_simple_msi_with_cx_freeze()
         
         if success:
-            print(f"\n=== {self.app_name} 빌드 완료! ===")
-            print("생성된 파일을 확인하세요:")
-            print(f"- dist/{self.app_name}/ (실행 파일)")
-            print("- dist/ (설치 파일)")
+            print(f"\n=== {self.app_name} 빌드 ?�료! ===")
+            print("?�성???�일???�인?�세??")
+            print(f"- dist/{self.app_name}/ (?�행 ?�일)")
+            print("- dist/ (?�치 ?�일)")
         else:
-            print("빌드에 실패했습니다.")
+            print("빌드???�패?�습?�다.")
         
         return success
 
 def main():
-    """메인 함수"""
+    """메인 ?�수"""
     if sys.platform != "win32":
-        print("이 스크립트는 Windows에서만 실행할 수 있습니다.")
+        print("???�크립트??Windows?�서�??�행?????�습?�다.")
         return 1
     
     builder = MSIBuilder()
@@ -408,10 +408,10 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except KeyboardInterrupt:
-        print("\n빌드가 중단되었습니다.")
+        print("\n빌드가 중단?�었?�니??")
         sys.exit(1)
     except Exception as e:
-        print(f"\n예상치 못한 오류: {e}")
+        print(f"\n?�상�?못한 ?�류: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

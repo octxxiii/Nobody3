@@ -1,69 +1,73 @@
-"""UI 컴포넌트 (CheckBoxHeader, VideoHandler, MainThreadSignalEmitter)"""
+"""Common UI components (header, signal helpers)."""
 
 from PyQt5.QtWidgets import QHeaderView, QCheckBox, QTableWidgetItem
 from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot
 
 
 class CheckBoxHeader(QHeaderView):
-    """체크박스가 있는 테이블 헤더"""
+    """Header that hosts a tri-state checkbox for select-all."""
+
     def __init__(self, parent=None):
         super().__init__(Qt.Horizontal, parent)
         self.setSectionResizeMode(QHeaderView.Fixed)
         self.setDefaultAlignment(Qt.AlignCenter)
-        self.setCheckBox()
+        self._check_box = QCheckBox(self)
+        self._check_box.setChecked(False)
+        self._check_box.clicked.connect(self.selectAll)
+        self._check_box.setStyleSheet("QCheckBox { margin-left: 6px; margin-right: 6px; }")
+        self.sectionResized.connect(self._resize_check_box)
 
-    def setCheckBox(self):
-        self.cb = QCheckBox(self)
-        self.cb.setChecked(False)
-        self.sectionResized.connect(self.resizeCheckBox)
-        self.cb.clicked.connect(self.selectAll)
-        self.cb.setStyleSheet("QCheckBox { margin-left: 6px; margin-right: 6px; }")
-
-    def resizeEvent(self, event):
+    def resizeEvent(self, event):  # noqa: N802 (Qt naming)
         super().resizeEvent(event)
-        self.resizeCheckBox()
+        self._resize_check_box()
 
-    def resizeCheckBox(self):
+    def _resize_check_box(self):
         rect = self.sectionViewportPosition(0)
-        self.cb.setGeometry(rect, 0, self.sectionSize(0), self.height())
-        self.parent().setColumnWidth(0, self.cb.sizeHint().width())
+        self._check_box.setGeometry(rect, 0, self.sectionSize(0), self.height())
+        if self.parent() is not None:
+            self.parent().setColumnWidth(0, self._check_box.sizeHint().width())
 
-    def selectAll(self):
-        check_state = self.cb.isChecked()
-        for row in range(self.parent().rowCount()):
-            item = self.parent().item(row, 0)
+    def selectAll(self):  # noqa: N802 (Qt naming)
+        check_state = self._check_box.isChecked()
+        table = self.parent()
+        if table is None:
+            return
+        for row in range(table.rowCount()):
+            item = table.item(row, 0)
             if item and isinstance(item, QTableWidgetItem):
                 item.setCheckState(Qt.Checked if check_state else Qt.Unchecked)
 
-    def updateState(self):
-        all_checked = self.parent().rowCount() > 0
-        for row in range(self.parent().rowCount()):
-            item = self.parent().item(row, 0)
+    def updateState(self):  # noqa: N802 (Qt naming)
+        table = self.parent()
+        if table is None or table.rowCount() == 0:
+            self._check_box.setChecked(False)
+            return
+        for row in range(table.rowCount()):
+            item = table.item(row, 0)
             if item is None or item.checkState() != Qt.Checked:
-                all_checked = False
-                break
-        self.cb.setChecked(all_checked)
+                self._check_box.setChecked(False)
+                return
+        self._check_box.setChecked(True)
 
 
 class VideoHandler(QObject):
-    """비디오 핸들러"""
+    """Utility class to handle signals from video elements."""
+
     @pyqtSlot(float)
-    def handleVideoDuration(self, duration):
+    def handleVideoDuration(self, duration):  # noqa: N802 (Qt naming)
         from ..utils.logging import logger
-        logger.debug(f"Video duration: {duration}")
+
+        logger.debug("Video duration: %s", duration)
 
 
 class MainThreadSignalEmitter(QObject):
-    """메인 스레드 시그널 에미터"""
-    warning_message = pyqtSignal(str)
+    """Expose cross-thread warning signal for presenters."""
 
-    def __init__(self):
-        super().__init__()
+    warning_message = pyqtSignal(str)
 
     def emit_warning(self, message):
         self.warning_message.emit(message)
 
 
-# 전역 인스턴스
 main_thread_signal_emitter = MainThreadSignalEmitter()
 

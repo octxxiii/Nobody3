@@ -1,17 +1,17 @@
 #!/bin/bash
 
-echo "=== macOS용 OctXXIII 빌드 ==="
+echo "=== macOS??Nobody 3 빌드 ==="
 echo
 
-# Python 버전 확인
+# Python 버전 ?�인
 python3 --version
 if [ $? -ne 0 ]; then
-    echo "Python3가 설치되지 않았습니다."
+    echo "Python3가 ?�치?��? ?�았?�니??"
     exit 1
 fi
 
-# 빌드 스크립트 실행
+# 빌드 ?�크립트 ?�행
 python3 build_macos.py
 
 echo
-echo "빌드가 완료되었습니다!"
+echo "빌드가 ?�료?�었?�니??"
