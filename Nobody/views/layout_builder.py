@@ -39,11 +39,9 @@ class LayoutBuilder:
         host.toggleDownButton.setFixedSize(30, 30)
 
         host.backButton = QPushButton("👈")
-        host.backButton.setFixedSize(30, 30)
         host.backButton.clicked.connect(host.browser.back)
 
         host.forwardButton = QPushButton("👉")
-        host.forwardButton.setFixedSize(30, 30)
         host.forwardButton.clicked.connect(host.browser.forward)
 
         host.refreshButton = QPushButton("🔄")
