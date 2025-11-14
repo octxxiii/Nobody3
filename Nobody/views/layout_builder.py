@@ -63,8 +63,8 @@ class LayoutBuilder:
         host.SCButton.setIcon(QIcon(":/soundCloudIcon"))
         host.SCButton.clicked.connect(lambda: host.browser.setUrl(host.SCPageUrl))
 
-        host.miniPlayerButton = QPushButton("🎵")
-        host.miniPlayerButton.setFixedSize(30, 30)
+        host.miniPlayerButton = QPushButton("🎵 미니")
+        host.miniPlayerButton.setFixedSize(60, 30)
         host.miniPlayerButton.setToolTip("미니 플레이어 모드")
         host.mini_player_controller.bind_toggle_button(host.miniPlayerButton)
 

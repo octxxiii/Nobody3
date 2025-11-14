@@ -51,7 +51,7 @@ class MiniPlayerController(QObject):
         self.dialog = QDialog(self.host)
         self.dialog.setWindowTitle("Nobody 3 - Mini Player")
         self.dialog.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint)
-        self.dialog.setFixedSize(350, 110)
+        self.dialog.setFixedSize(300, 100)
 
         layout = QVBoxLayout(self.dialog)
         layout.setContentsMargins(1, 1, 1, 1)
@@ -79,15 +79,15 @@ class MiniPlayerController(QObject):
         control_layout.setContentsMargins(0, 0, 0, 0)
 
         back_button = QPushButton("⏮️")
-        back_button.setFixedSize(35, 35)
+        back_button.setFixedSize(28, 28)
         back_button.clicked.connect(self.host.play_back)
 
         self.play_button = QPushButton("⏯️")
-        self.play_button.setFixedSize(40, 35)
+        self.play_button.setFixedSize(32, 28)
         self.play_button.clicked.connect(self.host.play)
 
         next_button = QPushButton("⏭️")
-        next_button.setFixedSize(35, 35)
+        next_button.setFixedSize(28, 28)
         next_button.clicked.connect(self.host.play_next)
 
         self.volume_slider = QSlider(Qt.Horizontal)
@@ -98,12 +98,12 @@ class MiniPlayerController(QObject):
         self.volume_slider.valueChanged.connect(self.on_volume_changed)
 
         self.always_on_top_button = QPushButton("📌")
-        self.always_on_top_button.setFixedSize(35, 35)
+        self.always_on_top_button.setFixedSize(28, 28)
         self.always_on_top_button.clicked.connect(self.toggle_always_on_top)
         self.always_on_top_button.setToolTip("최상위 고정")
 
         self.restore_button = QPushButton("🔼")
-        self.restore_button.setFixedSize(35, 35)
+        self.restore_button.setFixedSize(28, 28)
         self.restore_button.clicked.connect(self.restore_from_mini)
         self.restore_button.setToolTip("원래 크기로 복원")
 
@@ -125,24 +125,15 @@ class MiniPlayerController(QObject):
                 border-radius: 8px;
             }
             QPushButton {
-                background-color: #444444;
+                background-color: #333333;
                 color: #FFFFFF;
-                border: 2px solid #666666;
-                border-radius: 5px;
-                padding: 3px;
-                font-size: 14px;
-                font-weight: bold;
-                min-width: 35px;
-                min-height: 35px;
+                border: 1px solid #555555;
+                border-radius: 4px;
+                padding: 1px;
+                font-size: 12px;
             }
-            QPushButton:hover { 
-                background-color: #666666; 
-                border: 2px solid #888888;
-            }
-            QPushButton:pressed { 
-                background-color: #555555; 
-                border: 2px solid #777777;
-            }
+            QPushButton:hover { background-color: #555555; }
+            QPushButton:pressed { background-color: #444444; }
             QSlider::groove:horizontal {
                 border: 1px solid #555555;
                 height: 6px;
