@@ -110,6 +110,11 @@ dist/
 *.deb
 *.rpm
 
+# Release packages
+releases/
+*.zip
+*.tar.gz
+
 # FFmpeg binaries
 ffmpeg/
 temp_ffmpeg/
