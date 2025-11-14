@@ -1,0 +1,31 @@
+**Nobody 3 v2.0** - 개인용 YouTube/SoundCloud 다운로더 & 미디어 플레이어를 공개합니다! 🎵
+
+**주요 기능:**
+- YouTube & SoundCloud 비디오/오디오 다운로드
+- 내장 미니 플레이어 (최상단 고정)
+- 실시간 검색 및 포맷 선택 (MP3, MP4, WebM)
+- 다크 테마 UI
+- FFmpeg 포함 (Windows)
+
+**2025 업데이트:**
+미니 플레이어, 최상단 고정, FFmpeg 포함 빌드, 크로스 플랫폼 지원
+
+**다운로드:**
+Windows: [링크] | macOS/Linux: 빌드 스크립트 제공
+
+**사용 방법:**
+1. 브라우저에서 영상 선택
+2. CopyURL 클릭 또는 URL 입력
+3. 포맷 선택 후 다운로드
+
+**기술:** Python 3.12, PyQt5, yt-dlp, FFmpeg
+
+**주의:** 개인 사용 목적으로만 사용하세요. 저작권은 원 저작자에게 있습니다.
+
+**후원:** [buymeacoffee.com/octxxiii](https://buymeacoffee.com/octxxiii) ☕
+
+피드백 환영합니다!
+
+---
+Creator: nobody 😜 | Updated: 2025-11-14
+
