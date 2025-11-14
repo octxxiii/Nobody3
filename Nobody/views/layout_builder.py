@@ -39,7 +39,12 @@ class LayoutBuilder:
         host.toggleDownButton.setFixedSize(30, 30)
 
         host.backButton = QPushButton("👈")
+        host.backButton.setFixedSize(30, 30)
         host.backButton.clicked.connect(host.browser.back)
+
+        host.forwardButton = QPushButton("👉")
+        host.forwardButton.setFixedSize(30, 30)
+        host.forwardButton.clicked.connect(host.browser.forward)
 
         host.refreshButton = QPushButton("🔄")
         host.refreshButton.setFixedSize(30, 30)
@@ -59,9 +64,6 @@ class LayoutBuilder:
         host.SCButton.setFixedSize(30, 30)
         host.SCButton.setIcon(QIcon(":/soundCloudIcon"))
         host.SCButton.clicked.connect(lambda: host.browser.setUrl(host.SCPageUrl))
-
-        host.forwardButton = QPushButton("👉")
-        host.forwardButton.clicked.connect(host.browser.forward)
 
         host.miniPlayerButton = QPushButton("🎵")
         host.miniPlayerButton.setFixedSize(30, 30)
@@ -204,25 +206,13 @@ class LayoutBuilder:
         buttonLayout.addWidget(host.download_button)
         buttonLayout.addWidget(host.delete_button)
 
-        host.video_table.setStyleSheet(DARK_THEME_STYLESHEET)
-
-        rightSplitter = QSplitter(Qt.Vertical)
-        rightSplitter.addWidget(host.video_table)
-        controlsWidget = QWidget()
-        controlsLayout = QVBoxLayout(controlsWidget)
-        controlsLayout.setContentsMargins(0, 0, 0, 0)
-        controlsLayout.setSpacing(6)
-        controlsLayout.addLayout(playerLayout)
-        controlsLayout.addLayout(buttonLayout)
-        controlsLayout.addLayout(statusLayout)
-        rightSplitter.addWidget(controlsWidget)
-        rightSplitter.setSizes([400, 160])
-
+        # 레이아웃 순서: titleLayout -> playerLayout -> searchLayout -> video_table -> statusLayout -> actionLayout
         host.rightLayout.addLayout(titleLayout)
+        host.rightLayout.addLayout(playerLayout)
         host.rightLayout.addLayout(searchLayout)
-        host.rightLayout.addWidget(host.download_list)
-        host.rightLayout.addWidget(host.later_list)
-        host.rightLayout.addWidget(rightSplitter)
+        host.rightLayout.addWidget(host.video_table)
+        host.rightLayout.addLayout(statusLayout)
+        host.rightLayout.addLayout(buttonLayout)
 
         return host.downLayoutWidget
 

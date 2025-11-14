@@ -188,6 +188,9 @@ class VideoDownloader(QDialog):
 
         self.mini_player_controller.create()
 
+        # Apply dark theme stylesheet
+        self.setStyleSheet(DARK_THEME_STYLESHEET)
+
     def checkAndTriggerReset(self, url):
         """Check the URL and trigger the reset with a delay if it is the YouTube homepage."""
         if url.toString() == "https://www.youtube.com/":
