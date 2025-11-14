@@ -29,6 +29,17 @@ try:
 except ImportError:
     pass
 
+from ..config.constants import DARK_THEME_STYLESHEET
+from ..models.settings import AppSettings
+from ..services.ffmpeg_checker import FFmpegChecker
+from ..utils.cache import resolve_writable_cache_dir
+from ..utils.logging import logger
+from .layout_builder import LayoutBuilder
+from .mini_player import MiniPlayerController
+from .presenter import VideoPresenter
+from .settings_dialog import SettingsDialog
+from .format_settings_dialog import FormatSettingsDialog
+
 class VideoDownloader(QDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -104,8 +115,38 @@ class VideoDownloader(QDialog):
                 self.on_search()
         elif event.key() == Qt.Key_Escape:
             self.lower()
+        elif event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_S:
+            # Ctrl+S to take screenshot
+            self.take_screenshot()
         else:
             super().keyPressEvent(event)
+    
+    def take_screenshot(self, filename=None):
+        """Take a screenshot of the current window."""
+        try:
+            from PyQt5.QtGui import QPixmap, QScreen
+            screen = QApplication.primaryScreen()
+            pixmap = screen.grabWindow(self.winId())
+            
+            if filename is None:
+                from pathlib import Path
+                import datetime
+                screenshots_dir = Path(__file__).parent.parent.parent / "docs" / "screenshots"
+                screenshots_dir.mkdir(parents=True, exist_ok=True)
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = screenshots_dir / f"screenshot_{timestamp}.png"
+            else:
+                from pathlib import Path
+                screenshots_dir = Path(__file__).parent.parent.parent / "docs" / "screenshots"
+                screenshots_dir.mkdir(parents=True, exist_ok=True)
+                filename = screenshots_dir / filename
+            
+            pixmap.save(str(filename), "PNG")
+            logger.info(f"Screenshot saved: {filename}")
+            return str(filename)
+        except Exception as e:
+            logger.error(f"Failed to take screenshot: {e}")
+            return None
     
     def closeEvent(self, event):
         """Handle application shutdown and persist state."""
@@ -157,7 +198,7 @@ class VideoDownloader(QDialog):
         # self.positionSlider.setValue(0)
         # self.durationLabel.setText("00:00 / 00:00")
         self.play_button.setIcon(QIcon(":/play_icon"))  # Reset to play icon
-        self.play_button.setText("?")
+        self.play_button.setText("▶️")
 
     # def setupMediaControls(self):
     #     # Timer to update the position slider and duration label
@@ -402,9 +443,9 @@ class VideoDownloader(QDialog):
     @pyqtSlot(str)
     def updatePlayButtonIcon(self, state):
         if state == 'playing':
-            self.play_button.setText("?")  # Update to pause icon
+            self.play_button.setText("⏸️")  # Update to pause icon
         elif state == 'paused':
-            self.play_button.setText("?")  # Update to play icon
+            self.play_button.setText("▶️")  # Update to play icon
         else:
             # Optionally handle 'unknown' state or other states if necessary
             pass
@@ -513,21 +554,21 @@ class VideoDownloader(QDialog):
     def toggleBrowser(self):
         if self.downLayoutWidget.isVisible():
             self.downLayoutWidget.hide()
-            self.toggleDownButton.setText("Show Downloads")
+            self.toggleDownButton.setText("😜")
             self.adjustMainLayoutSize()
         else:
             self.downLayoutWidget.show()
-            self.toggleDownButton.setText("Hide Downloads")
+            self.toggleDownButton.setText("💥")
             self.resetMainLayoutSize()
 
     def toggleBrowWidgetVisibility(self):
         if self.browWidget.isVisible():
             self.browWidget.hide()
-            self.browHideButton.setText("Show Browser")
+            self.browHideButton.setText("💥")
             self.adjustMainLayoutSize()
         else:
             self.browWidget.show()
-            self.browHideButton.setText("Hide Browser")
+            self.browHideButton.setText("🦕")
             self.resetMainLayoutSize()
 
     def adjustMainLayoutSize(self):

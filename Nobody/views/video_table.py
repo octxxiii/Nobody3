@@ -28,7 +28,7 @@ class VideoTableManager:
         self.table.setHorizontalHeaderLabels(["", "Thumbnail", "Title", "Format"])
         header = CheckBoxHeader()
         self.table.setHorizontalHeader(header)
-        header.cb.clicked.connect(header.selectAll)
+        header._check_box.clicked.connect(header.selectAll)
         self.table.horizontalHeader().setSectionResizeMode(1, self.table.horizontalHeader().ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, self.table.horizontalHeader().Stretch)
         self.table.horizontalHeader().setVisible(True)

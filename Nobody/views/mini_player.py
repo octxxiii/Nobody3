@@ -78,15 +78,15 @@ class MiniPlayerController(QObject):
         control_layout.setSpacing(2)
         control_layout.setContentsMargins(0, 0, 0, 0)
 
-        back_button = QPushButton("Prev")
+        back_button = QPushButton("⏮️")
         back_button.setFixedSize(28, 28)
         back_button.clicked.connect(self.host.play_back)
 
-        self.play_button = QPushButton("Play")
+        self.play_button = QPushButton("⏯️")
         self.play_button.setFixedSize(32, 28)
         self.play_button.clicked.connect(self.host.play)
 
-        next_button = QPushButton("Next")
+        next_button = QPushButton("⏭️")
         next_button.setFixedSize(28, 28)
         next_button.clicked.connect(self.host.play_next)
 
@@ -97,15 +97,15 @@ class MiniPlayerController(QObject):
         self.volume_slider.setToolTip("Volume")
         self.volume_slider.valueChanged.connect(self.on_volume_changed)
 
-        self.always_on_top_button = QPushButton("Pin")
+        self.always_on_top_button = QPushButton("📌")
         self.always_on_top_button.setFixedSize(28, 28)
         self.always_on_top_button.clicked.connect(self.toggle_always_on_top)
-        self.always_on_top_button.setToolTip("Toggle always-on-top")
+        self.always_on_top_button.setToolTip("최상위 고정")
 
-        self.restore_button = QPushButton("Restore")
+        self.restore_button = QPushButton("🔼")
         self.restore_button.setFixedSize(28, 28)
         self.restore_button.clicked.connect(self.restore_from_mini)
-        self.restore_button.setToolTip("Restore main window")
+        self.restore_button.setToolTip("원래 크기로 복원")
 
         control_layout.addWidget(back_button)
         control_layout.addWidget(self.play_button)
@@ -208,13 +208,13 @@ class MiniPlayerController(QObject):
         if self.always_on_top:
             self.dialog.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint)
             if self.always_on_top_button:
-                self.always_on_top_button.setText("Unpin")
-                self.always_on_top_button.setToolTip("Disable always-on-top")
+                self.always_on_top_button.setText("📌")
+                self.always_on_top_button.setToolTip("최상위 고정 해제")
         else:
             self.dialog.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
             if self.always_on_top_button:
-                self.always_on_top_button.setText("Pin")
-                self.always_on_top_button.setToolTip("Enable always-on-top")
+                self.always_on_top_button.setText("📍")
+                self.always_on_top_button.setToolTip("최상위 고정")
 
         self.dialog.move(current_pos)
         self.dialog.show()
@@ -237,9 +237,9 @@ class MiniPlayerController(QObject):
         if not self.play_button:
             return
         if state == "playing":
-            self.play_button.setText("Pause")
+            self.play_button.setText("⏸️")
         elif state == "paused":
-            self.play_button.setText("Play")
+            self.play_button.setText("▶️")
 
     def on_volume_changed(self, value):
         """Handle volume slider change."""
