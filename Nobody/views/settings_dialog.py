@@ -8,6 +8,7 @@ from PyQt5.QtCore import Qt, QUrl, pyqtSignal
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile
 
 from ..utils.cache import resolve_writable_cache_dir
+from ..config.constants import DARK_THEME_STYLESHEET
 
 
 class SettingsDialog(QDialog):
@@ -88,6 +89,7 @@ class SettingsDialog(QDialog):
 
         self.setLayout(self.layout)
         self.setFixedSize(400, 300)
+        self.setStyleSheet(DARK_THEME_STYLESHEET)
 
         try:
             self.updateCacheSize()
