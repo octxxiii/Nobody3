@@ -35,7 +35,7 @@ class SettingsDialog(QDialog):
         """Korean text content"""
         return """
             <p style="text-align: center;">
-            <h1>OctXXIII v2.0</h1>
+            <h1>OctXXIII v1.0.0</h1>
             <div>Youtube/Music Converter & Player</div>
             <div>Release: 2025-01-03</div>
             </p>
@@ -109,7 +109,7 @@ class SettingsDialog(QDialog):
         """English text content"""
         return """
             <p style="text-align: center;">
-            <h1>OctXXIII v2.0</h1>
+            <h1>OctXXIII v1.0.0</h1>
             <div>Youtube/Music Converter & Player</div>
             <div>Release: 2025-01-03</div>
             </p>

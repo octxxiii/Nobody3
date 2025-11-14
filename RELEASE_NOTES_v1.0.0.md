@@ -1,101 +1,60 @@
-# Nobody 3 v1.0.0 Release Notes
+# OctXXIII v1.0.0 Release Notes
 
-## 🎉 Initial Release
+**Youtube/Music Converter & Player**
 
-This is the first stable release of Nobody 3 (OctXXIII v2.0).
+**Release: 2025-01-03**
 
-## ✨ Features
+## 2025 Updates
 
-### Core Functionality
-- **YouTube & SoundCloud Downloader**: Download videos and audio from YouTube and SoundCloud
-- **Built-in Browser**: Integrated web browser for easy navigation
-- **Format Selection**: Choose from multiple video/audio formats
-- **Playlist Support**: Download entire playlists
-- **Thumbnail Preview**: Visual preview of videos in the download list
+- Mini player mode added
+- Always-on-top toggle feature
+- Maximize button enabled
+- FFmpeg included build system
+- Cross-platform support
 
-### Mini Player Mode
-- **Compact Player**: Switch to mini player mode for minimal interface
-- **Always-on-Top Toggle**: Keep the mini player on top of other windows
-- **Volume Control**: Adjust playback volume
-- **Playback Controls**: Play, pause, next, previous controls
+## How to Use
 
-### User Interface
-- **Dark Theme**: Modern dark theme for comfortable viewing
-- **Bilingual Support**: Korean and English language support
-- **Responsive Layout**: Adjustable splitter layout
-- **Customizable Settings**: Format preferences and quality settings
+1. Select desired video/playlist in browser
+2. Click CopyURL or enter URL and search
+3. Select format from table and download
 
-### Technical Features
-- **FFmpeg Integration**: Built-in FFmpeg for media processing
-- **Cross-Platform**: Windows, macOS, and Linux support
-- **Cache Management**: Built-in cache clearing functionality
-- **Error Handling**: Robust error handling and user feedback
+## Previous Versions (2024)
 
-## 📦 Included Components
+- **v1.0 (240408)**: Current browser video/audio control panel added
+- **240405**: Clipboard copy, refresh, SoundCloud support
+- **240401**: Browser hide, YouTube Music support
+- **240328**: Browser integration, theme system
+- **240327**: Playlist support, URL management
+- **240326**: Basic download feature, thumbnail support
 
-- **FFmpeg**: Media processing framework (LGPL/GPL)
-- **yt-dlp**: Media extraction engine
-- **PyQt5**: GUI framework
-- **Python 3.x**: Runtime environment
+---
 
-## 🚀 Installation
+**Creator**: nobody 😜
 
-### Windows
-1. Download `Nobody3-Windows.zip`
-2. Extract to your desired location
-3. Run `Nobody3.exe`
-4. FFmpeg is included in the package
+**Last Updated**: 2025-09-04
 
-### macOS
-1. Download `Nobody3-macOS.dmg` (or `.zip`)
-2. Extract and run the application
-3. FFmpeg is included in the package
+## FFmpeg Distribution
 
-### Linux
-1. Download `Nobody3-Linux.tar.gz`
-2. Extract and run the executable
-3. FFmpeg is included in the package
+This application includes FFmpeg, which is licensed under the LGPL/GPL.
 
-## 📝 Usage
+FFmpeg is a multimedia framework that can decode, encode, transcode, mux, demux, stream, filter and play media files.
 
-1. **Browse**: Use the built-in browser to navigate to YouTube or SoundCloud
-2. **Copy URL**: Click the copy button or enter the URL manually
-3. **Search**: Click search to load available formats
-4. **Select Format**: Choose your preferred format from the table
-5. **Download**: Click the download button to start downloading
-6. **Mini Player**: Click the 🎧 button to switch to mini player mode
+For more information, visit: https://ffmpeg.org/
 
-## ⚠️ Important Notes
+## Copyright Notice
 
-- **Personal Use Only**: This tool is for personal use only
-- **Copyright**: Downloaded content is copyrighted by original creators
-- **Legal**: Unauthorized distribution or commercial use is illegal
-- **Responsibility**: Please respect copyright laws and use responsibly
+**Important**: This tool is for personal use only.
 
-## 🐛 Known Issues
+Downloaded content is copyrighted by the original creators.
 
-- Some formats may not be available for all videos
-- Large playlists may take time to process
-- Network connectivity required for downloads
+Unauthorized distribution or commercial use is illegal.
 
-## 🙏 Acknowledgments
+Please respect copyright laws and use this tool responsibly.
+
+## Acknowledgments
 
 - **yt-dlp**: Media extraction engine
 - **FFmpeg**: Media processing (LGPL/GPL)
 - **PyQt5**: GUI framework
 - **Python Community**: For amazing tools and libraries
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/octxxiii/Nobody3/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/octxxiii/Nobody3/discussions)
-- **Buy Me a Coffee**: [Support Link](https://www.buymeacoffee.com/octxxiii)
-
-## 📅 Release Date
-
-2025-01-03
-
----
-
-**Made with ❤️ by nobody**
 

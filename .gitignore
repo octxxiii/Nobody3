@@ -159,8 +159,9 @@ Thumbs.db
 *.lnk
 
 # Temporary deployment files (should not be committed)
-REDDIT_POST*.md
-REDDIT_POST*.txt
+# Note: MARKETING/ folder is tracked, but root-level marketing files are ignored
+/REDDIT_POST*.md
+/REDDIT_POST*.txt
 DEPLOYMENT_SUMMARY.md
 BUILD_GUIDE.md
 TEST_CHECKLIST.md
@@ -175,6 +176,7 @@ find_*.ps1
 DEPLOYMENT/
 plans/
 docs/IMPROVEMENT_*.md
+MARKETING/
 docs/INDEPENDENCE_*.md
 docs/REFACTORING_REPORT.md
 docs/BUILD_README.md
