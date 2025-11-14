@@ -51,7 +51,7 @@ class MiniPlayerController(QObject):
         self.dialog = QDialog(self.host)
         self.dialog.setWindowTitle("Nobody 3 - Mini Player")
         self.dialog.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint)
-        self.dialog.setFixedSize(300, 100)
+        self.dialog.setFixedSize(350, 110)
 
         layout = QVBoxLayout(self.dialog)
         layout.setContentsMargins(1, 1, 1, 1)
