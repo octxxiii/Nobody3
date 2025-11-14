@@ -160,6 +160,10 @@ DEPLOYMENT_SUMMARY.md
 BUILD_GUIDE.md
 TEST_CHECKLIST.md
 SECURITY_FIXES_SUMMARY.md
+CREATE_RELEASE*.md
+create_github_release.py
+create_release*.ps1
+find_*.ps1
 
 # Internal development files (not for public)
 DEPLOYMENT/
