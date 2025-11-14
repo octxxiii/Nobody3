@@ -41,7 +41,7 @@ class MiniPlayerController(QObject):
         self.toggle_button = button
         if self.toggle_button is not None:
             self.toggle_button.clicked.connect(self.switch_to_mini_mode)
-            self.toggle_button.setToolTip("Switch to mini player")
+            self.toggle_button.setToolTip("미니 플레이어 모드 / Mini Player Mode")
 
     def create(self):
         """Create mini player dialog with controls."""
@@ -167,7 +167,7 @@ class MiniPlayerController(QObject):
 
         if self.toggle_button:
             self.toggle_button.setEnabled(False)
-            self.toggle_button.setToolTip("Mini player active")
+            self.toggle_button.setToolTip("미니 플레이어 활성화됨 / Mini Player Active")
 
         self.host.hide()
         self.update_title_from_host()
@@ -185,7 +185,7 @@ class MiniPlayerController(QObject):
 
         if self.toggle_button:
             self.toggle_button.setEnabled(True)
-            self.toggle_button.setToolTip("Switch to mini player")
+            self.toggle_button.setToolTip("미니 플레이어 모드 / Mini Player Mode")
 
         if self.dialog:
             self.dialog.hide()
