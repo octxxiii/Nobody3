@@ -58,3 +58,16 @@ Please respect copyright laws and use this tool responsibly.
 - **PyQt5**: GUI framework
 - **Python Community**: For amazing tools and libraries
 
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/octxxiii/Nobody3/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/octxxiii/Nobody3/discussions)
+- **Buy Me a Coffee**: [Support Link](https://www.buymeacoffee.com/octxxiii)
+
+## 📅 Release Date
+
+2025-11-15
+
+---
+
+**Made with ❤️ by nobody**
