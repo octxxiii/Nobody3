@@ -93,7 +93,7 @@ This is the first stable release of Nobody 3 (OctXXIII v2.0).
 
 ## 📅 Release Date
 
-2025-01-03
+2025-11-15
 
 ---
 
