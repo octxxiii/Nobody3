@@ -119,7 +119,7 @@ class SettingsDialog(QDialog):
         self.layout.addWidget(self.clearCacheButton)
 
         self.setLayout(self.layout)
-        self.setFixedSize(400, 300)
+        self.setFixedSize(500, 600)
         self.setStyleSheet(DARK_THEME_STYLESHEET)
 
         try:
