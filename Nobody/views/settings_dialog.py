@@ -70,6 +70,37 @@ class SettingsDialog(QDialog):
             <br>
             Last Updated: 2025-09-04
             </h2>
+            <br>
+            <h3>FFmpeg Distribution</h3>
+            <p>
+            This application includes FFmpeg, which is licensed under the LGPL/GPL.
+            <br>
+            FFmpeg is a multimedia framework that can decode, encode, transcode, mux, demux, stream, filter and play media files.
+            <br>
+            For more information, visit: <a href="https://ffmpeg.org/">https://ffmpeg.org/</a>
+            </p>
+            <br>
+            <h3>Copyright Notice</h3>
+            <p>
+            <strong>Important:</strong> This tool is for personal use only.
+            <br>
+            Downloaded content is copyrighted by the original creators.
+            <br>
+            Unauthorized distribution or commercial use is illegal.
+            <br>
+            Please respect copyright laws and use this tool responsibly.
+            </p>
+            <br>
+            <h3>Acknowledgments</h3>
+            <p>
+            - <strong>yt-dlp</strong>: Media extraction engine
+            <br>
+            - <strong>FFmpeg</strong>: Media processing (LGPL/GPL)
+            <br>
+            - <strong>PyQt5</strong>: GUI framework
+            <br>
+            - <strong>Python Community</strong>: For amazing tools and libraries
+            </p>
         """
 
         self.textArea = QTextEdit()
