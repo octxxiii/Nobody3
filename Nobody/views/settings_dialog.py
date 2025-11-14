@@ -111,11 +111,15 @@ class SettingsDialog(QDialog):
         self.actionButton = QPushButton('Visit Created by Link', self)
         self.actionButton.clicked.connect(self.performAction)
 
+        self.supportButton = QPushButton('☕ Buy Me a Coffee', self)
+        self.supportButton.clicked.connect(self.openSupportLink)
+
         self.clearCacheButton = QPushButton('', self)
         self.clearCacheButton.clicked.connect(self.clearCache)
 
         self.layout.addWidget(self.textArea)
         self.layout.addWidget(self.actionButton)
+        self.layout.addWidget(self.supportButton)
         self.layout.addWidget(self.clearCacheButton)
 
         self.setLayout(self.layout)
@@ -142,6 +146,11 @@ class SettingsDialog(QDialog):
         """Open the URL in a web browser"""
         QDesktopServices.openUrl(QUrl(self.predefinedURL))
         self.close()
+
+    def openSupportLink(self):
+        """Open Buy Me a Coffee support link"""
+        support_url = "https://www.buymeacoffee.com/octxxiii"
+        QDesktopServices.openUrl(QUrl(support_url))
 
     def updateCacheSize(self):
         """Update the cache size display"""
