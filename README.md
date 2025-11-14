@@ -1,142 +1,303 @@
-# Nobody 3 - YouTube/Music Converter & Player
+# Nobody 3
 
-## 📖 프로젝트 소개
+<div align="center">
 
-Nobody 3는 YouTube, YouTube Music, SoundCloud를 하나의 GUI에서 탐색하고 플레이리스트 단위로 음악을 다운로드/재생하기 위해 만든 개인 프로젝트입니다. 혼자 쓰던 도구였지만, 더 많은 사람들이 활용할 수 있도록 공유 가능한 구조로 정리했습니다.
+![Nobody 3](https://img.shields.io/badge/version-2.0-blue.svg)
+![Python](https://img.shields.io/badge/python-3.12-blue.svg)
+![PyQt5](https://img.shields.io/badge/PyQt5-5.15.10-green.svg)
+![License](https://img.shields.io/badge/license-Open%20Source-lightgrey.svg)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
 
----
+**A cross-platform personal media manager and player**
 
-## 📁 저장소 구조
+[English](README.md) | [한국어](README.ko.md)
 
-```
-.
-├── Nobody/            # 애플리케이션 소스 패키지
-├── docs/              # 사용자/빌드/개선 문서
-├── scripts/           # 빌드 및 배포 스크립트
-├── dist/              # 빌드 산출물 (Nobody 3.exe 등)
-├── legacy/            # 이전 버전 및 참고 자료
-├── plans/             # 작업 계획 문서
-├── tests/             # pytest 기반 단위 테스트
-├── README.md          # 이 문서
-└── requirements.txt   # 파이썬 의존성 목록
-```
+[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Development](#-development) • [Contributing](#-contributing)
 
-### 배포 산출물 (`dist/`)
-
-```
-dist/
-├── build/             # 기존 빌드 결과 (Nobody 3.exe 포함)
-└── build_new/         # 최신 빌드 산출물
-    ├── Nobody 3.exe   # 메인 실행 파일
-    ├── python312.dll  # 내장 파이썬 런타임
-    ├── resources_rc.py
-    └── lib/           # 의존성 라이브러리
-```
+</div>
 
 ---
 
-## ✨ 주요 기능
+## 📖 Overview
 
-- **내장 브라우저**: YouTube / YouTube Music / SoundCloud 탐색 및 재생
-- **포맷 필터**: 비디오/오디오 포맷 표시 제어, 최대 해상도 제한
-- **다운로드 관리**: 선택 포맷으로 일괄 다운로드, 진행 상황 표시
-- **미니 플레이어**: 창 최소화와 상관없이 항상 위에서 제어 가능
-- **자동 FFmpeg 처리**: 실행 시 필요한 경우 백그라운드 다운로드
-- **로깅 & 설정**: 사용자별 캐시에 로그/설정 저장
+Nobody 3 is a desktop application that combines browsing, downloading, and playing media content from YouTube, YouTube Music, and SoundCloud in a single, elegant interface. Built with PyQt5 for native performance across Windows, macOS, and Linux.
+
+### Why Nobody 3?
+
+- **Unified Experience**: Browse, search, download, and play—all in one app
+- **Privacy-Focused**: Keep your media local, no cloud required
+- **Lightweight**: ~50MB bundle size (vs 100MB+ for Electron apps)
+- **Native Performance**: Built with PyQt5, not a web wrapper
+- **Open Source**: Full source code available, contributions welcome
 
 ---
 
-## 🛠️ 실행 방법
+## ✨ Features
 
-### 1) 개발 환경
+### Core Features
+- 🎬 **Integrated Browser**: Built-in browser for YouTube, YouTube Music, and SoundCloud
+- 📋 **Format Selection**: Choose from multiple video/audio formats with quality indicators
+- 🎵 **Local Playback**: Built-in media player with mini player mode
+- 🎨 **Dark Theme**: Eye-friendly interface for extended use
+- ⚡ **FFmpeg Integration**: Automatic download and bundling (Windows)
+- 🔒 **Security**: URL validation, filename sanitization, SSL verification
 
+### 2025 Updates
+- ✨ Mini player mode with always-on-top option
+- 🔧 Enhanced format selection UI
+- 📦 FFmpeg included builds (Windows)
+- 🌐 Improved cross-platform compatibility
+- 🔐 Security improvements (input validation, path sanitization)
+
+---
+
+## 📸 Screenshots
+
+### Main Interface
+![Main Interface](docs/screenshots/main_interface.png)
+*Main window with integrated browser and video table*
+
+### Format Selection
+![Format Selection](docs/screenshots/format_selection.png)
+*Format selection table with quality indicators*
+
+### Mini Player
+![Mini Player](docs/screenshots/mini_player.png)
+*Compact mini player with always-on-top option*
+
+### Settings Dialog
+![Settings Dialog](docs/screenshots/settings_dialog.png)
+*Settings dialog with collapsible sections*
+
+---
+
+## 🛠️ Installation
+
+### Option 1: Pre-built Executables (Recommended)
+
+Download the latest release for your platform:
+
+- **Windows**: [Download `Nobody3-Windows.zip`](https://github.com/octxxiii/Nobody3/releases)
+- **macOS**: [Download `Nobody3-macOS.zip`](https://github.com/octxxiii/Nobody3/releases)
+- **Linux**: [Download `Nobody3-Linux.tar.gz`](https://github.com/octxxiii/Nobody3/releases)
+
+**Windows**: Extract and run `Nobody3.exe`  
+**macOS**: Extract and open `Nobody3.app`  
+**Linux**: Extract and run `./Nobody3`
+
+### Option 2: Build from Source
+
+#### Prerequisites
+- Python 3.12 or higher
+- pip
+
+#### Steps
 ```bash
-# 의존성 설치
+# Clone the repository
+git clone https://github.com/octxxiii/Nobody3.git
+cd Nobody3
+
+# Install dependencies
 pip install -r requirements.txt
 
-# 실행
+# Run the application
 python -m Nobody.main
 ```
 
-### 2) 빌드 & 배포 (Windows 예시)
-
+#### Building Executables
 ```bash
-# scripts/ 에서 실행
-python scripts/build_windows.py
+# Windows
+pyinstaller --clean --noconfirm Nobody3.spec
+
+# macOS/Linux
+chmod +x build_macos.sh  # or build_linux.sh
+./build_macos.sh
 ```
 
-결과물은 `dist/build_new/Nobody 3.exe`와 `lib/` 폴더로 제공됩니다.
+---
+
+## 📖 Usage
+
+### Basic Workflow
+
+1. **Launch the app**: Run the executable or `python -m Nobody.main`
+2. **Browse content**: Use the integrated browser to find videos/music
+3. **Copy URL**: Click the "CopyURL" button or paste a URL manually
+4. **Select format**: Choose your preferred format from the table
+5. **Download**: Click the download button to save to your selected directory
+
+### Mini Player
+
+- Click the minimize button to switch to mini player mode
+- Toggle always-on-top with the pin button
+- Control playback without switching windows
+
+### Format Settings
+
+Access format filters via the settings menu:
+- Show/hide video formats
+- Show/hide audio formats
+- Set maximum quality/resolution
 
 ---
 
-## 🔧 FFmpeg 취급 방식
+## 🏗️ Architecture
 
-실행 시 `Nobody/utils/ffmpeg.py`의 `find_ffmpeg_executable()`이 다음 순서로 FFmpeg를 찾습니다.
+```
+Nobody/
+├── main.py                 # Application entry point
+├── config/                 # Configuration
+│   └── constants.py       # Theme and constants
+├── models/                 # Domain models
+│   └── settings.py        # App settings
+├── services/               # Background workers
+│   ├── searcher.py        # Metadata fetcher
+│   ├── downloader.py      # Download worker
+│   └── ffmpeg_checker.py  # FFmpeg download
+├── utils/                  # Utilities
+│   ├── cache.py           # Cache directory helpers
+│   ├── logging.py         # Logging setup
+│   ├── ffmpeg.py          # FFmpeg discovery
+│   └── security.py        # Security utilities
+└── views/                  # UI components
+    ├── main_window.py     # Main window
+    ├── mini_player.py     # Mini player controller
+    ├── video_table.py     # Table manager
+    ├── presenter.py       # Business logic
+    └── layout_builder.py  # UI layout
+```
 
-1. 패키징된 경우: 실행 파일과 같은 폴더 (`Nobody 3.exe`와 동일 위치)
-2. 개발 중인 경우: 프로젝트 루트 (`C:\dev\Nobody3\ffmpeg.exe` 등)
-3. 현재 작업 디렉터리
-4. 시스템 PATH
+### Design Patterns
 
-**없다면?** `FFmpegChecker`가 백그라운드에서 자동 다운로드 후 동일 위치에 저장합니다.
-
-**즉, 함께 배포하지 않아도 되지만** 인터넷 접근이 어려운 환경이면 `ffmpeg.exe`/`ffprobe.exe`를 실행 파일과 같은 폴더에 포함하는 것이 안전합니다. 자동 설치가 막힌 환경에서도 곧바로 사용할 수 있습니다.
+- **MVP (Model-View-Presenter)**: Separation of concerns
+- **Service Layer**: Background tasks in QThread
+- **Utility Layer**: Reusable helper functions
 
 ---
 
-## 📚 문서 모음 (docs/)
+## 🔧 Development
 
-- `docs/사용자_가이드.md` : GUI 사용법 (국문)
-- `docs/빌드_가이드.md` : 개발자용 빌드 절차 (국문)
-- `docs/BUILD_README.md` : 빌드 개요 (영문)
-
-그 외 개선 계획/보고서는 `docs/` 폴더에서 확인하세요.
-
----
-
-## ✅ 테스트 & 품질
+### Setup Development Environment
 
 ```bash
-# 단위 테스트 실행
+# Clone and install
+git clone https://github.com/octxxiii/Nobody3.git
+cd Nobody3
+pip install -r requirements.txt
+
+# Run tests
 pytest
+
+# Run with logging
+python -m Nobody.main
 ```
 
-현재는 `VideoTableManager` 등 핵심 모듈에 대한 테스트가 포함되어 있으며, 지속적으로 보강 예정입니다.
+### Project Structure
 
-실행 로그는 사용자 캐시 경로(`%LOCALAPPDATA%/Nobody 3/Caches`)에 기록됩니다.
+```
+.
+├── Nobody/            # Application source package
+├── docs/              # Documentation
+├── scripts/           # Build and deployment scripts
+├── tests/             # Unit tests (pytest)
+├── legacy/            # Legacy code (reference)
+└── releases/          # Release packages
+```
 
----
+### Testing
 
-## 📦 배포 체크 리스트
+```bash
+# Run all tests
+pytest
 
-1. `dist/build_new/` 내용 확인 (Nobody 3.exe, lib/ 등)
-2. 필요한 경우 `ffmpeg.exe`/`ffprobe.exe` 추가 포함
-3. `docs/사용자_가이드.md` 등 문서 동봉
-4. `requirements.txt`는 개발자 참고용으로만 제공
+# Run with coverage
+pytest --cov=Nobody
 
----
+# Run specific test file
+pytest tests/test_video_table.py
+```
 
-## 🗂 legacy 폴더
+### Logging
 
-- `legacy/Nobody3.py` : 리팩터링 전 모놀리식 버전 (참고용)
-- `legacy/OctXXIII_v2.0/` : 이전 빌드 결과물 및 문서 (명칭 유지)
-
----
-
-## 🧭 향후 개선 방향
-
-- Presenter/Manager 단위 테스트 확장
-- 멀티다운로드 큐 UI 개선
-- 자동 업데이트 채널 검토
-
----
-
-## 👤 개발자 정보
-
-- **Creator**: nobody 😜
-- **Last Updated**: 2025-01-11
-- **문의**: GitHub Issues / Pull Request
+Logs are written to:
+- **Windows**: `%LOCALAPPDATA%\Nobody 3\Caches\nobody3.log`
+- **macOS**: `~/Library/Caches/Nobody 3/nobody3.log`
+- **Linux**: `~/.cache/Nobody 3/nobody3.log`
 
 ---
 
-> 💡 **팁**: 안정적인 인터넷 연결이 어렵다면, 배포 시 `ffmpeg.exe`와 `ffprobe.exe`를 실행 파일과 함께 제공하세요. 자동 다운로드가 불가능한 환경에서도 즉시 사용할 수 있습니다.
+## 🔒 Security
+
+### Implemented Security Features
+
+- ✅ **SSL/TLS Verification**: Certificate checking enabled
+- ✅ **URL Validation**: SSRF protection, protocol whitelist
+- ✅ **Filename Sanitization**: Path traversal prevention
+- ✅ **Input Validation**: User input sanitization
+
+See [SECURITY_AUDIT.md](SECURITY_AUDIT.md) for details.
+
+---
+
+## 📦 Dependencies
+
+- **PyQt5** (5.15.10): GUI framework
+- **PyQtWebEngine** (≥5.15.7): Embedded browser
+- **yt-dlp** (≥2023.12.30): Media extraction
+- **requests** (≥2.31.0): HTTP client
+- **FFmpeg**: Media processing (auto-downloaded on Windows)
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+### How to Contribute
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Code Style
+
+- Follow PEP 8 for Python code
+- Use type hints where applicable
+- Add docstrings for public functions/classes
+- Write tests for new features
+
+---
+
+## 📝 License
+
+This project is open source. Please use responsibly and respect copyright laws.
+
+**Important**: This tool is for personal use only. Downloaded content is copyrighted by the original creators. Unauthorized distribution or commercial use is illegal.
+
+---
+
+## 🙏 Acknowledgments
+
+- **yt-dlp**: Media extraction engine
+- **FFmpeg**: Media processing
+- **PyQt5**: GUI framework
+- **Python Community**: For amazing tools and libraries
+
+---
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/octxxiii/Nobody3/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/octxxiii/Nobody3/discussions)
+
+---
+
+<div align="center">
+
+**Made with ❤️ by nobody**
+
+⭐ Star this repo if you find it useful!
+
+</div>
