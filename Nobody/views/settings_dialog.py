@@ -30,15 +30,53 @@ class SettingsDialog(QDialog):
         self.predefinedURL = "https://soundcloud.com/octxxiii"
         self.setupUI()
 
-    def setupUI(self):
-        cache_path = self.cacheDirectory
-        info_text = f"OctXXIII v2.0\n\n캐시 디렉토리:\n{cache_path}\n\nSoundCloud 링크:\n{self.predefinedURL}"
+        predefinedText = """
+            <p style="text-align: center;">
+            <h1>OctXXIII v2.0</h1>
+            <div>Youtube/Music Converter & Player</div>
+            <div>Release: 2025-01-03</div>
+            </p>
+            <br>
+            <p>
+            <h3>2025 업데이트</h3>
+                <ul>
+                    <li>미니 플레이어 모드 추가</li>
+                    <li>최상위 고정 토글 기능</li>
+                    <li>최대화 버튼 활성화</li>
+                    <li>FFmpeg 포함 빌드 시스템</li>
+                    <li>크로스 플랫폼 지원</li>
+                </ul>
 
-        self.textArea = QTextEdit(self)
+                <h3>사용방법</h3>
+                <ol>
+                    <li>브라우저에서 원하는 영상/플레이리스트 선택</li>
+                    <li>CopyURL 클릭 또는 URL 입력 후 검색</li>
+                    <li>테이블에서 포맷 선택 후 다운로드</li>
+                </ol>
+
+                <h3>이전 버전들 (2024)</h3>
+                <ul>
+                    <li>v1.0 (240408): 현재 브라우저 비디오/오디오 컨트롤 패널 추가</li>
+                    <li>240405: 클립보드 복사, 새로고침, SoundCloud 지원</li>
+                    <li>240401: 브라우저 숨기기, YouTube Music 지원</li>
+                    <li>240328: 브라우저 통합, 테마 시스템</li>
+                    <li>240327: 플레이리스트 지원, URL 관리</li>
+                    <li>240326: 기본 다운로드 기능, 썸네일 지원</li>
+                </ul>
+            </p>
+            <h2>
+            Creator: nobody 😜 
+            <br>
+            Last Updated: 2025-09-04
+            </h2>
+        """
+
+        self.textArea = QTextEdit()
+        self.textArea.setHtml(predefinedText)
         self.textArea.setReadOnly(True)
-        self.textArea.setText(info_text)
+        self.textArea.setContentsMargins(0, 0, 0, 0)
 
-        self.actionButton = QPushButton('SoundCloud 열기', self)
+        self.actionButton = QPushButton('Visit Created by Link', self)
         self.actionButton.clicked.connect(self.performAction)
 
         self.clearCacheButton = QPushButton('', self)
@@ -55,6 +93,9 @@ class SettingsDialog(QDialog):
             self.updateCacheSize()
         except Exception as e:
             print(f"Failed to update cache size: {e}")
+
+    def setupUI(self):
+        cache_path = self.cacheDirectory
 
     def closeEvent(self, event):
         """Reimplement the close event to emit the dialogClosed signal"""
