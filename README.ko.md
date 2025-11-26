@@ -28,18 +28,22 @@ Nobody 3는 YouTube, YouTube Music, SoundCloud를 하나의 GUI에서 탐색하�
 
 ### 메인 인터페이스
 ![메인 인터페이스](resource/img/Main%20Interface.png)
+
 *통합 브라우저와 비디오 테이블이 있는 메인 창*
 
 ### 포맷 선택
 ![포맷 선택](resource/img/Format%20Selection.png)
+
 *품질 표시기가 있는 포맷 선택 테이블*
 
 ### 미니 플레이어
 ![미니 플레이어](resource/img/Mini%20Player.png)
+
 *항상 위에 표시되는 옵션이 있는 컴팩트 미니 플레이어*
 
 ### 설정 다이얼로그
 ![설정 다이얼로그](resource/img/Settings%20Dialog.png)
+
 *접을 수 있는 섹션이 있는 설정 다이얼로그*
 
 ---
