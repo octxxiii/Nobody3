@@ -2,7 +2,7 @@
 
 **Youtube/Music Converter & Player**
 
-**Release: 2025-01-XX**
+**Release: 2025-11-26**
 
 ## 🐛 Bug Fixes
 
@@ -43,7 +43,7 @@
 
 ## 📅 Release Date
 
-2025-01-XX
+2025-11-26
 
 ---
 
