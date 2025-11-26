@@ -17,6 +17,10 @@ if platform.system() == "Windows":
     os.environ.setdefault("QT_OPENGL", "software")
     # Disable ANGLE to use software rendering
     os.environ.setdefault("QT_ANGLE_PLATFORM", "d3d11")
+    # Additional WebEngine stability settings
+    os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-gpu --disable-software-rasterizer")
+    # Disable WebEngine logging to reduce overhead
+    os.environ.setdefault("QTWEBENGINE_DISABLE_LOGGING", "1")
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon

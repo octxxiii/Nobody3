@@ -67,24 +67,58 @@ class VideoDownloader(QDialog):
             except Exception as e:
                 logger.error(f"Failed to create cache directory {self.cacheDirectory}: {e}")
 
-        # Validate and clean corrupted WebEngine profile (e.g., from system date changes)
-        from ..utils.cache import validate_and_clean_profile
-        profile_cleaned = validate_and_clean_profile(self.cacheDirectory, logger)
-        if profile_cleaned:
-            logger.info("WebEngine profile validated and cleaned. "
-                       "This may resolve crashes caused by system date changes.")
+        # CRITICAL: Always clear WebEngine profile on startup to prevent crashes
+        # This is necessary because Windows Store Python + PyQt5 WebEngine has known issues
+        # with corrupted profiles, especially after system date changes
+        from ..utils.cache import clear_webengine_profile
+        try:
+            logger.info("Clearing WebEngine profile to prevent crashes...")
+            clear_webengine_profile(self.cacheDirectory, logger)
+            logger.info("WebEngine profile cleared successfully.")
+        except Exception as e:
+            logger.error(f"Failed to clear WebEngine profile: {e}")
+            # Try to delete directory manually as fallback
+            try:
+                if os.path.exists(self.cacheDirectory):
+                    import shutil
+                    shutil.rmtree(self.cacheDirectory, ignore_errors=True)
+                    os.makedirs(self.cacheDirectory, exist_ok=True)
+                    logger.info("WebEngine profile manually cleared.")
+            except Exception as manual_clear_error:
+                logger.error(f"Failed to manually clear profile: {manual_clear_error}")
 
         # Configure persistent browser profile paths
-        profile = QWebEngineProfile.defaultProfile()
-        profile.setPersistentStoragePath(self.cacheDirectory)
-        profile.setHttpCacheType(QWebEngineProfile.NoCache)
-        profile.setPersistentCookiesPolicy(QWebEngineProfile.ForcePersistentCookies)
+        # Do this AFTER profile cleanup to ensure clean state
+        try:
+            profile = QWebEngineProfile.defaultProfile()
+            profile.setPersistentStoragePath(self.cacheDirectory)
+            profile.setHttpCacheType(QWebEngineProfile.NoCache)
+            profile.setPersistentCookiesPolicy(QWebEngineProfile.ForcePersistentCookies)
 
-        settings = profile.settings()
-        settings.setAttribute(QWebEngineSettings.LocalStorageEnabled, True)
-        settings.setAttribute(QWebEngineSettings.JavascriptEnabled, True)
-        settings.setAttribute(QWebEngineSettings.PluginsEnabled, True)
-        settings.setAttribute(QWebEngineSettings.WebGLEnabled, True)
+            settings = profile.settings()
+            settings.setAttribute(QWebEngineSettings.LocalStorageEnabled, True)
+            settings.setAttribute(QWebEngineSettings.JavascriptEnabled, True)
+            settings.setAttribute(QWebEngineSettings.PluginsEnabled, True)
+            settings.setAttribute(QWebEngineSettings.WebGLEnabled, True)
+        except Exception as profile_error:
+            logger.error(f"Failed to configure WebEngine profile: {profile_error}")
+            # Try to clear and recreate
+            try:
+                from ..utils.cache import clear_webengine_profile
+                clear_webengine_profile(self.cacheDirectory, logger)
+                # Retry profile configuration
+                profile = QWebEngineProfile.defaultProfile()
+                profile.setPersistentStoragePath(self.cacheDirectory)
+                profile.setHttpCacheType(QWebEngineProfile.NoCache)
+                profile.setPersistentCookiesPolicy(QWebEngineProfile.ForcePersistentCookies)
+                settings = profile.settings()
+                settings.setAttribute(QWebEngineSettings.LocalStorageEnabled, True)
+                settings.setAttribute(QWebEngineSettings.JavascriptEnabled, True)
+                settings.setAttribute(QWebEngineSettings.PluginsEnabled, True)
+                settings.setAttribute(QWebEngineSettings.WebGLEnabled, True)
+                logger.info("WebEngine profile recreated after configuration failure.")
+            except Exception as retry_error:
+                logger.error(f"Failed to recreate WebEngine profile: {retry_error}")
 
         self.setWindowTitle("Nobody 3")
         self.player = QMediaPlayer(self)

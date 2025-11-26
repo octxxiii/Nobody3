@@ -33,24 +33,39 @@ class LayoutBuilder:
         host.browWidget = QWidget()
         host.leftLayout = QVBoxLayout(host.browWidget)
         
-        # Create QWebEngineView with explicit parent to prevent Windows crashes
-        host.browser = QWebEngineView(host.browWidget)
-        
-        # Set URL URLs
+        # Set URL URLs before creating browser
         host.homePageUrl = QUrl("https://www.youtube.com")
         host.musicPageUrl = QUrl("https://music.youtube.com")
         host.SCPageUrl = QUrl("https://soundcloud.com/")
+        
+        # Create QWebEngineView with explicit parent and error handling
+        # Wrap in try-except to handle Windows Store Python + PyQt5 WebEngine crashes
+        from ..utils.logging import logger
+        try:
+            host.browser = QWebEngineView(host.browWidget)
+            logger.info("QWebEngineView created successfully.")
+        except Exception as browser_error:
+            logger.error(f"Failed to create QWebEngineView: {browser_error}")
+            # Create a placeholder widget if WebEngine fails
+            from PyQt5.QtWidgets import QLabel
+            host.browser = QLabel("WebEngine initialization failed. Please restart the application.", host.browWidget)
+            host.browser.setStyleSheet("color: red; padding: 20px;")
+            logger.warning("Using placeholder widget instead of WebEngine.")
         
         # Delay URL loading to ensure WebEngine is fully initialized
         # Use QTimer.singleShot to defer URL loading until after event loop starts
         def delayed_url_load():
             try:
-                host.browser.setUrl(host.homePageUrl)
+                if hasattr(host.browser, 'setUrl'):
+                    host.browser.setUrl(host.homePageUrl)
+                    logger.info("Initial URL loaded successfully.")
+                else:
+                    logger.warning("Browser widget does not support setUrl (placeholder mode).")
             except Exception as e:
-                from ..utils.logging import logger
                 logger.error(f"Failed to load initial URL: {e}")
         
-        QTimer.singleShot(100, delayed_url_load)
+        # Increase delay to 500ms for more stable initialization
+        QTimer.singleShot(500, delayed_url_load)
 
         host.toggleDownButton = QPushButton("💥", host)
         host.toggleDownButton.clicked.connect(host.toggleBrowser)

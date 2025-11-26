@@ -8,32 +8,33 @@
 
 ### Critical Fix: WebEngine Crash on Windows
 - **Fixed**: Qt5WebEngineCore.dll memory access violation (0xc0000005)
-- **Root Cause**: System date changes during execution corrupted WebEngine profile data
+- **Root Cause**: System date changes and Windows Store Python sandbox corrupted WebEngine profile data
 - **Solution**: 
-  - Added automatic profile validation and cleanup on startup
-  - Detects and removes corrupted files with abnormal timestamps (e.g., from 2015)
-  - Prevents crashes after system date changes
+  - **Forced profile reset** on every startup (no residual cache survives)
+  - Automatic detection/removal of corrupted files with abnormal timestamps (e.g., from 2015)
+  - Robust fallback that deletes the entire profile if any corruption is detected
   - Improved WebEngine initialization with proper parent widget assignment
-  - Added delayed URL loading to ensure proper initialization
+  - Longer delayed URL loading to ensure WebEngine is fully initialized before navigation
 
 ### WebEngine Initialization Improvements
-- Fixed QWebEngineView creation without parent widget (Windows compatibility)
-- Added delayed URL loading using QTimer for stable initialization
-- Added Windows-specific environment variables for software rendering fallback
+- Defensive creation of `QWebEngineView` with placeholder fallback (prevents hard crash)
+- Delayed URL loading increased to 500 ms for stability on slower systems
+- Added Windows-specific Chromium flags (`--disable-gpu --disable-software-rasterizer`)
+- Added sandbox/logging disable toggles to reduce WebEngine overhead
 - Improved error handling and logging for WebEngine operations
 
 ## 🔧 Technical Changes
 
 ### New Features
 - **Profile Validation**: Automatic detection and cleanup of corrupted WebEngine profiles
-- **Timestamp Validation**: Validates file timestamps to detect corruption from date changes
-- **Safe Recovery**: Automatic profile cleanup on validation failure
+- **Forced Reset Mode**: Ability to fully clear the profile when validation is inconclusive
+- **Safe Recovery**: Placeholder widget shown when WebEngine cannot initialize
 
 ### Code Improvements
-- Enhanced `cache.py` with `validate_and_clean_profile()` function
-- Improved WebEngine initialization sequence in `layout_builder.py`
+- Enhanced `cache.py` with `clear_webengine_profile()` + stricter validation heuristics
+- Reworked WebEngine initialization sequence in `layout_builder.py`
 - Added Windows-specific environment variable configuration in `main.py`
-- Better error handling and logging throughout
+- Broader exception handling across initialization path
 
 ## 📋 Migration Notes
 
