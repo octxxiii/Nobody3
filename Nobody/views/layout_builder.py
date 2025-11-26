@@ -28,11 +28,29 @@ class LayoutBuilder:
 
     def build_left_panel(self):
         host = self.host
-        host.browser = QWebEngineView()
-        host.browser.setUrl(QUrl("https://www.youtube.com"))
+        
+        # Create parent widget first
+        host.browWidget = QWidget()
+        host.leftLayout = QVBoxLayout(host.browWidget)
+        
+        # Create QWebEngineView with explicit parent to prevent Windows crashes
+        host.browser = QWebEngineView(host.browWidget)
+        
+        # Set URL URLs
         host.homePageUrl = QUrl("https://www.youtube.com")
         host.musicPageUrl = QUrl("https://music.youtube.com")
         host.SCPageUrl = QUrl("https://soundcloud.com/")
+        
+        # Delay URL loading to ensure WebEngine is fully initialized
+        # Use QTimer.singleShot to defer URL loading until after event loop starts
+        def delayed_url_load():
+            try:
+                host.browser.setUrl(host.homePageUrl)
+            except Exception as e:
+                from ..utils.logging import logger
+                logger.error(f"Failed to load initial URL: {e}")
+        
+        QTimer.singleShot(100, delayed_url_load)
 
         host.toggleDownButton = QPushButton("💥", host)
         host.toggleDownButton.clicked.connect(host.toggleBrowser)
@@ -78,8 +96,6 @@ class LayoutBuilder:
         host.navLayout.addWidget(host.miniPlayerButton)
         host.navLayout.addWidget(host.toggleDownButton)
 
-        host.browWidget = QWidget()
-        host.leftLayout = QVBoxLayout(host.browWidget)
         host.leftLayout.addLayout(host.navLayout)
         host.leftLayout.addWidget(host.browser)
         return host.browWidget

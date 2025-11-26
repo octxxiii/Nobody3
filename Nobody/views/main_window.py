@@ -67,6 +67,13 @@ class VideoDownloader(QDialog):
             except Exception as e:
                 logger.error(f"Failed to create cache directory {self.cacheDirectory}: {e}")
 
+        # Validate and clean corrupted WebEngine profile (e.g., from system date changes)
+        from ..utils.cache import validate_and_clean_profile
+        profile_cleaned = validate_and_clean_profile(self.cacheDirectory, logger)
+        if profile_cleaned:
+            logger.info("WebEngine profile validated and cleaned. "
+                       "This may resolve crashes caused by system date changes.")
+
         # Configure persistent browser profile paths
         profile = QWebEngineProfile.defaultProfile()
         profile.setPersistentStoragePath(self.cacheDirectory)

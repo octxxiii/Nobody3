@@ -9,9 +9,18 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+# Windows-specific WebEngine environment variables to prevent crashes
+if platform.system() == "Windows":
+    # Disable GPU acceleration if causing issues
+    os.environ.setdefault("QTWEBENGINE_DISABLE_SANDBOX", "1")
+    # Use software rendering to avoid GPU driver issues
+    os.environ.setdefault("QT_OPENGL", "software")
+    # Disable ANGLE to use software rendering
+    os.environ.setdefault("QT_ANGLE_PLATFORM", "d3d11")
+
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWebEngineWidgets import QWebEngineSettings, QWebEngineView
+from PyQt5.QtWebEngineWidgets import QWebEngineSettings
 
 from Nobody.views import VideoDownloader
 
@@ -43,7 +52,6 @@ def main():
 
     mainWindow = VideoDownloader()
     mainWindow.show()
-    QWebEngineView()
     sys.exit(app.exec_())
 
 
