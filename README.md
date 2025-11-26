@@ -54,19 +54,19 @@ Nobody 3 is a desktop application that combines browsing, downloading, and playi
 ## 📸 Screenshots
 
 ### Main Interface
-![Main Interface](docs/screenshots/main_interface.png)
+![Main Interface](resource/img/Main%20Interface.png)
 *Main window with integrated browser and video table*
 
 ### Format Selection
-![Format Selection](docs/screenshots/format_selection.png)
+![Format Selection](resource/img/Format%20Selection.png)
 *Format selection table with quality indicators*
 
 ### Mini Player
-![Mini Player](docs/screenshots/mini_player.png)
+![Mini Player](resource/img/Mini%20Player.png)
 *Compact mini player with always-on-top option*
 
 ### Settings Dialog
-![Settings Dialog](docs/screenshots/settings_dialog.png)
+![Settings Dialog](resource/img/Settings%20Dialog.png)
 *Settings dialog with collapsible sections*
 
 ---
