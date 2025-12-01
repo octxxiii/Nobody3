@@ -35,19 +35,23 @@ class SettingsDialog(QDialog):
         """Korean text content"""
         return """
             <p style="text-align: center;">
-            <h1>OctXXIII v1.0.0</h1>
+            <h1>Nobody 3 v1.0.2</h1>
             <div>Youtube/Music Converter & Player</div>
-            <div>Release: 2025-01-03</div>
+            <div>Release: 2025-12-01</div>
             </p>
             <br>
             <p>
-            <h3>2025 업데이트</h3>
+            <h3>최신 업데이트 (v1.0.2)</h3>
                 <ul>
-                    <li>미니 플레이어 모드 추가</li>
-                    <li>최상위 고정 토글 기능</li>
-                    <li>최대화 버튼 활성화</li>
-                    <li>FFmpeg 포함 빌드 시스템</li>
-                    <li>크로스 플랫폼 지원</li>
+                    <li><strong>로그인 상태 보존</strong>: 프로그램 재시작 시에도 로그인 상태 유지</li>
+                    <li><strong>캐시 최적화</strong>: 손상된 파일만 선택적 삭제, 정상 캐시 보존</li>
+                    <li><strong>쿠키/세션 보호</strong>: 로그인 정보, 로컬 스토리지 데이터 보호</li>
+                </ul>
+
+            <h3>이전 업데이트</h3>
+                <ul>
+                    <li><strong>v1.0.1</strong>: WebEngine 크래시 수정, 프로필 검증 기능 추가</li>
+                    <li><strong>v1.0.0</strong>: 미니 플레이어 모드, 최상위 고정, FFmpeg 포함 빌드</li>
                 </ul>
 
                 <h3>사용방법</h3>
@@ -70,7 +74,7 @@ class SettingsDialog(QDialog):
             <h2>
             Creator: nobody 😜 
             <br>
-            Last Updated: 2025-09-04
+            Last Updated: 2025-12-01
             </h2>
             <br>
             <h3>FFmpeg 배포</h3>
@@ -109,19 +113,23 @@ class SettingsDialog(QDialog):
         """English text content"""
         return """
             <p style="text-align: center;">
-            <h1>OctXXIII v1.0.0</h1>
+            <h1>Nobody 3 v1.0.2</h1>
             <div>Youtube/Music Converter & Player</div>
-            <div>Release: 2025-01-03</div>
+            <div>Release: 2025-12-01</div>
             </p>
             <br>
             <p>
-            <h3>2025 Updates</h3>
+            <h3>Latest Updates (v1.0.2)</h3>
                 <ul>
-                    <li>Mini player mode added</li>
-                    <li>Always-on-top toggle feature</li>
-                    <li>Maximize button enabled</li>
-                    <li>FFmpeg included build system</li>
-                    <li>Cross-platform support</li>
+                    <li><strong>Login State Preservation</strong>: Login state maintained across program restarts</li>
+                    <li><strong>Cache Optimization</strong>: Selective removal of corrupted files, preserves valid cache</li>
+                    <li><strong>Cookie/Session Protection</strong>: Login info and local storage data protected</li>
+                </ul>
+
+            <h3>Previous Updates</h3>
+                <ul>
+                    <li><strong>v1.0.1</strong>: WebEngine crash fix, profile validation feature added</li>
+                    <li><strong>v1.0.0</strong>: Mini player mode, always-on-top, FFmpeg included build</li>
                 </ul>
 
                 <h3>How to Use</h3>
@@ -144,7 +152,7 @@ class SettingsDialog(QDialog):
             <h2>
             Creator: nobody 😜 
             <br>
-            Last Updated: 2025-09-04
+            Last Updated: 2025-12-01
             </h2>
             <br>
             <h3>FFmpeg Distribution</h3>
