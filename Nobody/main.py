@@ -34,17 +34,23 @@ def main():
     app = QApplication(sys.argv)
     app.setStyle("fusion")
 
-    icon_paths = []
-    if platform.system() == "Windows":
-        icon_paths = [
-            os.path.join(project_root, "icon.ico"),
-            os.path.join(project_root, "st2.icns"),
-        ]
+    # Get resource path for frozen (PyInstaller) environment
+    if getattr(sys, 'frozen', False):
+        # Running as compiled executable
+        if hasattr(sys, '_MEIPASS'):
+            base_path = sys._MEIPASS
+        else:
+            base_path = os.path.dirname(sys.executable)
     else:
-        icon_paths = [
-            os.path.join(project_root, "icon.icns"),
-            os.path.join(project_root, "st2.icns"),
-        ]
+        # Running as script
+        base_path = project_root
+    
+    icon_paths = [
+        os.path.join(base_path, "st2.icns"),
+        os.path.join(project_root, "st2.icns"),
+        os.path.join(base_path, "icon.ico"),
+        os.path.join(project_root, "icon.ico"),
+    ]
 
     for icon_path in icon_paths:
         if os.path.exists(icon_path):

@@ -67,25 +67,23 @@ class VideoDownloader(QDialog):
             except Exception as e:
                 logger.error(f"Failed to create cache directory {self.cacheDirectory}: {e}")
 
-        # CRITICAL: Always clear WebEngine profile on startup to prevent crashes
-        # This is necessary because Windows Store Python + PyQt5 WebEngine has known issues
-        # with corrupted profiles, especially after system date changes
-        from ..utils.cache import clear_webengine_profile
+        # Validate WebEngine profile on startup (conservative approach)
+        # This only removes files with clearly corrupted timestamps while
+        # preserving cookies, sessions, and login data
+        # Profile validation is now very conservative to prevent login loss
+        from ..utils.cache import validate_and_clean_profile
         try:
-            logger.info("Clearing WebEngine profile to prevent crashes...")
-            clear_webengine_profile(self.cacheDirectory, logger)
-            logger.info("WebEngine profile cleared successfully.")
+            logger.info("Checking WebEngine profile integrity (preserving login data)...")
+            cleaned = validate_and_clean_profile(self.cacheDirectory, logger, force_clear=False)
+            if cleaned:
+                logger.info("WebEngine profile checked - some corrupted files removed, login data preserved.")
+            else:
+                logger.info("WebEngine profile is valid, no cleaning needed.")
         except Exception as e:
-            logger.error(f"Failed to clear WebEngine profile: {e}")
-            # Try to delete directory manually as fallback
-            try:
-                if os.path.exists(self.cacheDirectory):
-                    import shutil
-                    shutil.rmtree(self.cacheDirectory, ignore_errors=True)
-                    os.makedirs(self.cacheDirectory, exist_ok=True)
-                    logger.info("WebEngine profile manually cleared.")
-            except Exception as manual_clear_error:
-                logger.error(f"Failed to manually clear profile: {manual_clear_error}")
+            logger.error(f"Failed to validate WebEngine profile: {e}")
+            # Do NOT clear profile on validation failure - preserve login state
+            # Only log the error and continue
+            logger.warning("Profile validation error occurred, but preserving profile to maintain login state.")
 
         # Configure persistent browser profile paths
         # Do this AFTER profile cleanup to ensure clean state
@@ -102,10 +100,13 @@ class VideoDownloader(QDialog):
             settings.setAttribute(QWebEngineSettings.WebGLEnabled, True)
         except Exception as profile_error:
             logger.error(f"Failed to configure WebEngine profile: {profile_error}")
-            # Try to clear and recreate
+            # Try to validate/clean and retry, but preserve login data
             try:
-                from ..utils.cache import clear_webengine_profile
-                clear_webengine_profile(self.cacheDirectory, logger)
+                from ..utils.cache import validate_and_clean_profile
+                # Try selective cleaning (preserves cookies/sessions)
+                if validate_and_clean_profile(self.cacheDirectory, logger, force_clear=False):
+                    logger.info("Profile cleaned (login data preserved), retrying configuration...")
+                
                 # Retry profile configuration
                 profile = QWebEngineProfile.defaultProfile()
                 profile.setPersistentStoragePath(self.cacheDirectory)
@@ -116,9 +117,10 @@ class VideoDownloader(QDialog):
                 settings.setAttribute(QWebEngineSettings.JavascriptEnabled, True)
                 settings.setAttribute(QWebEngineSettings.PluginsEnabled, True)
                 settings.setAttribute(QWebEngineSettings.WebGLEnabled, True)
-                logger.info("WebEngine profile recreated after configuration failure.")
+                logger.info("WebEngine profile reconfigured (login data preserved).")
             except Exception as retry_error:
-                logger.error(f"Failed to recreate WebEngine profile: {retry_error}")
+                logger.error(f"Failed to reconfigure WebEngine profile: {retry_error}")
+                logger.warning("Continuing with default profile settings to preserve login state.")
 
         self.setWindowTitle("Nobody 3")
         self.player = QMediaPlayer(self)

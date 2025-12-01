@@ -59,6 +59,9 @@ def validate_and_clean_profile(cache_directory: str, logger=None, force_clear=Fa
     Detects and removes files with abnormal timestamps (e.g., from 2015)
     that can cause WebEngine crashes after system date changes.
     
+    IMPORTANT: This function protects cookies, session data, and login information
+    by excluding critical WebEngine profile files from deletion.
+    
     Args:
         cache_directory: Path to the WebEngine profile cache directory
         logger: Optional logger instance for error reporting
@@ -74,6 +77,27 @@ def validate_and_clean_profile(cache_directory: str, logger=None, force_clear=Fa
     if force_clear:
         return clear_webengine_profile(cache_directory, logger)
     
+    # Critical files/directories that must be preserved (cookies, sessions, login data)
+    # These are essential for maintaining user login state
+    protected_patterns = [
+        'Cookies',  # Cookie database
+        'Cookies-journal',  # Cookie journal
+        'Local Storage',  # LocalStorage data
+        'Session Storage',  # SessionStorage data
+        'IndexedDB',  # IndexedDB data
+        'Service Worker',  # Service Worker cache
+        'WebStorage',  # Web storage data
+        'GPUCache',  # GPU cache (can be regenerated but safe to keep)
+    ]
+    
+    def is_protected(path):
+        """Check if a file or directory path should be protected from deletion."""
+        path_lower = path.lower()
+        for pattern in protected_patterns:
+            if pattern.lower() in path_lower:
+                return True
+        return False
+    
     cleaned = False
     current_time = time.time()
     # Consider files older than 10 years or newer than 1 day in the future as corrupted
@@ -87,6 +111,13 @@ def validate_and_clean_profile(cache_directory: str, logger=None, force_clear=Fa
             # Check files
             for filename in files:
                 file_path = os.path.join(root, filename)
+                
+                # Skip protected files (cookies, sessions, etc.)
+                if is_protected(file_path):
+                    if logger:
+                        logger.debug(f"Protecting critical file: {file_path}")
+                    continue
+                
                 try:
                     mtime = os.path.getmtime(file_path)
                     # Check if timestamp is abnormal (too old or future)
@@ -110,6 +141,13 @@ def validate_and_clean_profile(cache_directory: str, logger=None, force_clear=Fa
             # Check directories
             for dirname in dirs[:]:  # Copy list to allow modification
                 dir_path = os.path.join(root, dirname)
+                
+                # Skip protected directories (cookies, sessions, etc.)
+                if is_protected(dir_path):
+                    if logger:
+                        logger.debug(f"Protecting critical directory: {dir_path}")
+                    continue
+                
                 try:
                     mtime = os.path.getmtime(dir_path)
                     if mtime < min_valid_time or mtime > max_valid_time:
@@ -126,34 +164,40 @@ def validate_and_clean_profile(cache_directory: str, logger=None, force_clear=Fa
                         logger.warning(f"Failed to check/remove directory {dir_path}: {e}")
         
         # If significant corruption detected (more than 5 files), clear entire profile
+        # BUT: Only if no protected files were affected
         if corrupted_file_count > 5:
             if logger:
                 logger.warning(
                     f"Detected {corrupted_file_count} corrupted files. "
-                    "Clearing entire profile for safety."
+                    "However, protected files (cookies/sessions) are preserved."
                 )
-            return clear_webengine_profile(cache_directory, logger)
+            # Don't clear entire profile - just log the issue
+            # Only clear if absolutely necessary and user explicitly requests it
+            if logger:
+                logger.info(
+                    "Skipping full profile clear to preserve login state. "
+                    "If crashes persist, manual cache clearing may be needed."
+                )
         
         # If any corruption detected, log it
         if cleaned:
             if logger:
                 logger.info(
                     f"Corrupted WebEngine profile detected and cleaned ({corrupted_file_count} files). "
+                    "Cookies and session data were preserved. "
                     "This may have been caused by system date changes."
                 )
     except Exception as e:
         if logger:
             logger.error(f"Error during profile validation: {e}")
-        # If validation fails completely, clear the entire cache as a safety measure
-        try:
-            shutil.rmtree(cache_directory, ignore_errors=True)
-            os.makedirs(cache_directory, exist_ok=True)
-            if logger:
-                logger.warning("Cleared entire WebEngine profile due to validation failure.")
-            cleaned = True
-        except Exception as cleanup_error:
-            if logger:
-                logger.error(f"Failed to clear corrupted profile: {cleanup_error}")
+        # If validation fails completely, DO NOT clear the entire cache
+        # This would delete all cookies and sessions
+        # Instead, just log the error and continue
+        if logger:
+            logger.warning(
+                "Profile validation failed, but preserving profile to maintain login state. "
+                f"Error: {e}"
+            )
     
     return cleaned
 

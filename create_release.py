@@ -10,7 +10,7 @@ def create_github_release():
     """Create GitHub release with asset upload."""
     
     # Read release notes
-    notes_path = Path("RELEASE_NOTES_v1.0.1.md")
+    notes_path = Path("RELEASE_NOTES_v1.0.2.md")
     if not notes_path.exists():
         print(f"Error: {notes_path} not found")
         return False
@@ -18,15 +18,18 @@ def create_github_release():
     with open(notes_path, "r", encoding="utf-8") as f:
         release_notes = f.read()
     
-    # Find zip file
-    zip_path = Path("releases/Nobody3-v1.0.1-20251126.zip")
-    if not zip_path.exists():
-        print(f"Error: {zip_path} not found")
+    # Find zip file (search for v1.0.2 zip files)
+    import glob
+    zip_files = glob.glob("releases/Nobody3-Windows-v1.0.2-*.zip")
+    if not zip_files:
+        print(f"Error: No v1.0.2 release zip file found in releases/")
         return False
+    zip_path = Path(zip_files[0])  # Use the first match
+    print(f"Using zip file: {zip_path}")
     
     # GitHub API endpoint
     repo = "octxxiii/Nobody3"
-    tag = "v1.0.1"
+    tag = "v1.0.2"
     api_url = f"https://api.github.com/repos/{repo}/releases"
     
     # Get GitHub token from environment
@@ -53,7 +56,7 @@ def create_github_release():
         # Update existing release
         update_url = f"{api_url}/{release_id}"
         data = {
-            "name": "Nobody 3 v1.0.1 - WebEngine Crash Fix",
+            "name": "Nobody 3 v1.0.2 - Login State Preservation",
             "body": release_notes,
             "draft": False,
             "prerelease": False
@@ -69,7 +72,7 @@ def create_github_release():
         print(f"Creating release {tag}...")
         data = {
             "tag_name": tag,
-            "name": "Nobody 3 v1.0.1 - WebEngine Crash Fix",
+            "name": "Nobody 3 v1.0.2 - Login State Preservation",
             "body": release_notes,
             "draft": False,
             "prerelease": False
