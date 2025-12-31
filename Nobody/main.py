@@ -18,15 +18,34 @@ if platform.system() == "Windows":
     # Disable ANGLE to use software rendering
     os.environ.setdefault("QT_ANGLE_PLATFORM", "d3d11")
     # Additional WebEngine stability settings
-    os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--disable-gpu --disable-software-rasterizer")
+    # Service Worker 관련 에러를 방지하기 위한 플래그 추가
+    chromium_flags = [
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        # Service Worker 백그라운드 네트워킹 비활성화
+        "--disable-background-networking",
+        # 백그라운드 타이머 스로틀링 비활성화
+        "--disable-background-timer-throttling",
+        # 가려진 창 백그라운드 처리 비활성화
+        "--disable-backgrounding-occluded-windows",
+        # 렌더러 백그라운드 처리 비활성화
+        "--disable-renderer-backgrounding",
+        # 번역 UI 비활성화 (Service Worker 사용 감소)
+        "--disable-features=TranslateUI",
+    ]
+    flags_str = " ".join(chromium_flags)
+    os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", flags_str)
     # Disable WebEngine logging to reduce overhead
-    os.environ.setdefault("QTWEBENGINE_DISABLE_LOGGING", "1")
+    # (하지만 에러는 여전히 표시됨)
+    # os.environ.setdefault("QTWEBENGINE_DISABLE_LOGGING", "1")
+    # 주석 처리: 에러 추적을 위해 로깅 유지
 
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWebEngineWidgets import QWebEngineSettings
+# Import after environment variables are set
+from PyQt5.QtWidgets import QApplication  # noqa: E402
+from PyQt5.QtGui import QIcon  # noqa: E402
+from PyQt5.QtWebEngineWidgets import QWebEngineSettings  # noqa: E402
 
-from Nobody.views import VideoDownloader
+from Nobody.views import VideoDownloader  # noqa: E402
 
 
 def main():
@@ -44,7 +63,7 @@ def main():
     else:
         # Running as script
         base_path = project_root
-    
+
     icon_paths = [
         os.path.join(base_path, "st2.icns"),
         os.path.join(project_root, "st2.icns"),
@@ -57,8 +76,11 @@ def main():
             app.setWindowIcon(QIcon(icon_path))
             break
 
-    QWebEngineSettings.globalSettings().setAttribute(QWebEngineSettings.WebGLEnabled, True)
-    QWebEngineSettings.globalSettings().setAttribute(QWebEngineSettings.Accelerated2dCanvasEnabled, True)
+    settings = QWebEngineSettings.globalSettings()
+    settings.setAttribute(QWebEngineSettings.WebGLEnabled, True)
+    settings.setAttribute(
+        QWebEngineSettings.Accelerated2dCanvasEnabled, True
+    )
 
     mainWindow = VideoDownloader()
     mainWindow.show()
@@ -67,4 +89,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

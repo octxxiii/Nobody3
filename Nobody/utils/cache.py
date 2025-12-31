@@ -53,6 +53,40 @@ def clear_webengine_profile(cache_directory: str, logger=None) -> bool:
         return False
 
 
+def clean_service_worker_cache(cache_directory: str, logger=None) -> bool:
+    """Clean Service Worker cache to prevent database IO errors.
+    
+    Service Worker 스토리지 데이터베이스가 손상되었을 때 발생하는
+    "Failed to delete the database: Database IO error" 에러를 방지하기 위해
+    Service Worker 캐시를 정리합니다.
+    
+    Args:
+        cache_directory: Path to the WebEngine profile cache directory
+        logger: Optional logger instance for error reporting
+        
+    Returns:
+        True if Service Worker cache was cleaned, False otherwise
+    """
+    service_worker_paths = [
+        os.path.join(cache_directory, "Service Worker"),
+        os.path.join(cache_directory, "ServiceWorkers"),
+    ]
+    
+    cleaned = False
+    for sw_path in service_worker_paths:
+        if os.path.exists(sw_path):
+            try:
+                if logger:
+                    logger.info(f"Cleaning Service Worker cache: {sw_path}")
+                shutil.rmtree(sw_path, ignore_errors=True)
+                cleaned = True
+            except Exception as e:
+                if logger:
+                    logger.warning(f"Failed to clean Service Worker cache {sw_path}: {e}")
+    
+    return cleaned
+
+
 def validate_and_clean_profile(cache_directory: str, logger=None, force_clear=False) -> bool:
     """Validate WebEngine profile integrity and clean corrupted data.
     
@@ -77,6 +111,9 @@ def validate_and_clean_profile(cache_directory: str, logger=None, force_clear=Fa
     if force_clear:
         return clear_webengine_profile(cache_directory, logger)
     
+    # Service Worker 캐시 정리 (손상된 DB 에러 방지)
+    sw_cleaned = clean_service_worker_cache(cache_directory, logger)
+    
     # Critical files/directories that must be preserved (cookies, sessions, login data)
     # These are essential for maintaining user login state
     protected_patterns = [
@@ -85,7 +122,8 @@ def validate_and_clean_profile(cache_directory: str, logger=None, force_clear=Fa
         'Local Storage',  # LocalStorage data
         'Session Storage',  # SessionStorage data
         'IndexedDB',  # IndexedDB data
-        'Service Worker',  # Service Worker cache
+        # Service Worker는 손상된 경우 정리 가능하도록 보호 목록에서 제외
+        # (손상된 Service Worker DB가 에러를 유발할 수 있음)
         'WebStorage',  # Web storage data
         'GPUCache',  # GPU cache (can be regenerated but safe to keep)
     ]
@@ -180,13 +218,18 @@ def validate_and_clean_profile(cache_directory: str, logger=None, force_clear=Fa
                 )
         
         # If any corruption detected, log it
-        if cleaned:
+        if cleaned or sw_cleaned:
             if logger:
-                logger.info(
-                    f"Corrupted WebEngine profile detected and cleaned ({corrupted_file_count} files). "
-                    "Cookies and session data were preserved. "
-                    "This may have been caused by system date changes."
-                )
+                if sw_cleaned:
+                    logger.info("Service Worker cache cleaned to prevent database IO errors.")
+                if cleaned:
+                    logger.info(
+                        f"Corrupted WebEngine profile detected and cleaned ({corrupted_file_count} files). "
+                        "Cookies and session data were preserved. "
+                        "This may have been caused by system date changes."
+                    )
+        
+        return cleaned or sw_cleaned
     except Exception as e:
         if logger:
             logger.error(f"Error during profile validation: {e}")
@@ -198,6 +241,12 @@ def validate_and_clean_profile(cache_directory: str, logger=None, force_clear=Fa
                 "Profile validation failed, but preserving profile to maintain login state. "
                 f"Error: {e}"
             )
+        # 예외 발생 시에도 Service Worker 캐시 정리는 시도
+        try:
+            sw_cleaned = clean_service_worker_cache(cache_directory, logger)
+            return sw_cleaned
+        except:
+            return False
     
-    return cleaned
+    return cleaned or sw_cleaned
 
