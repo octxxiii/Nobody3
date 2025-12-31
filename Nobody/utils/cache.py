@@ -70,9 +70,13 @@ def clean_service_worker_cache(cache_directory: str, logger=None) -> bool:
     service_worker_paths = [
         os.path.join(cache_directory, "Service Worker"),
         os.path.join(cache_directory, "ServiceWorkers"),
+        # 추가 가능한 Service Worker 경로들
+        os.path.join(cache_directory, "ServiceWorker"),
     ]
     
     cleaned = False
+    cleaned_paths = []
+    
     for sw_path in service_worker_paths:
         if os.path.exists(sw_path):
             try:
@@ -80,9 +84,42 @@ def clean_service_worker_cache(cache_directory: str, logger=None) -> bool:
                     logger.info(f"Cleaning Service Worker cache: {sw_path}")
                 shutil.rmtree(sw_path, ignore_errors=True)
                 cleaned = True
+                cleaned_paths.append(sw_path)
             except Exception as e:
                 if logger:
-                    logger.warning(f"Failed to clean Service Worker cache {sw_path}: {e}")
+                    logger.warning(
+                        f"Failed to clean Service Worker cache {sw_path}: {e}"
+                    )
+    
+    # Service Worker 데이터베이스 파일 직접 정리
+    # (디렉토리 내부의 .db 파일들)
+    try:
+        for root, dirs, files in os.walk(cache_directory):
+            # Service Worker 관련 디렉토리 내의 .db 파일 정리
+            if "service" in root.lower() and "worker" in root.lower():
+                for filename in files:
+                    if filename.endswith(('.db', '.sqlite', '.sqlite3')):
+                        db_path = os.path.join(root, filename)
+                        try:
+                            os.remove(db_path)
+                            cleaned = True
+                            if logger:
+                                logger.debug(
+                                    f"Removed Service Worker DB: {db_path}"
+                                )
+                        except Exception as e:
+                            if logger:
+                                logger.debug(
+                                    f"Could not remove DB {db_path}: {e}"
+                                )
+    except Exception as e:
+        if logger:
+            logger.debug(f"Error scanning for Service Worker DBs: {e}")
+    
+    if cleaned and logger:
+        logger.info(
+            f"Service Worker cache cleaned: {len(cleaned_paths)} directories"
+        )
     
     return cleaned
 
@@ -245,7 +282,12 @@ def validate_and_clean_profile(cache_directory: str, logger=None, force_clear=Fa
         try:
             sw_cleaned = clean_service_worker_cache(cache_directory, logger)
             return sw_cleaned
-        except:
+        except (OSError, PermissionError, FileNotFoundError, ValueError) as cleanup_error:
+            # 구체적인 예외 타입으로 처리
+            if logger:
+                logger.debug(
+                    f"Service Worker cleanup failed in fallback: {cleanup_error}"
+                )
             return False
     
     return cleaned or sw_cleaned

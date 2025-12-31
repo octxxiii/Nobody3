@@ -7,7 +7,11 @@ from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtCore import Qt, QUrl, pyqtSignal
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile
 
-from ..utils.cache import resolve_writable_cache_dir
+from ..utils.cache import (
+    resolve_writable_cache_dir,
+    clean_service_worker_cache,
+)
+from ..utils.logging import logger
 from ..config.constants import DARK_THEME_STYLESHEET
 
 
@@ -288,22 +292,63 @@ class SettingsDialog(QDialog):
             self.clearCacheButton.setText(f"Clear Cache: {cache_size_mb:.2f}MB")
 
     def getDirectorySize(self, directory):
-        """Calculate directory size"""
+        """Calculate directory size with error handling.
+
+        Optimized to skip inaccessible files and handle permission errors
+        gracefully.
+        """
         total_size = 0
-        for dirpath, dirnames, filenames in os.walk(directory):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                try:
-                    if os.path.exists(fp):
-                        total_size += os.path.getsize(fp)
-                except Exception as e:
-                    print(f"Skip size for {fp}: {e}")
+        if not os.path.exists(directory):
+            return 0
+
+        try:
+            for dirpath, dirnames, filenames in os.walk(directory):
+                # Skip hidden/system directories for performance
+                system_dir = 'System Volume Information'
+                dirnames[:] = [
+                    d for d in dirnames
+                    if not d.startswith('.') and d != system_dir
+                ]
+
+                for filename in filenames:
+                    # Skip hidden/system files
+                    if filename.startswith('.'):
+                        continue
+
+                    file_path = os.path.join(dirpath, filename)
+                    try:
+                        if os.path.isfile(file_path):
+                            total_size += os.path.getsize(file_path)
+                    except (OSError, PermissionError, FileNotFoundError):
+                        # Skip files that can't be accessed
+                        continue
+        except (OSError, PermissionError) as e:
+            # Log error but return partial size
+            if logger:
+                logger.warning(
+                    f"Error calculating directory size for {directory}: {e}"
+                )
+
         return total_size
 
     def clearCache(self):
-        """Clear the cache"""
-        QWebEngineProfile.defaultProfile().clearHttpCache()
+        """Clear the cache including Service Worker cache"""
+        try:
+            # Clear HTTP cache
+            QWebEngineProfile.defaultProfile().clearHttpCache()
+            
+            # Clear Service Worker cache to prevent database IO errors
+            # Use the main cache directory (Nobody 3) instead of OctXXIII
+            from ..utils.cache import resolve_writable_cache_dir
+            main_cache_dir = resolve_writable_cache_dir("Nobody 3")
+            if os.path.exists(main_cache_dir):
+                sw_cleaned = clean_service_worker_cache(main_cache_dir, logger)
+                if sw_cleaned:
+                    logger.info("Service Worker cache cleared from settings dialog")
+        except Exception as e:
+            logger.warning(f"Failed to clear Service Worker cache: {e}")
 
+        # Clear OctXXIII cache directory
         for filename in os.listdir(self.cacheDirectory):
             file_path = os.path.join(self.cacheDirectory, filename)
             try:

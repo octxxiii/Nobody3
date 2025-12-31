@@ -25,9 +25,10 @@ class Searcher(QThread):
             "ignore_no_formats_error": True,
             "extract_flat": False,
             "format": "best[height<=480]/best[height<=720]/best",
-            "socket_timeout": 10,
-            "retries": 2,
-            "fragment_retries": 2,
+            # Improved timeout and retry settings for better stability
+            "socket_timeout": 20,  # Increased from 10 to 20 seconds
+            "retries": 5,  # Increased from 2 to 5 retries
+            "fragment_retries": 5,  # Increased from 2 to 5 retries
             "concurrent_fragment_downloads": 1,
         }
         with yt_dlp.YoutubeDL(options) as ydl:

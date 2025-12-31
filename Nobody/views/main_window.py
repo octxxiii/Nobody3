@@ -198,8 +198,87 @@ class VideoDownloader(QDialog):
         except Exception as exc:
             logger.error(f"Failed to save settings: {exc}")
 
-        self.mini_player_controller.dispose()
+        # Clean up background threads with improved timeout handling
+        try:
+            # Clean up FFmpeg checker thread
+            if hasattr(self, 'ffmpeg_checker') and self.ffmpeg_checker:
+                self._cleanup_thread(
+                    self.ffmpeg_checker,
+                    "FFmpeg checker",
+                    timeout_ms=2000  # 2 seconds for FFmpeg operations
+                )
+            
+            # Clean up search and download threads via presenter
+            if hasattr(self, 'presenter') and self.presenter:
+                if hasattr(self.presenter, 'search_thread') and self.presenter.search_thread:
+                    self._cleanup_thread(
+                        self.presenter.search_thread,
+                        "Search thread",
+                        timeout_ms=3000  # 3 seconds for search operations
+                    )
+                if hasattr(self.presenter, 'downloader_thread') and self.presenter.downloader_thread:
+                    self._cleanup_thread(
+                        self.presenter.downloader_thread,
+                        "Downloader thread",
+                        timeout_ms=5000  # 5 seconds for download operations
+                    )
+        except Exception as exc:
+            logger.warning(f"Error cleaning up background threads: {exc}")
+
+        # Clean up mini player
+        try:
+            self.mini_player_controller.dispose()
+        except Exception as exc:
+            logger.warning(f"Error disposing mini player: {exc}")
+
+        # Clean up dialogs
+        try:
+            if self.settingsDialog:
+                self.settingsDialog.deleteLater()
+            if self.formatSettingsDialog:
+                self.formatSettingsDialog.deleteLater()
+        except Exception as exc:
+            logger.warning(f"Error cleaning up dialogs: {exc}")
+
+        try:
+            logger.info("Application shutting down")
+        except (AttributeError, RuntimeError):
+            # Logger may not be available or already destroyed
+            pass
+
         super().closeEvent(event)
+
+    def _cleanup_thread(self, thread, thread_name, timeout_ms=2000):
+        """Safely cleanup a QThread with timeout and fallback termination.
+
+        Args:
+            thread: QThread instance to cleanup
+            thread_name: Name for logging purposes
+            timeout_ms: Maximum wait time in milliseconds
+        """
+        if not thread:
+            return
+
+        try:
+            if thread.isRunning():
+                logger.debug(f"Stopping {thread_name}...")
+                thread.quit()
+
+                # Wait for graceful shutdown
+                if not thread.wait(timeout_ms):
+                    logger.warning(
+                        f"{thread_name} did not stop within {timeout_ms}ms, "
+                        "terminating forcefully"
+                    )
+                    thread.terminate()
+                    # Wait additional 500ms after terminate
+                    thread.wait(500)
+                else:
+                    logger.debug(f"{thread_name} stopped gracefully")
+
+            thread.deleteLater()
+        except Exception as exc:
+            logger.warning(f"Error cleaning up {thread_name}: {exc}")
 
     def initUI(self):
         builder = LayoutBuilder(self)
