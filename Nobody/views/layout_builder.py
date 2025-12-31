@@ -17,6 +17,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 
 from ..config.constants import DARK_THEME_STYLESHEET
 from .video_table import VideoTableManager
+from .browser_tab import BrowserTabWidget
 
 
 class LayoutBuilder:
@@ -32,59 +33,49 @@ class LayoutBuilder:
         # Create parent widget first
         host.browWidget = QWidget()
         host.leftLayout = QVBoxLayout(host.browWidget)
+        host.leftLayout.setContentsMargins(0, 0, 0, 0)
+        host.leftLayout.setSpacing(0)
         
         # Set URL URLs before creating browser
         host.homePageUrl = QUrl("https://www.youtube.com")
         host.musicPageUrl = QUrl("https://music.youtube.com")
         host.SCPageUrl = QUrl("https://soundcloud.com/")
         
-        # Create QWebEngineView with explicit parent and error handling
-        # Wrap in try-except to handle Windows Store Python + PyQt5 WebEngine crashes
+        # Create simple browser (original structure)
         from ..utils.logging import logger
         try:
             host.browser = QWebEngineView(host.browWidget)
+            host.browser.setUrl(host.homePageUrl)
             logger.info("QWebEngineView created successfully.")
         except Exception as browser_error:
             logger.error(f"Failed to create QWebEngineView: {browser_error}")
-            # Create a placeholder widget if WebEngine fails
             from PyQt5.QtWidgets import QLabel
-            host.browser = QLabel("WebEngine initialization failed. Please restart the application.", host.browWidget)
+            host.browser = QLabel(
+                "WebEngine initialization failed. "
+                "Please restart the application.",
+                host.browWidget
+            )
             host.browser.setStyleSheet("color: red; padding: 20px;")
-            logger.warning("Using placeholder widget instead of WebEngine.")
-        
-        # Delay URL loading to ensure WebEngine is fully initialized
-        # Use QTimer.singleShot to defer URL loading until after event loop starts
-        def delayed_url_load():
-            try:
-                if hasattr(host.browser, 'setUrl'):
-                    host.browser.setUrl(host.homePageUrl)
-                    logger.info("Initial URL loaded successfully.")
-                else:
-                    logger.warning("Browser widget does not support setUrl (placeholder mode).")
-            except Exception as e:
-                logger.error(f"Failed to load initial URL: {e}")
-        
-        # Increase delay to 500ms for more stable initialization
-        QTimer.singleShot(500, delayed_url_load)
 
         host.toggleDownButton = QPushButton("💥", host)
         host.toggleDownButton.clicked.connect(host.toggleBrowser)
         host.toggleDownButton.setFixedSize(30, 30)
 
+        # Navigation buttons are now in browser_toolbar, but keep these for compatibility
         host.backButton = QPushButton("👈")
-        host.backButton.clicked.connect(host.browser.back)
+        host.backButton.clicked.connect(host._on_browser_back)
 
         host.forwardButton = QPushButton("👉")
-        host.forwardButton.clicked.connect(host.browser.forward)
+        host.forwardButton.clicked.connect(host._on_browser_forward)
 
         host.refreshButton = QPushButton("🔄")
         host.refreshButton.setFixedSize(30, 30)
-        host.refreshButton.clicked.connect(host.browser.reload)
+        host.refreshButton.clicked.connect(host._on_browser_refresh)
 
         host.homeButton = QPushButton()
         host.homeButton.setFixedSize(30, 30)
         host.homeButton.setIcon(QIcon(":/homeIcon"))
-        host.homeButton.clicked.connect(lambda: host.browser.setUrl(host.homePageUrl))
+        host.homeButton.clicked.connect(host._on_browser_home)
 
         host.musicButton = QPushButton()
         host.musicButton.setFixedSize(30, 30)
@@ -98,7 +89,9 @@ class LayoutBuilder:
 
         host.miniPlayerButton = QPushButton("🎧")
         host.miniPlayerButton.setFixedSize(30, 30)
-        host.miniPlayerButton.setToolTip("미니 플레이어 모드 / Mini Player Mode")
+        host.miniPlayerButton.setToolTip("미니 플레이어 모드 (Ctrl+M) / Mini Player Mode (Ctrl+M)")
+        host.miniPlayerButton.setAccessibleName("Mini player toggle button")
+        host.miniPlayerButton.setAccessibleDescription("Toggle mini player mode for compact playback control")
         host.mini_player_controller.bind_toggle_button(host.miniPlayerButton)
 
         host.navLayout = QHBoxLayout()
@@ -112,7 +105,7 @@ class LayoutBuilder:
         host.navLayout.addWidget(host.toggleDownButton)
 
         host.leftLayout.addLayout(host.navLayout)
-        host.leftLayout.addWidget(host.browser)
+        host.leftLayout.addWidget(host.browser, 1)
         return host.browWidget
 
     def build_right_panel(self):
@@ -129,16 +122,24 @@ class LayoutBuilder:
         host.createrButton = QPushButton("💬")
         host.createrButton.setFixedSize(30, 30)
         host.createrButton.clicked.connect(host.openSettingsDialog)
+        host.createrButton.setToolTip("설정/정보 (F1) / Settings/About (F1)")
+        host.createrButton.setAccessibleName("Settings and about dialog button")
+        host.createrButton.setAccessibleDescription("Open settings and about dialog with cache management options")
 
         host.formatSettingsButton = QPushButton("⚙️")
         host.formatSettingsButton.setFixedSize(30, 30)
         host.formatSettingsButton.clicked.connect(host.openFormatSettingsDialog)
-        host.formatSettingsButton.setToolTip("포맷 설정")
+        host.formatSettingsButton.setToolTip("포맷 설정 (Ctrl+,) / Format Settings (Ctrl+,)")
+        host.formatSettingsButton.setAccessibleName("Format settings button")
+        host.formatSettingsButton.setAccessibleDescription("Configure video and audio format display options")
 
         host.copyUrlButton = QPushButton("📋")
         host.copyUrlButton.setFixedSize(30, 30)
 
         host.search_url = QLineEdit()
+        host.search_url.setPlaceholderText("Enter URL and press Enter or click Search...")
+        host.search_url.setAccessibleName("URL input field")
+        host.search_url.setAccessibleDescription("Enter YouTube, YouTube Music, or SoundCloud URL to search for videos")
         host.search_url.setStyleSheet(
             """
             QLineEdit {
@@ -156,10 +157,15 @@ class LayoutBuilder:
         host.search_button = QPushButton("🔍")
         host.search_button.setFixedSize(30, 30)
         host.search_button.clicked.connect(host.on_search)
+        host.search_button.setToolTip("검색 (Enter) / Search (Enter)")
+        host.search_button.setAccessibleName("Search button")
+        host.search_button.setAccessibleDescription("Search for videos using the URL in the input field")
         host.copyUrlButton.clicked.connect(host.copyUrlToClipboard)
 
-        host.download_list = QPushButton("📍")
+        host.download_list = QPushButton("📍 History")
         host.download_list.setFixedSize(100, 30)
+        host.download_list.setToolTip("다운로드 히스토리 / Download History")
+        host.download_list.clicked.connect(host.openHistoryDialog)
         host.later_list = QPushButton("📌")
         host.later_list.setFixedSize(100, 30)
 
@@ -169,6 +175,9 @@ class LayoutBuilder:
 
         host.download_button = QPushButton("📥")
         host.download_button.clicked.connect(host.on_download)
+        host.download_button.setToolTip("다운로드 (Ctrl+D) / Download (Ctrl+D)")
+        host.download_button.setAccessibleName("Download button")
+        host.download_button.setAccessibleDescription("Download selected videos to the chosen directory")
 
         host.delete_button = QPushButton("❌")
         host.delete_button.clicked.connect(host.on_delete_selected)

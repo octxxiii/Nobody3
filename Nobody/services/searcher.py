@@ -144,7 +144,19 @@ class Searcher(QThread):
                         video.get("webpage_url", ""),
                         processed,
                     )
+            except (yt_dlp.utils.DownloadError,
+                    yt_dlp.utils.ExtractorError,
+                    yt_dlp.utils.UnsupportedError) as exc:
+                error_msg = f"Video extraction error: {exc}"
+                logger.error(error_msg, exc_info=True)
+                self.updated_list.emit(f"Error: {exc}", "", self.url, [])
+            except (OSError, IOError, ConnectionError) as exc:
+                error_msg = f"Network/IO error: {exc}"
+                logger.error(error_msg, exc_info=True)
+                self.updated_list.emit(f"Connection error: {exc}", "", self.url, [])
             except Exception as exc:  # noqa: BLE001
-                logger.error("Searcher thread error: %s", exc, exc_info=True)
+                # Catch-all for unexpected errors
+                error_msg = f"Unexpected search error: {exc}"
+                logger.error(error_msg, exc_info=True)
                 self.updated_list.emit(f"Error: {exc}", "", self.url, [])
 

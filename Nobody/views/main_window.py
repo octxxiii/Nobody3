@@ -39,6 +39,7 @@ from .mini_player import MiniPlayerController
 from .presenter import VideoPresenter
 from .settings_dialog import SettingsDialog
 from .format_settings_dialog import FormatSettingsDialog
+from .history_dialog import HistoryDialog
 
 class VideoDownloader(QDialog):
     def __init__(self, *args, **kwargs):
@@ -51,6 +52,7 @@ class VideoDownloader(QDialog):
         )
         self.settingsDialog = None
         self.formatSettingsDialog = None
+        self.historyDialog = None
         self.Nobody = resolve_writable_cache_dir("Nobody")  # Define here
         
         # Load persisted application settings
@@ -59,6 +61,11 @@ class VideoDownloader(QDialog):
 
         # Initialize mini player controller
         self.mini_player_controller = MiniPlayerController(self)
+        # Initialize download queue and notification manager
+        from ..models.queue import DownloadQueue
+        from ..utils.notifications import NotificationManager
+        self.download_queue = DownloadQueue()
+        self.notification_manager = NotificationManager(self)
         # Use a user-writable cache directory to avoid permission issues under Program Files
         self.cacheDirectory = resolve_writable_cache_dir("Nobody 3")
         if not os.path.exists(self.cacheDirectory):
@@ -149,18 +156,119 @@ class VideoDownloader(QDialog):
         """Handle generic window state changes."""
         super().changeEvent(event)
     def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Enter, Qt.Key_Return):
+        """Handle keyboard shortcuts and accessibility.
+        
+        Keyboard shortcuts:
+        - Enter/Return: Search (when URL input is focused)
+        - Escape: Lower window
+        - Ctrl+S: Take screenshot
+        - Ctrl+F: Focus search URL input
+        - Ctrl+D: Start download
+        - Ctrl+M: Toggle mini player
+        - Ctrl+,: Open format settings
+        - F1: Open settings/about dialog
+        """
+        modifiers = event.modifiers()
+        key = event.key()
+        
+        # Enter/Return: Search
+        if key in (Qt.Key_Enter, Qt.Key_Return):
             if hasattr(self, "search_url"):
                 focused_widget = QApplication.focusWidget()
                 if focused_widget == self.search_url and self.search_url.text().strip():
                     self.on_search()
             else:
                 self.on_search()
-        elif event.key() == Qt.Key_Escape:
-            self.lower()
-        elif event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_S:
-            # Ctrl+S to take screenshot
+        # Escape: Restore from mini player or lower window
+        elif key == Qt.Key_Escape:
+            # If in mini player mode, restore to main window
+            if (hasattr(self, "mini_player_controller") and
+                    self.mini_player_controller and
+                    self.mini_player_controller.is_mini_mode):
+                self.mini_player_controller.restore_from_mini()
+                event.accept()
+            else:
+                # Otherwise, just lower the window
+                self.lower()
+        # Ctrl+S: Screenshot
+        elif modifiers == Qt.ControlModifier and key == Qt.Key_S:
             self.take_screenshot()
+        # Ctrl+F: Focus search URL
+        elif modifiers == Qt.ControlModifier and key == Qt.Key_F:
+            if hasattr(self, "search_url"):
+                self.search_url.setFocus()
+                self.search_url.selectAll()
+            event.accept()
+        # Ctrl+D: Download
+        elif modifiers == Qt.ControlModifier and key == Qt.Key_D:
+            if hasattr(self, "download_button") and self.download_button.isEnabled():
+                self.on_download()
+            event.accept()
+        # Ctrl+M: Toggle mini player
+        elif modifiers == Qt.ControlModifier and key == Qt.Key_M:
+            if hasattr(self, "miniPlayerButton"):
+                self.miniPlayerButton.click()
+            event.accept()
+        # Ctrl+,: Format settings
+        elif modifiers == Qt.ControlModifier and key == Qt.Key_Comma:
+            if hasattr(self, "formatSettingsButton"):
+                self.formatSettingsButton.click()
+            event.accept()
+        # F1: Settings/About
+        elif key == Qt.Key_F1:
+            if hasattr(self, "createrButton"):
+                self.createrButton.click()
+            event.accept()
+        # Ctrl+R: Browser refresh
+        elif modifiers == Qt.ControlModifier and key == Qt.Key_R:
+            if hasattr(self, "browser") and self.browser:
+                self.browser.reload()
+            event.accept()
+        # Ctrl+W: Close window (or current tab in future)
+        elif modifiers == Qt.ControlModifier and key == Qt.Key_W:
+            # For now, just close the window
+            self.close()
+            event.accept()
+        # Space: Play/Pause
+        elif key == Qt.Key_Space and modifiers == Qt.NoModifier:
+            if hasattr(self, "play_button"):
+                self.play()
+            event.accept()
+        # Left Arrow: Seek backward 5 seconds
+        elif key == Qt.Key_Left and modifiers == Qt.NoModifier:
+            self._seek_video(-5)
+            event.accept()
+        # Right Arrow: Seek forward 5 seconds
+        elif key == Qt.Key_Right and modifiers == Qt.NoModifier:
+            self._seek_video(5)
+            event.accept()
+        # Up Arrow: Volume up
+        elif key == Qt.Key_Up and modifiers == Qt.NoModifier:
+            self._adjust_volume(5)
+            event.accept()
+        # Down Arrow: Volume down
+        elif key == Qt.Key_Down and modifiers == Qt.NoModifier:
+            self._adjust_volume(-5)
+            event.accept()
+        # F12 or Ctrl+Shift+I: Open developer tools
+        elif (key == Qt.Key_F12 or
+              (modifiers == (Qt.ControlModifier | Qt.ShiftModifier) and
+               key == Qt.Key_I)):
+            self._open_developer_tools()
+            event.accept()
+        # Delete: Delete selected items
+        elif key == Qt.Key_Delete and modifiers == Qt.NoModifier:
+            if hasattr(self, "video_table"):
+                self.on_delete_selected()
+            event.accept()
+        # Ctrl+A: Select all
+        elif modifiers == Qt.ControlModifier and key == Qt.Key_A:
+            if hasattr(self, "video_table"):
+                for row in range(self.video_table.rowCount()):
+                    item = self.video_table.item(row, 0)
+                    if item:
+                        item.setCheckState(Qt.Checked)
+            event.accept()
         else:
             super().keyPressEvent(event)
     
@@ -240,6 +348,37 @@ class VideoDownloader(QDialog):
         except Exception as exc:
             logger.warning(f"Error cleaning up dialogs: {exc}")
 
+        # Stop all timers
+        try:
+            if hasattr(self, 'scrollTimer') and self.scrollTimer:
+                self.scrollTimer.stop()
+            if hasattr(self, 'resetTimer') and self.resetTimer:
+                self.resetTimer.stop()
+            if hasattr(self, 'animation_timer') and self.animation_timer:
+                self.animation_timer.stop()
+        except Exception as exc:
+            logger.warning(f"Error stopping timers: {exc}")
+
+        # Clean up WebEngine browser
+        try:
+            if hasattr(self, 'browser') and self.browser:
+                # Disconnect all signals
+                try:
+                    self.browser.titleChanged.disconnect()
+                    self.browser.urlChanged.disconnect()
+                    self.browser.loadFinished.disconnect()
+                except (TypeError, RuntimeError):
+                    # Signals may already be disconnected
+                    pass
+                # Clear browser history and cache
+                try:
+                    if hasattr(self.browser, 'page'):
+                        self.browser.page().deleteLater()
+                except Exception:
+                    pass
+        except Exception as exc:
+            logger.warning(f"Error cleaning up browser: {exc}")
+
         try:
             logger.info("Application shutting down")
         except (AttributeError, RuntimeError):
@@ -306,7 +445,9 @@ class VideoDownloader(QDialog):
         self.resetTimer.setSingleShot(True)
         self.resetTimer.timeout.connect(self.performResetMediaControls)
         self.browser.urlChanged.connect(self.checkAndTriggerReset)
+        self.browser.urlChanged.connect(self._on_browser_url_changed)
         self.browser.loadFinished.connect(self.updateButtonStates)
+        self.browser.loadFinished.connect(self._on_browser_load_finished)
 
         self.mini_player_controller.create()
 
@@ -406,6 +547,72 @@ class VideoDownloader(QDialog):
         }})();
         """
         self.browser.page().runJavaScript(jsCode)
+
+    def _seek_video(self, seconds: int) -> None:
+        """Seek video by specified seconds.
+        
+        Args:
+            seconds: Number of seconds to seek (positive = forward, negative = backward)
+        """
+        if not hasattr(self, "browser") or not self.browser:
+            return
+        js = f"""
+        (function() {{
+            var video = document.querySelector('video');
+            if (video) {{
+                var newTime = video.currentTime + {seconds};
+                video.currentTime = Math.max(0, Math.min(newTime, video.duration));
+                return true;
+            }}
+            return false;
+        }})();
+        """
+        try:
+            self.browser.page().runJavaScript(js)
+        except Exception as exc:
+            logger.debug(f"Seek video error: {exc}")
+
+    def _adjust_volume(self, delta: int) -> None:
+        """Adjust video volume.
+        
+        Args:
+            delta: Volume change in percentage (-100 to 100)
+        """
+        if not hasattr(self, "browser") or not self.browser:
+            return
+        js = f"""
+        (function() {{
+            var video = document.querySelector('video');
+            if (video) {{
+                var currentVolume = video.volume || 1.0;
+                var newVolume = Math.max(0, Math.min(1.0, currentVolume + ({delta} / 100)));
+                video.volume = newVolume;
+                return newVolume;
+            }}
+            return null;
+        }})();
+        """
+        try:
+            self.browser.page().runJavaScript(js)
+            # Also update mini player volume if active
+            if (hasattr(self, "mini_player_controller") and
+                    self.mini_player_controller and
+                    self.mini_player_controller.is_mini_mode and
+                    self.mini_player_controller.volume_slider):
+                # Get current volume from video and update slider
+                def update_slider(volume):
+                    if volume is not None and self.mini_player_controller.volume_slider:
+                        slider_value = int(volume * 100)
+                        self.mini_player_controller.volume_slider.setValue(slider_value)
+                get_volume_js = """
+                (function() {
+                    var video = document.querySelector('video');
+                    return video ? video.volume : null;
+                })();
+                """
+                self.browser.page().runJavaScript(get_volume_js, update_slider)
+        except Exception as exc:
+            logger.debug(f"Adjust volume error: {exc}")
 
     # def onSliderRelease(self):
     #     # Calls seekVideo only when the user releases the slider
@@ -644,6 +851,31 @@ class VideoDownloader(QDialog):
         self.settingsDialog.deleteLater()
         self.settingsDialog = None
     
+    def openHistoryDialog(self):
+        """Open download history dialog."""
+        if not hasattr(self, 'historyDialog') or self.historyDialog is None:
+            self.historyDialog = HistoryDialog(self)
+            self.historyDialog.redownload_requested.connect(
+                self._on_history_redownload
+            )
+        self.historyDialog.show()
+        self.historyDialog.raise_()
+        self.historyDialog.activateWindow()
+
+    def _on_history_redownload(self, url: str, title: str, format_id: str):
+        """Handle redownload request from history dialog.
+        
+        Args:
+            url: Video URL
+            title: Video title
+            format_id: Format ID
+        """
+        # Add to search URL and trigger search
+        if hasattr(self, "search_url"):
+            self.search_url.setText(url)
+            # Trigger search
+            self.presenter.start_search(url)
+
     def openFormatSettingsDialog(self):
         """Display the format settings dialog, creating it on first use."""
         if not self.formatSettingsDialog:
@@ -774,8 +1006,11 @@ class VideoDownloader(QDialog):
         """Log FFmpeg availability checks and surface warnings."""
         if success:
             logger.info("FFmpeg: %s", message)
+            self.ffmpeg_status = "✓"
         else:
             logger.warning("FFmpeg: %s", message)
+            self.ffmpeg_status = "✗"
+        self._update_status_bar()
 
     def search_finished(self):
         self.set_status("Search complete.")
@@ -786,11 +1021,146 @@ class VideoDownloader(QDialog):
         self.status_label.setText("Download complete.")
 
     def set_status(self, message):
+        """Set status message and update status bar with queue info.
+        
+        Args:
+            message: Status message
+        """
         self.status_label.setText(message)
+        self._update_status_bar()
 
     @pyqtSlot(float)
     def update_progress_bar(self, progress):
         self.progress_bar.setValue(int(progress))
+
+    @pyqtSlot(int, float, str, str)
+    def update_item_progress(self, row: int, percent: float, speed: str, eta: str):
+        """Update download progress for a specific table row.
+        
+        Args:
+            row: Row index in the table
+            percent: Download percentage (0-100)
+            speed: Download speed string
+            eta: Estimated time remaining
+        """
+        if hasattr(self, 'table_manager') and self.table_manager:
+            self.table_manager.update_download_progress(row, percent, speed, eta)
+
+    @pyqtSlot(int)
+    def mark_item_complete(self, row: int):
+        """Mark a download as complete in the table.
+        
+        Args:
+            row: Row index in the table
+        """
+        if hasattr(self, 'table_manager') and self.table_manager:
+            self.table_manager.mark_download_complete(row)
+
+    @pyqtSlot(int, str)
+    def mark_item_started(self, row: int, title: str):
+        """Mark a download as started in the table.
+        
+        Args:
+            row: Row index in the table
+            title: Video title
+        """
+        if hasattr(self, 'table_manager') and self.table_manager:
+            self.table_manager.mark_download_started(row, title)
+
+    @pyqtSlot(str, str, str, str, object)
+    def add_to_history(
+        self, title: str, url: str, format_id: str, path: str, size: object
+    ):
+        """Add a completed download to history.
+        
+        Args:
+            title: Video title
+            url: Video URL
+            format_id: Format ID used
+            path: Download file path
+            size: File size in bytes (optional)
+        """
+        try:
+            from ..models.history import DownloadHistory
+            history = DownloadHistory()
+            history.add_entry(title, url, format_id, path, size)
+            # Show notification
+            if hasattr(self, 'notification_manager'):
+                # Get settings for auto-open folder (default False)
+                open_folder = getattr(self.app_settings, 'auto_open_folder', False)
+                self.notification_manager.notify_download_complete(
+                    title, path, open_folder
+                )
+        except Exception as exc:
+            logger.warning(f"Failed to add to history: {exc}")
+
+    def _on_address_bar_entered(self, url_or_query: str):
+        """Handle address bar URL entry.
+        
+        Args:
+            url_or_query: URL or search query
+        """
+        if not hasattr(self, "browser") or not self.browser:
+            return
+
+        # If it's a search query (doesn't start with http), treat as search
+        if not url_or_query.startswith(("http://", "https://")):
+            # Could implement search here, for now just try as URL
+            url_or_query = f"https://www.google.com/search?q={url_or_query}"
+
+        try:
+            qurl = QUrl(url_or_query)
+            if qurl.isValid():
+                self.browser.setUrl(qurl)
+            else:
+                logger.warning(f"Invalid URL: {url_or_query}")
+        except Exception as exc:
+            logger.error(f"Failed to navigate to URL: {exc}")
+
+    def _on_browser_url_changed(self, url: QUrl):
+        """Handle browser URL change to update address bar.
+        
+        Args:
+            url: New browser URL
+        """
+        if hasattr(self, "browser_toolbar") and self.browser_toolbar:
+            url_str = url.toString()
+            if url_str != self.browser_toolbar.get_url():
+                self.browser_toolbar.set_url(url_str)
+
+    def _on_browser_load_finished(self, success: bool):
+        """Handle browser load finished to update navigation buttons.
+        
+        Args:
+            success: Whether load was successful
+        """
+        if (hasattr(self, "browser") and self.browser and
+                hasattr(self, "browser_toolbar") and self.browser_toolbar):
+            can_go_back = self.browser.history().canGoBack()
+            can_go_forward = self.browser.history().canGoForward()
+            self.browser_toolbar.update_navigation_state(
+                can_go_back, can_go_forward
+            )
+
+    def _on_browser_back(self):
+        """Handle back button click."""
+        if hasattr(self, "browser") and self.browser:
+            self.browser.back()
+
+    def _on_browser_forward(self):
+        """Handle forward button click."""
+        if hasattr(self, "browser") and self.browser:
+            self.browser.forward()
+
+    def _on_browser_refresh(self):
+        """Handle refresh button click."""
+        if hasattr(self, "browser") and self.browser:
+            self.browser.reload()
+
+    def _on_browser_home(self):
+        """Handle home button click."""
+        if hasattr(self, "browser") and self.browser:
+            self.browser.setUrl(self.homePageUrl)
 
     def status_update(self, message):
         self.status_label.setText(message)
@@ -804,6 +1174,7 @@ class VideoDownloader(QDialog):
     @pyqtSlot()
     def on_download(self):
         selected_videos = []
+        selected_rows = []
         invalid_selection = False
 
         for row in range(self.video_table.rowCount()):
@@ -838,12 +1209,13 @@ class VideoDownloader(QDialog):
                 break
 
             selected_videos.append((modified_title, video_url, selected_format_id))
+            selected_rows.append(row)
 
         if invalid_selection:
             self.status_label.setText("Select a valid format before downloading.")
             return
 
-        self.presenter.start_download(selected_videos)
+        self.presenter.start_download(selected_videos, selected_rows)
 
     def download_failed(self, message):
         self.set_status(f"Download failed: {message}")
@@ -873,3 +1245,128 @@ class VideoDownloader(QDialog):
             self.header.updateState()
         self.status_label.setText(f"Removed {len(rows_to_delete)} item(s).")
 
+    def _on_new_tab(self):
+        """Handle new tab button click."""
+        if hasattr(self, 'browser_tabs'):
+            self.browser_tabs.add_tab(self.homePageUrl, "New Tab")
+
+    def _on_tab_changed(self, index: int):
+        """Handle tab change.
+        
+        Args:
+            index: New tab index
+        """
+        if hasattr(self, 'browser_tabs'):
+            current_tab = self.browser_tabs.get_current_tab()
+            if current_tab:
+                # Update browser reference
+                self.browser = current_tab.browser
+                # Update address bar
+                if hasattr(self, 'browser_toolbar'):
+                    self.browser_toolbar.set_url(
+                        current_tab.get_url().toString()
+                    )
+                # Update navigation buttons
+                self._on_browser_load_finished(True)
+                # Update zoom display
+                if hasattr(self, 'browser_toolbar') and hasattr(self.browser, 'zoomFactor'):
+                    self.browser_toolbar.update_zoom(self.browser.zoomFactor())
+
+    def _on_zoom_in(self):
+        """Handle zoom in request."""
+        if hasattr(self, 'browser') and hasattr(self.browser, 'zoomFactor'):
+            current_zoom = self.browser.zoomFactor()
+            new_zoom = min(5.0, current_zoom + 0.1)
+            self.browser.setZoomFactor(new_zoom)
+            if hasattr(self, 'browser_toolbar'):
+                self.browser_toolbar.update_zoom(new_zoom)
+
+    def _on_zoom_out(self):
+        """Handle zoom out request."""
+        if hasattr(self, 'browser') and hasattr(self.browser, 'zoomFactor'):
+            current_zoom = self.browser.zoomFactor()
+            new_zoom = max(0.25, current_zoom - 0.1)
+            self.browser.setZoomFactor(new_zoom)
+            if hasattr(self, 'browser_toolbar'):
+                self.browser_toolbar.update_zoom(new_zoom)
+
+    def _on_zoom_reset(self):
+        """Handle zoom reset request."""
+        if hasattr(self, 'browser') and hasattr(self.browser, 'setZoomFactor'):
+            self.browser.setZoomFactor(1.0)
+            if hasattr(self, 'browser_toolbar'):
+                self.browser_toolbar.update_zoom(1.0)
+
+    def _update_status_bar(self):
+        """Update status bar with comprehensive status information."""
+        if not hasattr(self, 'status_label'):
+            return
+        
+        # Get queue counts
+        pending = 0
+        downloading = 0
+        if hasattr(self, 'download_queue'):
+            pending = self.download_queue.get_pending_count()
+            downloading = self.download_queue.get_downloading_count()
+        
+        # Build status parts
+        parts = []
+        if downloading > 0:
+            parts.append(f"Downloading: {downloading}")
+        if pending > 0:
+            parts.append(f"Queued: {pending}")
+        if hasattr(self, 'ffmpeg_status'):
+            parts.append(f"FFmpeg: {self.ffmpeg_status}")
+        if hasattr(self, 'network_status'):
+            parts.append(f"Network: {self.network_status}")
+        
+        # Update status if we have parts
+        if parts:
+            current_text = self.status_label.text()
+            # Only update if not a transient message
+            if not any(x in current_text.lower() for x in ['downloading', 'complete', 'failed']):
+                self.status_label.setText(f"{current_text} | {' | '.join(parts)}")
+
+    def _open_developer_tools(self):
+        """Open browser developer tools in a separate window."""
+        if not hasattr(self, 'browser') or not self.browser:
+            return
+        
+        try:
+            from PyQt5.QtWebEngineWidgets import QWebEngineView
+            from PyQt5.QtWidgets import QDialog, QVBoxLayout
+            
+            # Create dev tools dialog
+            if not hasattr(self, '_dev_tools_dialog') or self._dev_tools_dialog is None:
+                self._dev_tools_dialog = QDialog(self)
+                self._dev_tools_dialog.setWindowTitle("Developer Tools")
+                self._dev_tools_dialog.setMinimumSize(800, 600)
+                
+                layout = QVBoxLayout(self._dev_tools_dialog)
+                layout.setContentsMargins(0, 0, 0, 0)
+                
+                # Create dev tools view
+                self._dev_tools_view = QWebEngineView(self._dev_tools_dialog)
+                layout.addWidget(self._dev_tools_view)
+                
+                # Connect browser page to dev tools
+                if hasattr(self.browser, 'page'):
+                    page = self.browser.page()
+                    if hasattr(page, 'setDevToolsPage'):
+                        dev_tools_page = self._dev_tools_view.page()
+                        page.setDevToolsPage(dev_tools_page)
+                
+                self._dev_tools_dialog.finished.connect(
+                    lambda: setattr(self, '_dev_tools_dialog', None)
+                )
+            
+            self._dev_tools_dialog.show()
+            self._dev_tools_dialog.raise_()
+            self._dev_tools_dialog.activateWindow()
+        except Exception as e:
+            logger.error(f"Failed to open developer tools: {e}")
+            QMessageBox.warning(
+                self,
+                "Developer Tools",
+                f"Failed to open developer tools:\n{e}"
+            )
