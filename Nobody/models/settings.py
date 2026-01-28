@@ -15,6 +15,11 @@ class AppSettings:
         self.show_audio_formats = True  # include audio formats
         self.show_audio_only = True  # include audio-only variants
         self.max_quality = 720  # highest allowed resolution (0 = unlimited)
+        # Extended settings
+        self.default_download_path = ""  # Default download directory
+        self.auto_open_folder = False  # Auto-open folder after download
+        self.auto_play = False  # Auto-play after download
+        self.show_notifications = True  # Show download notifications
 
     def get_settings_file_path(self):
         """Return the filesystem path for the JSON settings file."""
@@ -31,6 +36,10 @@ class AppSettings:
             "show_audio_formats": self.show_audio_formats,
             "show_audio_only": self.show_audio_only,
             "max_quality": self.max_quality,
+            "default_download_path": getattr(self, 'default_download_path', ''),
+            "auto_open_folder": getattr(self, 'auto_open_folder', False),
+            "auto_play": getattr(self, 'auto_play', False),
+            "show_notifications": getattr(self, 'show_notifications', True),
         }
         try:
             settings_file = self.get_settings_file_path()

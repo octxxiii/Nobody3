@@ -5,8 +5,10 @@ from typing import List, Tuple, Optional
 
 import requests
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QComboBox, QTableWidget, QTableWidgetItem
+from PyQt5.QtGui import QPixmap, QColor
+from PyQt5.QtWidgets import (
+    QComboBox, QTableWidget, QTableWidgetItem, QProgressBar
+)
 
 from ..utils.logging import logger
 from .components import CheckBoxHeader
@@ -24,8 +26,10 @@ class VideoTableManager:
 
     def initialize(self):
         """Initial table setup."""
-        self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["", "Thumbnail", "Title", "Format"])
+        self.table.setColumnCount(5)  # Added Progress column
+        self.table.setHorizontalHeaderLabels(
+            ["", "Thumbnail", "Title", "Format", "Progress"]
+        )
         header = CheckBoxHeader()
         self.table.setHorizontalHeader(header)
         header._check_box.clicked.connect(header.selectAll)
@@ -39,6 +43,7 @@ class VideoTableManager:
         self.table.setColumnWidth(1, 150)
         self.table.setColumnWidth(2, 300)
         self.table.setColumnWidth(3, 180)
+        self.table.setColumnWidth(4, 200)  # Progress column
         self.table.itemChanged.connect(self._handle_item_changed)
         self.header = header
 
@@ -84,6 +89,26 @@ class VideoTableManager:
 
         self._select_default_format(format_combo)
         self.table.setCellWidget(row_position, 3, format_combo)
+        
+        # Add progress bar for this row
+        progress_bar = QProgressBar()
+        progress_bar.setRange(0, 100)
+        progress_bar.setValue(0)
+        progress_bar.setTextVisible(True)
+        progress_bar.setFormat("Ready")
+        progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #555;
+                border-radius: 3px;
+                text-align: center;
+                background-color: #2D2D2D;
+            }
+            QProgressBar::chunk {
+                background-color: #4CAF50;
+                border-radius: 2px;
+            }
+        """)
+        self.table.setCellWidget(row_position, 4, progress_bar)
 
     def apply_filters(self):
         """Reapply format filters to existing rows."""
@@ -241,3 +266,89 @@ class VideoTableManager:
                 selected_videos.append((row, url, format_id))
         return selected_videos
 
+    def update_download_progress(
+        self, row: int, percent: float, speed: str, eta: str
+    ) -> None:
+        """Update download progress for a specific row.
+        
+        Args:
+            row: Row index
+            percent: Download percentage (0-100)
+            speed: Download speed string (e.g., "1.5MiB/s")
+            eta: Estimated time remaining (e.g., "00:30")
+        """
+        if row < 0 or row >= self.table.rowCount():
+            return
+        
+        progress_widget = self.table.cellWidget(row, 4)
+        if isinstance(progress_widget, QProgressBar):
+            progress_widget.setValue(int(percent))
+            # Format: "45% - 1.5MiB/s - ETA: 00:30"
+            if speed and speed != "N/A" and eta and eta != "N/A":
+                progress_widget.setFormat(f"{int(percent)}% - {speed} - ETA: {eta}")
+            elif speed and speed != "N/A":
+                progress_widget.setFormat(f"{int(percent)}% - {speed}")
+            elif eta and eta != "N/A":
+                progress_widget.setFormat(f"{int(percent)}% - ETA: {eta}")
+            else:
+                progress_widget.setFormat(f"{int(percent)}%")
+
+    def mark_download_complete(self, row: int) -> None:
+        """Mark a download as complete with visual indication.
+        
+        Args:
+            row: Row index
+        """
+        if row < 0 or row >= self.table.rowCount():
+            return
+        
+        # Update progress bar
+        progress_widget = self.table.cellWidget(row, 4)
+        if isinstance(progress_widget, QProgressBar):
+            progress_widget.setValue(100)
+            progress_widget.setFormat("✓ Complete")
+            progress_widget.setStyleSheet("""
+                QProgressBar {
+                    border: 1px solid #4CAF50;
+                    border-radius: 3px;
+                    text-align: center;
+                    background-color: #2D2D2D;
+                }
+                QProgressBar::chunk {
+                    background-color: #4CAF50;
+                    border-radius: 2px;
+                }
+            """)
+        
+        # Change row background color to indicate completion
+        for col in range(self.table.columnCount()):
+            item = self.table.item(row, col)
+            if item:
+                item.setBackground(QColor(40, 60, 40))  # Dark green tint
+
+    def mark_download_started(self, row: int, title: str) -> None:
+        """Mark a download as started.
+        
+        Args:
+            row: Row index
+            title: Video title
+        """
+        if row < 0 or row >= self.table.rowCount():
+            return
+        
+        progress_widget = self.table.cellWidget(row, 4)
+        if isinstance(progress_widget, QProgressBar):
+            progress_widget.setValue(0)
+            progress_widget.setFormat("Starting...")
+            progress_widget.setStyleSheet("""
+                QProgressBar {
+                    border: 1px solid #555;
+                    border-radius: 3px;
+                    text-align: center;
+                    background-color: #2D2D2D;
+                }
+                QProgressBar::chunk {
+                    background-color: #2196F3;
+                    border-radius: 2px;
+                }
+            """)

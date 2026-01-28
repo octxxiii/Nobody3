@@ -8,6 +8,8 @@ from .ffmpeg import (
     get_ffmpeg_download_url,
     download_ffmpeg_quietly,
 )
+from .sanitize import sanitize_filename, validate_url, sanitize_url
+from .notifications import NotificationManager
 
 __all__ = [
     "setup_logging",
@@ -17,5 +19,9 @@ __all__ = [
     "check_ffmpeg_exists",
     "get_ffmpeg_download_url",
     "download_ffmpeg_quietly",
+    "sanitize_filename",
+    "validate_url",
+    "sanitize_url",
+    "NotificationManager",
 ]
 

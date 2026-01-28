@@ -1,53 +1,54 @@
-# Nobody 3
+# Nobody 3 — A Small Tool That Returns Choice to You
 
-<div align="center">
+A lightweight personal media tool — built to give freedom back to the user.
 
-![Nobody 3](https://img.shields.io/badge/version-1.0.2-blue.svg)
-![Python](https://img.shields.io/badge/python-3.12-blue.svg)
-![PyQt5](https://img.shields.io/badge/PyQt5-5.15.10-green.svg)
-![License](https://img.shields.io/badge/license-Open%20Source-lightgrey.svg)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
-
-**A cross-platform personal media manager and player**
-
-[English](README.md) | [한국어](README.ko.md)
-
-[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Development](#-development) • [Contributing](#-contributing)
-
-</div>
+English | 한국어
 
 ---
 
-## 📖 Overview
+## 🧠 Philosophy
 
-Nobody 3 is a desktop application that combines browsing, downloading, and playing media content from YouTube, YouTube Music, and SoundCloud in a single, elegant interface. Built with PyQt5 for native performance across Windows, macOS, and Linux.
+Every product is a means to an end.  
+Nobody 3 is not a final destination — it is a tool that takes someone somewhere.
 
-### Why Nobody 3?
+### 1. Problem
+We no longer own our music or video.  
+Streaming is convenient, but our taste has been consumed by algorithms.
 
-- **Unified Experience**: Browse, search, download, and play—all in one app
-- **Privacy-Focused**: Keep your media local, no cloud required
-- **Lightweight**: ~50MB bundle size (vs 100MB+ for Electron apps)
-- **Native Performance**: Built with PyQt5, not a web wrapper
-- **Open Source**: Full source code available, contributions welcome
+### 2. Emotion
+Our freedom to choose is shrinking.  
+Subscriptions rise, and what we want fades away.
+
+### 3. Solution (Nobody 3)
+Nobody 3 disrupts the flow.  
+It lets you listen, watch, save, and create — **on your own terms.**
+
+### 4. Future
+No one knows where this tool will take you.  
+That’s why it’s called **Nobody.**
+
+---
+
+## 🚀 What Nobody 3 Enables
+- Choose ownership over subscription
+- Build your personal media space
+- Disconnect from algorithmic noise
+- Create without permission
+- Keep your world local & private
+
+Nobody 3 is not just a downloader.  
+It is a way to reclaim your time — and **a starting point for creativity.**
 
 ---
 
 ## ✨ Features
-
-### Core Features
-- 🎬 **Integrated Browser**: Built-in browser for YouTube, YouTube Music, and SoundCloud
-- 📋 **Format Selection**: Choose from multiple video/audio formats with quality indicators
-- 🎵 **Local Playback**: Built-in media player with mini player mode
-- 🎨 **Dark Theme**: Eye-friendly interface for extended use
-- ⚡ **FFmpeg Integration**: Automatic download and bundling (Windows)
-- 🔒 **Security**: URL validation, filename sanitization, SSL verification
-
-### 2025 Updates
-- ✨ Mini player mode with always-on-top option
-- 🔧 Enhanced format selection UI
-- 📦 FFmpeg included builds (Windows)
-- 🌐 Improved cross-platform compatibility
-- 🔐 Security improvements (input validation, path sanitization)
+- Integrated browser for YouTube / YouTube Music / SoundCloud
+- Built-in mini player with always-on-top mode
+- Selectable formats & resolutions (via yt-dlp)
+- Local playback & personal library structure
+- FFmpeg integrated (Windows: auto-download)
+- Lightweight PyQt5 native performance (~50MB)
+- Privacy-first (no analytics, no cloud, no tracking)
 
 ---
 
@@ -56,92 +57,27 @@ Nobody 3 is a desktop application that combines browsing, downloading, and playi
 ### Main Interface
 ![Main Interface](resource/img/Main%20Interface.png)
 
-*Main window with integrated browser and video table*
-
 ### Format Selection
 ![Format Selection](resource/img/Format%20Selection.png)
-
-*Format selection table with quality indicators*
 
 ### Mini Player
 ![Mini Player](resource/img/Mini%20Player.png)
 
-*Compact mini player with always-on-top option*
-
 ### Settings Dialog
 ![Settings Dialog](resource/img/Settings%20Dialog.png)
 
-*Settings dialog with collapsible sections*
-
 ---
 
-## 🛠️ Installation
+## 📦 Installation
 
-### Option 1: Pre-built Executables (Recommended)
+Releases:  
+https://github.com/octxxiii/Nobody3/releases
 
-Download the latest release for your platform:
-
-- **Windows**: [Download `Nobody3-Windows.zip`](https://github.com/octxxiii/Nobody3/releases)
-- **macOS**: [Download `Nobody3-macOS.zip`](https://github.com/octxxiii/Nobody3/releases)
-- **Linux**: [Download `Nobody3-Linux.tar.gz`](https://github.com/octxxiii/Nobody3/releases)
-
-**Windows**: Extract and run `Nobody3.exe`  
-**macOS**: Extract and open `Nobody3.app`  
-**Linux**: Extract and run `./Nobody3`
-
-### Option 2: Build from Source
-
-#### Prerequisites
-- Python 3.12 or higher
-- pip
-
-#### Steps
 ```bash
-# Clone the repository
 git clone https://github.com/octxxiii/Nobody3.git
 cd Nobody3
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Run the application
 python -m Nobody.main
-```
-
-#### Building Executables
-```bash
-# Windows
-pyinstaller --clean --noconfirm Nobody3.spec
-
-# macOS/Linux
-chmod +x build_macos.sh  # or build_linux.sh
-./build_macos.sh
-```
-
----
-
-## 📖 Usage
-
-### Basic Workflow
-
-1. **Launch the app**: Run the executable or `python -m Nobody.main`
-2. **Browse content**: Use the integrated browser to find videos/music
-3. **Copy URL**: Click the "CopyURL" button or paste a URL manually
-4. **Select format**: Choose your preferred format from the table
-5. **Download**: Click the download button to save to your selected directory
-
-### Mini Player
-
-- Click the minimize button to switch to mini player mode
-- Toggle always-on-top with the pin button
-- Control playback without switching windows
-
-### Format Settings
-
-Access format filters via the settings menu:
-- Show/hide video formats
-- Show/hide audio formats
-- Set maximum quality/resolution
 
 ---
 

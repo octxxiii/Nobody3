@@ -7,7 +7,11 @@ from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtCore import Qt, QUrl, pyqtSignal
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile
 
-from ..utils.cache import resolve_writable_cache_dir
+from ..utils.cache import (
+    resolve_writable_cache_dir,
+    clean_service_worker_cache,
+)
+from ..utils.logging import logger
 from ..config.constants import DARK_THEME_STYLESHEET
 
 
@@ -34,157 +38,195 @@ class SettingsDialog(QDialog):
     def get_text_ko(self):
         """Korean text content"""
         return """
-            <p style="text-align: center;">
-            <h1>Nobody 3 v1.0.2</h1>
-            <div>Youtube/Music Converter & Player</div>
-            <div>Release: 2025-12-01</div>
-            </p>
-            <br>
-            <p>
-            <h3>최신 업데이트 (v1.0.2)</h3>
-                <ul>
-                    <li><strong>로그인 상태 보존</strong>: 프로그램 재시작 시에도 로그인 상태 유지</li>
-                    <li><strong>캐시 최적화</strong>: 손상된 파일만 선택적 삭제, 정상 캐시 보존</li>
-                    <li><strong>쿠키/세션 보호</strong>: 로그인 정보, 로컬 스토리지 데이터 보호</li>
-                </ul>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="margin: 10px 0;">Nobody 3 v1.0.2</h1>
+                <p style="font-size: 14px; color: #888;">
+                    Youtube/Music Converter & Player<br>
+                    Release: 2025-12-01
+                </p>
+            </div>
 
-            <h3>이전 업데이트</h3>
-                <ul>
-                    <li><strong>v1.0.1</strong>: WebEngine 크래시 수정, 프로필 검증 기능 추가</li>
-                    <li><strong>v1.0.0</strong>: 미니 플레이어 모드, 최상위 고정, FFmpeg 포함 빌드</li>
+            <div style="margin: 20px 0;">
+                <h3 style="color: #4CAF50; margin-bottom: 10px;">
+                    ✨ 최신 업데이트 (v1.0.2)
+                </h3>
+                <ul style="line-height: 1.8;">
+                    <li><strong>로그인 상태 보존</strong><br>
+                        프로그램 재시작 시에도 로그인 상태 유지</li>
+                    <li><strong>캐시 최적화</strong><br>
+                        손상된 파일만 선택적 삭제, 정상 캐시 보존</li>
+                    <li><strong>쿠키/세션 보호</strong><br>
+                        로그인 정보, 로컬 스토리지 데이터 보호</li>
+                    <li><strong>안정성 향상</strong><br>
+                        Service Worker 에러 해결, 리소스 관리 개선</li>
                 </ul>
+            </div>
 
-                <h3>사용방법</h3>
-                <ol>
+            <div style="margin: 20px 0;">
+                <h3 style="margin-bottom: 10px;">📋 이전 업데이트</h3>
+                <ul style="line-height: 1.6;">
+                    <li><strong>v1.0.1</strong><br>
+                        WebEngine 크래시 수정, 프로필 검증 기능 추가</li>
+                    <li><strong>v1.0.0</strong><br>
+                        미니 플레이어 모드, 최상위 고정, FFmpeg 포함 빌드</li>
+                </ul>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h3 style="margin-bottom: 10px;">🚀 사용방법</h3>
+                <ol style="line-height: 1.8; padding-left: 20px;">
                     <li>브라우저에서 원하는 영상/플레이리스트 선택</li>
                     <li>CopyURL 클릭 또는 URL 입력 후 검색</li>
                     <li>테이블에서 포맷 선택 후 다운로드</li>
                 </ol>
+            </div>
 
-                <h3>이전 버전들 (2024)</h3>
-                <ul>
-                    <li>v1.0 (240408): 현재 브라우저 비디오/오디오 컨트롤 패널 추가</li>
+            <div style="margin: 20px 0;">
+                <h3 style="margin-bottom: 10px;">📜 이전 버전 (2024)</h3>
+                <ul style="line-height: 1.6; font-size: 12px;">
+                    <li>v1.0 (240408): 브라우저 비디오/오디오 컨트롤 패널</li>
                     <li>240405: 클립보드 복사, 새로고침, SoundCloud 지원</li>
                     <li>240401: 브라우저 숨기기, YouTube Music 지원</li>
                     <li>240328: 브라우저 통합, 테마 시스템</li>
                     <li>240327: 플레이리스트 지원, URL 관리</li>
                     <li>240326: 기본 다운로드 기능, 썸네일 지원</li>
                 </ul>
-            </p>
-            <h2>
-            Creator: nobody 😜 
-            <br>
-            Last Updated: 2025-12-01
-            </h2>
-            <br>
-            <h3>FFmpeg 배포</h3>
-            <p>
-            이 애플리케이션은 LGPL/GPL 라이선스 하에 배포되는 FFmpeg를 포함합니다.
-            <br>
-            FFmpeg는 미디어 파일을 디코딩, 인코딩, 트랜스코딩, 멀티플렉싱, 디멀티플렉싱, 스트리밍, 필터링 및 재생할 수 있는 멀티미디어 프레임워크입니다.
-            <br>
-            자세한 정보는 다음을 방문하세요: <a href="https://ffmpeg.org/">https://ffmpeg.org/</a>
-            </p>
-            <br>
-            <h3>저작권 안내</h3>
-            <p>
-            <strong>중요:</strong> 이 도구는 개인 사용 전용입니다.
-            <br>
-            다운로드한 콘텐츠는 원작자의 저작권이 있습니다.
-            <br>
-            무단 배포 또는 상업적 사용은 불법입니다.
-            <br>
-            저작권법을 준수하고 이 도구를 책임감 있게 사용하세요.
-            </p>
-            <br>
-            <h3>감사의 말</h3>
-            <p>
-            - <strong>yt-dlp</strong>: 미디어 추출 엔진
-            <br>
-            - <strong>FFmpeg</strong>: 미디어 처리 (LGPL/GPL)
-            <br>
-            - <strong>PyQt5</strong>: GUI 프레임워크
-            <br>
-            - <strong>Python Community</strong>: 훌륭한 도구와 라이브러리 제공
-            </p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0; padding: 15px; background: #2a2a2a; border-radius: 5px;">
+                <p style="margin: 5px 0; font-size: 14px;">
+                    <strong>Creator:</strong> nobody 😜<br>
+                    <strong>Last Updated:</strong> 2025-12-01
+                </p>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h3 style="margin-bottom: 10px;">📦 FFmpeg 배포</h3>
+                <p style="line-height: 1.6; font-size: 13px;">
+                    이 애플리케이션은 LGPL/GPL 라이선스 하에 배포되는 FFmpeg를 포함합니다.
+                    FFmpeg는 미디어 파일을 디코딩, 인코딩, 트랜스코딩, 멀티플렉싱, 
+                    디멀티플렉싱, 스트리밍, 필터링 및 재생할 수 있는 멀티미디어 프레임워크입니다.
+                    <br><br>
+                    자세한 정보: <a href="https://ffmpeg.org/" style="color: #4CAF50;">https://ffmpeg.org/</a>
+                </p>
+            </div>
+
+            <div style="margin: 20px 0; padding: 15px; background: #3a1a1a; border-left: 4px solid #f44336; border-radius: 3px;">
+                <h3 style="margin-top: 0; color: #ff6b6b;">⚠️ 저작권 안내</h3>
+                <p style="line-height: 1.8; font-size: 13px;">
+                    <strong>중요:</strong> 이 도구는 개인 사용 전용입니다.<br>
+                    다운로드한 콘텐츠는 원작자의 저작권이 있습니다.<br>
+                    무단 배포 또는 상업적 사용은 불법입니다.<br>
+                    저작권법을 준수하고 이 도구를 책임감 있게 사용하세요.
+                </p>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h3 style="margin-bottom: 10px;">🙏 감사의 말</h3>
+                <p style="line-height: 2; font-size: 13px;">
+                    • <strong>yt-dlp</strong>: 미디어 추출 엔진<br>
+                    • <strong>FFmpeg</strong>: 미디어 처리 (LGPL/GPL)<br>
+                    • <strong>PyQt5</strong>: GUI 프레임워크<br>
+                    • <strong>Python Community</strong>: 훌륭한 도구와 라이브러리 제공
+                </p>
+            </div>
         """
 
     def get_text_en(self):
         """English text content"""
         return """
-            <p style="text-align: center;">
-            <h1>Nobody 3 v1.0.2</h1>
-            <div>Youtube/Music Converter & Player</div>
-            <div>Release: 2025-12-01</div>
-            </p>
-            <br>
-            <p>
-            <h3>Latest Updates (v1.0.2)</h3>
-                <ul>
-                    <li><strong>Login State Preservation</strong>: Login state maintained across program restarts</li>
-                    <li><strong>Cache Optimization</strong>: Selective removal of corrupted files, preserves valid cache</li>
-                    <li><strong>Cookie/Session Protection</strong>: Login info and local storage data protected</li>
-                </ul>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="margin: 10px 0;">Nobody 3 v1.0.2</h1>
+                <p style="font-size: 14px; color: #888;">
+                    Youtube/Music Converter & Player<br>
+                    Release: 2025-12-01
+                </p>
+            </div>
 
-            <h3>Previous Updates</h3>
-                <ul>
-                    <li><strong>v1.0.1</strong>: WebEngine crash fix, profile validation feature added</li>
-                    <li><strong>v1.0.0</strong>: Mini player mode, always-on-top, FFmpeg included build</li>
+            <div style="margin: 20px 0;">
+                <h3 style="color: #4CAF50; margin-bottom: 10px;">
+                    ✨ Latest Updates (v1.0.2)
+                </h3>
+                <ul style="line-height: 1.8;">
+                    <li><strong>Login State Preservation</strong><br>
+                        Login state maintained across program restarts</li>
+                    <li><strong>Cache Optimization</strong><br>
+                        Selective removal of corrupted files, preserves valid cache</li>
+                    <li><strong>Cookie/Session Protection</strong><br>
+                        Login info and local storage data protected</li>
+                    <li><strong>Stability Improvements</strong><br>
+                        Service Worker error fixes, enhanced resource management</li>
                 </ul>
+            </div>
 
-                <h3>How to Use</h3>
-                <ol>
+            <div style="margin: 20px 0;">
+                <h3 style="margin-bottom: 10px;">📋 Previous Updates</h3>
+                <ul style="line-height: 1.6;">
+                    <li><strong>v1.0.1</strong><br>
+                        WebEngine crash fix, profile validation feature added</li>
+                    <li><strong>v1.0.0</strong><br>
+                        Mini player mode, always-on-top, FFmpeg included build</li>
+                </ul>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h3 style="margin-bottom: 10px;">🚀 How to Use</h3>
+                <ol style="line-height: 1.8; padding-left: 20px;">
                     <li>Select desired video/playlist in browser</li>
                     <li>Click CopyURL or enter URL and search</li>
                     <li>Select format from table and download</li>
                 </ol>
+            </div>
 
-                <h3>Previous Versions (2024)</h3>
-                <ul>
-                    <li>v1.0 (240408): Current browser video/audio control panel added</li>
+            <div style="margin: 20px 0;">
+                <h3 style="margin-bottom: 10px;">📜 Previous Versions (2024)</h3>
+                <ul style="line-height: 1.6; font-size: 12px;">
+                    <li>v1.0 (240408): Browser video/audio control panel</li>
                     <li>240405: Clipboard copy, refresh, SoundCloud support</li>
                     <li>240401: Browser hide, YouTube Music support</li>
                     <li>240328: Browser integration, theme system</li>
                     <li>240327: Playlist support, URL management</li>
                     <li>240326: Basic download feature, thumbnail support</li>
                 </ul>
-            </p>
-            <h2>
-            Creator: nobody 😜 
-            <br>
-            Last Updated: 2025-12-01
-            </h2>
-            <br>
-            <h3>FFmpeg Distribution</h3>
-            <p>
-            This application includes FFmpeg, which is licensed under the LGPL/GPL.
-            <br>
-            FFmpeg is a multimedia framework that can decode, encode, transcode, mux, demux, stream, filter and play media files.
-            <br>
-            For more information, visit: <a href="https://ffmpeg.org/">https://ffmpeg.org/</a>
-            </p>
-            <br>
-            <h3>Copyright Notice</h3>
-            <p>
-            <strong>Important:</strong> This tool is for personal use only.
-            <br>
-            Downloaded content is copyrighted by the original creators.
-            <br>
-            Unauthorized distribution or commercial use is illegal.
-            <br>
-            Please respect copyright laws and use this tool responsibly.
-            </p>
-            <br>
-            <h3>Acknowledgments</h3>
-            <p>
-            - <strong>yt-dlp</strong>: Media extraction engine
-            <br>
-            - <strong>FFmpeg</strong>: Media processing (LGPL/GPL)
-            <br>
-            - <strong>PyQt5</strong>: GUI framework
-            <br>
-            - <strong>Python Community</strong>: For amazing tools and libraries
-            </p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0; padding: 15px; background: #2a2a2a; border-radius: 5px;">
+                <p style="margin: 5px 0; font-size: 14px;">
+                    <strong>Creator:</strong> nobody 😜<br>
+                    <strong>Last Updated:</strong> 2025-12-01
+                </p>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h3 style="margin-bottom: 10px;">📦 FFmpeg Distribution</h3>
+                <p style="line-height: 1.6; font-size: 13px;">
+                    This application includes FFmpeg, which is licensed under the LGPL/GPL.
+                    FFmpeg is a multimedia framework that can decode, encode, transcode, mux, 
+                    demux, stream, filter and play media files.
+                    <br><br>
+                    For more information: <a href="https://ffmpeg.org/" style="color: #4CAF50;">https://ffmpeg.org/</a>
+                </p>
+            </div>
+
+            <div style="margin: 20px 0; padding: 15px; background: #3a1a1a; border-left: 4px solid #f44336; border-radius: 3px;">
+                <h3 style="margin-top: 0; color: #ff6b6b;">⚠️ Copyright Notice</h3>
+                <p style="line-height: 1.8; font-size: 13px;">
+                    <strong>Important:</strong> This tool is for personal use only.<br>
+                    Downloaded content is copyrighted by the original creators.<br>
+                    Unauthorized distribution or commercial use is illegal.<br>
+                    Please respect copyright laws and use this tool responsibly.
+                </p>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h3 style="margin-bottom: 10px;">🙏 Acknowledgments</h3>
+                <p style="line-height: 2; font-size: 13px;">
+                    • <strong>yt-dlp</strong>: Media extraction engine<br>
+                    • <strong>FFmpeg</strong>: Media processing (LGPL/GPL)<br>
+                    • <strong>PyQt5</strong>: GUI framework<br>
+                    • <strong>Python Community</strong>: For amazing tools and libraries
+                </p>
+            </div>
         """
 
     def setupUI(self):
@@ -288,22 +330,63 @@ class SettingsDialog(QDialog):
             self.clearCacheButton.setText(f"Clear Cache: {cache_size_mb:.2f}MB")
 
     def getDirectorySize(self, directory):
-        """Calculate directory size"""
+        """Calculate directory size with error handling.
+
+        Optimized to skip inaccessible files and handle permission errors
+        gracefully.
+        """
         total_size = 0
-        for dirpath, dirnames, filenames in os.walk(directory):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                try:
-                    if os.path.exists(fp):
-                        total_size += os.path.getsize(fp)
-                except Exception as e:
-                    print(f"Skip size for {fp}: {e}")
+        if not os.path.exists(directory):
+            return 0
+
+        try:
+            for dirpath, dirnames, filenames in os.walk(directory):
+                # Skip hidden/system directories for performance
+                system_dir = 'System Volume Information'
+                dirnames[:] = [
+                    d for d in dirnames
+                    if not d.startswith('.') and d != system_dir
+                ]
+
+                for filename in filenames:
+                    # Skip hidden/system files
+                    if filename.startswith('.'):
+                        continue
+
+                    file_path = os.path.join(dirpath, filename)
+                    try:
+                        if os.path.isfile(file_path):
+                            total_size += os.path.getsize(file_path)
+                    except (OSError, PermissionError, FileNotFoundError):
+                        # Skip files that can't be accessed
+                        continue
+        except (OSError, PermissionError) as e:
+            # Log error but return partial size
+            if logger:
+                logger.warning(
+                    f"Error calculating directory size for {directory}: {e}"
+                )
+
         return total_size
 
     def clearCache(self):
-        """Clear the cache"""
-        QWebEngineProfile.defaultProfile().clearHttpCache()
+        """Clear the cache including Service Worker cache"""
+        try:
+            # Clear HTTP cache
+            QWebEngineProfile.defaultProfile().clearHttpCache()
+            
+            # Clear Service Worker cache to prevent database IO errors
+            # Use the main cache directory (Nobody 3) instead of OctXXIII
+            from ..utils.cache import resolve_writable_cache_dir
+            main_cache_dir = resolve_writable_cache_dir("Nobody 3")
+            if os.path.exists(main_cache_dir):
+                sw_cleaned = clean_service_worker_cache(main_cache_dir, logger)
+                if sw_cleaned:
+                    logger.info("Service Worker cache cleared from settings dialog")
+        except Exception as e:
+            logger.warning(f"Failed to clear Service Worker cache: {e}")
 
+        # Clear OctXXIII cache directory
         for filename in os.listdir(self.cacheDirectory):
             file_path = os.path.join(self.cacheDirectory, filename)
             try:

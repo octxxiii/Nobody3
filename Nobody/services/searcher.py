@@ -25,9 +25,10 @@ class Searcher(QThread):
             "ignore_no_formats_error": True,
             "extract_flat": False,
             "format": "best[height<=480]/best[height<=720]/best",
-            "socket_timeout": 10,
-            "retries": 2,
-            "fragment_retries": 2,
+            # Improved timeout and retry settings for better stability
+            "socket_timeout": 20,  # Increased from 10 to 20 seconds
+            "retries": 5,  # Increased from 2 to 5 retries
+            "fragment_retries": 5,  # Increased from 2 to 5 retries
             "concurrent_fragment_downloads": 1,
         }
         with yt_dlp.YoutubeDL(options) as ydl:
@@ -143,7 +144,19 @@ class Searcher(QThread):
                         video.get("webpage_url", ""),
                         processed,
                     )
+            except (yt_dlp.utils.DownloadError,
+                    yt_dlp.utils.ExtractorError,
+                    yt_dlp.utils.UnsupportedError) as exc:
+                error_msg = f"Video extraction error: {exc}"
+                logger.error(error_msg, exc_info=True)
+                self.updated_list.emit(f"Error: {exc}", "", self.url, [])
+            except (OSError, IOError, ConnectionError) as exc:
+                error_msg = f"Network/IO error: {exc}"
+                logger.error(error_msg, exc_info=True)
+                self.updated_list.emit(f"Connection error: {exc}", "", self.url, [])
             except Exception as exc:  # noqa: BLE001
-                logger.error("Searcher thread error: %s", exc, exc_info=True)
+                # Catch-all for unexpected errors
+                error_msg = f"Unexpected search error: {exc}"
+                logger.error(error_msg, exc_info=True)
                 self.updated_list.emit(f"Error: {exc}", "", self.url, [])
 
