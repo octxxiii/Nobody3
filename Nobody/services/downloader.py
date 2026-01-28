@@ -60,14 +60,7 @@ class Downloader(QThread):
                     }
                 ]
             else:
-                download_options["postprocessors"] = [
-                    {
-                        "key": "FFmpegVideoConvertor",
-                        "preferredformat": "mp4",
-                    }
-                ]
                 download_options["merge_output_format"] = "mp4"
-                download_options["postprocessor_args"] = ["-c:v", "copy", "-c:a", "copy"]
 
             with yt_dlp.YoutubeDL(download_options) as ydl:
                 try:
