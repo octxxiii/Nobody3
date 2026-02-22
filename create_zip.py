@@ -7,9 +7,9 @@ date = datetime.now().strftime('%Y%m%d')
 zip_name = f'releases/Nobody3-Windows-v1.0.2-{date}.zip'
 
 files = [
-    'dist/Nobody3.exe',
-    'dist/ffmpeg.exe',
-    'dist/ffprobe.exe',
+    'dist/Nobody3/Nobody3.exe',
+    'dist/Nobody3/ffmpeg.exe',
+    'dist/Nobody3/ffprobe.exe',
     'RELEASE_NOTES_v1.0.2.md'
 ]
 

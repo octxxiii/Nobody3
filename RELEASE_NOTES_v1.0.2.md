@@ -1,61 +1,45 @@
 # Nobody 3 v1.0.2 Release Notes
 
-**Youtube/Music Converter & Player**
+## 🎉 새로운 기능
+- YouTube 동영상 다운로드 기능
+- 다양한 품질 옵션 지원 (144p ~ 4K)
+- 오디오 전용 다운로드 지원
+- 실시간 다운로드 진행률 표시
+- 다운로드 히스토리 관리
+- 북마크 기능
 
-**Release: 2025-11-27**
+## 🛠️ 기술적 개선사항
+- PyQt5 기반 현대적인 GUI
+- yt-dlp를 이용한 안정적인 다운로드 엔진
+- FFmpeg 통합으로 다양한 포맷 지원
+- 멀티스레딩으로 향상된 성능
+- 로깅 시스템으로 디버깅 지원
 
-## 🎯 Major Fix: Login State Preservation
+## 📦 포함된 구성요소
+- Nobody3.exe (메인 애플리케이션)
+- ffmpeg.exe (비디오 처리)
+- ffprobe.exe (미디어 정보 분석)
 
-### Critical Fix: Cache Management
-- **Fixed**: Login state being lost on every program restart
-- **Root Cause**: Aggressive cache clearing was deleting cookies and session data
-- **Solution**: 
-  - **Selective cache cleaning**: Only removes corrupted files, preserves login data
-  - **Protected data**: Cookies, LocalStorage, SessionStorage, IndexedDB are now protected
-  - **Conservative validation**: Profile validation is now very conservative to prevent login loss
-  - **Smart cleanup**: Only removes files with clearly corrupted timestamps (e.g., from 2015)
+## 💻 시스템 요구사항
+- Windows 10 이상
+- 최소 4GB RAM 권장
+- 인터넷 연결 필요
 
-### Protected Data
-The following critical data is now preserved across restarts:
-- **Cookies** (`Cookies`, `Cookies-journal`) - Login sessions
-- **Local Storage** - Website preferences and data
-- **Session Storage** - Temporary session data
-- **IndexedDB** - Database storage
-- **Service Worker** - Service worker cache
+## 🚀 사용법
+1. ZIP 파일을 원하는 위치에 압축 해제
+2. Nobody3.exe 실행
+3. YouTube URL 입력 후 다운로드
 
-## 🔧 Technical Changes
+## 🐛 알려진 이슈
+- 일부 제한된 동영상은 다운로드가 불가능할 수 있습니다
+- 매우 긴 동영상의 경우 다운로드 시간이 오래 걸릴 수 있습니다
 
-### Cache Management Improvements
-- **Protected Patterns**: Added protection list for critical WebEngine profile files
-- **Conservative Validation**: Profile validation no longer clears entire profile on errors
-- **Error Handling**: Improved error handling to preserve login state even on validation failures
-- **Selective Cleaning**: Only removes files with abnormal timestamps, not entire directories
-
-### Code Improvements
-- Enhanced `validate_and_clean_profile()` in `cache.py` with protected file patterns
-- Updated `main_window.py` to use conservative profile validation
-- Improved error messages and logging for cache operations
-- Better handling of profile configuration failures
-
-## 📋 Migration Notes
-
-- **No action required**: The fix is automatic and transparent
-- **Login state preserved**: You should now stay logged in across program restarts
-- **Cache optimization**: Only corrupted cache files are removed, valid cache is preserved for better performance
-- **If issues persist**: Manual cache clearing is still available in Settings dialog
-
-## 🐛 Bug Fixes
-
-### v1.0.1 Issues Resolved
-- Fixed login state being lost on every restart
-- Fixed cookies being deleted unnecessarily
-- Fixed session data being cleared on startup
-
-## 📅 Release Date
-
-2025-11-27
+## 📞 지원
+문제가 발생하면 GitHub Issues에 보고해 주세요.
 
 ---
-
-**Made with ❤️ by nobody**
-
+**빌드 정보:**
+- 빌드 날짜: 2026-02-22
+- Python 버전: 3.10.5
+- PyQt5 버전: 5.15.10
+- yt-dlp 버전: 2026.2.21

@@ -1,5 +1,32 @@
 # GitHub 릴리즈 생성 가이드
 
+## exe 빌드 (한 번에 전달용)
+
+Python/모듈이 없는 PC에 전달할 때는 **단일 exe(onefile)**로 빌드한 뒤 그 exe를 zip에 넣어 릴리즈에 올리면 됩니다.
+
+### 1. exe 빌드
+
+프로젝트 루트에서:
+
+```powershell
+# 의존성 설치 (최초 1회)
+pip install -r requirements.txt
+pip install -r requirements-build.txt
+
+# 빌드 (onefile = exe 하나에 전부 포함)
+.\build_exe.ps1
+```
+
+- **결과**: `dist\Nobody3.exe` 한 파일. 이 exe만 넣은 zip이 `releases\Nobody3-Windows-v1.0.2-YYYYMMDD.zip` 에 생성됩니다.
+- **전달 방법**: zip 받아서 압축 해제 후 `Nobody3.exe` 더블클릭 (Python/설치 불필요).
+- **FFmpeg**: exe와 같은 폴더에 없으면 앱이 첫 실행 시 자동 다운로드 시도 (기존 로직 유지).
+
+### 2. GitHub 릴리즈에 올리기
+
+아래 "방법 1" 또는 "방법 2"로 릴리즈를 만든 뒤, **Attach binaries**에 `releases\Nobody3-Windows-v1.0.2-YYYYMMDD.zip` 를 업로드하면 됩니다.
+
+---
+
 ## 방법 1: 자동 생성 (스크립트 사용)
 
 ### 1. GitHub Personal Access Token 생성

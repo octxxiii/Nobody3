@@ -24,6 +24,7 @@ MANIFEST
 # PyInstaller
 *.manifest
 *.spec
+!Nobody3.spec
 
 # Installer logs
 pip-log.txt
